@@ -15,8 +15,9 @@ export async function updateSession(request: NextRequest) {
         setAll(cookiesToSet, headers) {
           // Sync cookies to the request (so subsequent middleware can access them),
           // then write cookies to the outgoing response.
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value, options);
+          cookiesToSet.forEach(({ name, value }) => {
+            // NextRequest cookies.set only accepts (name, value).
+            request.cookies.set(name, value);
           });
 
           response = NextResponse.next({ request });
