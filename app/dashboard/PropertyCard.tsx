@@ -78,6 +78,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
   const router = useRouter();
   const [showGenerate, setShowGenerate] = useState(false);
   const [showExtendId, setShowExtendId] = useState<string | null>(null);
+  const [showActiveLinks, setShowActiveLinks] = useState(false);
 
   const [guestName, setGuestName] = useState('');
   const [checkoutDate, setCheckoutDate] = useState('');
@@ -88,6 +89,8 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [generatedLinkCopied, setGeneratedLinkCopied] = useState(false);
 
   const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '');
 
@@ -104,13 +107,45 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
 
   async function copyToClipboard(text: string) {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-      return false;
+      if (typeof document === 'undefined') return false;
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return ok;
+      } catch {
+        document.body.removeChild(textarea);
+        return false;
+      }
     }
     try {
       await navigator.clipboard.writeText(text);
       return true;
     } catch {
-      return false;
+      if (typeof document === 'undefined') return false;
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return ok;
+      } catch {
+        document.body.removeChild(textarea);
+        return false;
+      }
     }
   }
 
@@ -118,6 +153,8 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
     e.preventDefault();
     setError(null);
     setLinkMessage(null);
+    setGeneratedLink(null);
+    setGeneratedLinkCopied(false);
     setSubmitting(true);
     try {
       const result = await generateGuestLink({
@@ -130,12 +167,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
       if (!result.ok) throw new Error(result.error);
 
       const fullLink = absoluteStayUrl(result.token);
-      const copied = await copyToClipboard(fullLink);
-      setLinkMessage(
-        copied
-          ? fullLink
-          : `${fullLink} (Link created. Copy may be blocked on this device/browser.)`
-      );
+      setGeneratedLink(fullLink);
       setGuestName('');
       setCheckoutDate('');
       setIsPermanent(false);
@@ -212,7 +244,11 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
               : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'
           }`}
         >
-          {property.is_live ? 'Live' : 'Draft'}
+          {property.is_live ? (
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          ) : (
+            <span className="h-2 w-2 rounded-full bg-slate-400" />
+          )}
         </span>
       </div>
 
@@ -225,13 +261,24 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
           }}
           className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:opacity-95"
         >
-          Generate Guest Link
+          Generate Link
         </button>
         <Link
           href={`/properties/${property.id}/edit`}
-          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          aria-label="Edit property settings"
+          title="Edit property settings"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
         >
-          Edit Property
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+            <path
+              d="M10.5 3h3l.6 2.1c.4.2.9.4 1.3.7l2-.8 2.1 2.1-.8 2c.3.4.5.9.7 1.3L21 11v3l-2.1.6c-.2.4-.4.9-.7 1.3l.8 2-2.1 2.1-2-.8c-.4.3-.9.5-1.3.7L13.5 21h-3l-.6-2.1c-.4-.2-.9-.4-1.3-.7l-2 .8L4.5 17l.8-2c-.3-.4-.5-.9-.7-1.3L3 14v-3l2.1-.6c.2-.4.4-.9.7-1.3l-.8-2L7.1 5l2 .8c.4-.3.9-.5 1.3-.7L10.5 3Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="12" cy="12" r="2.75" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
         </Link>
       </div>
 
@@ -265,7 +312,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
             </label>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div>
+            <div className="min-w-0">
               <label className="text-xs font-semibold text-slate-600">
                 Guest name
               </label>
@@ -273,10 +320,10 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                 required
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <label className="text-xs font-semibold text-slate-600">
                 Checkout date
               </label>
@@ -286,7 +333,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                 type="date"
                 value={checkoutDate}
                 onChange={(e) => setCheckoutDate(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               />
             </div>
           </div>
@@ -333,139 +380,73 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
           {linkMessage}
         </div>
       ) : null}
+      {generatedLink ? (
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700">
+          <div className="break-all">{generatedLink}</div>
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const copied = await copyToClipboard(generatedLink);
+                if (copied) {
+                  setGeneratedLinkCopied(true);
+                } else {
+                  // Mobile browsers may block clipboard on insecure origins; use share as fallback.
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    try {
+                      await navigator.share({ url: generatedLink });
+                      setGeneratedLinkCopied(true);
+                      setLinkMessage('Link shared');
+                      return;
+                    } catch {
+                      // user dismissed share sheet; keep manual fallback message below
+                    }
+                  }
+                  setLinkMessage('Copy blocked here. Long press the link above to copy.');
+                }
+              }}
+              className="rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-700"
+            >
+              {generatedLinkCopied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Active links
-        </h3>
-        {activeLinks.length === 0 ? (
-          <p className="mt-2 text-sm text-slate-500">No active links yet.</p>
-        ) : (
-          <div className="mt-2 space-y-2">
-            {activeLinks.map((l) => {
-              const fullLink = absoluteStayUrl(l.token);
-              return (
-                <div
-                  key={l.id}
-                  className="rounded-xl border border-slate-200 bg-white p-3"
-                >
-                  <div className="text-sm font-semibold text-slate-800">
-                    {l.guest_name}
-                  </div>
-                  <div className="mt-1 text-xs text-slate-600">
-                    {l.is_permanent === true ? (
-                      <span>Permanent guest link</span>
-                    ) : (
-                      <span>Checkout: {formatDate(l.checkout_date)}</span>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const copied = await copyToClipboard(fullLink);
-                        setLinkMessage(
-                          copied
-                            ? 'Link copied to clipboard.'
-                            : `Copy blocked. Use this link: ${fullLink}`
-                        );
-                      }}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-                    >
-                      Copy link
-                    </button>
-                    {l.is_permanent !== true ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowExtendId(l.id);
-                          setExtendDate(l.checkout_date ?? '');
-                          setError(null);
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-                      >
-                        Extend
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => onDeleteLink(l.id)}
-                      disabled={submitting}
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 disabled:opacity-60"
-                    >
-                      Delete link
-                    </button>
-                  </div>
-
-                  {showExtendId === l.id ? (
-                    <form
-                      onSubmit={onExtend}
-                      className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2"
-                    >
-                      <label className="text-xs font-semibold text-slate-600">
-                        New checkout date
-                      </label>
-                      <input
-                        required
-                        type="date"
-                        value={extendDate}
-                        onChange={(e) => setExtendDate(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-                      />
-                      <div className="mt-2 flex items-center gap-2">
-                        <button
-                          disabled={submitting}
-                          className="rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
-                        >
-                          {submitting ? 'Saving...' : 'Save'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowExtendId(null)}
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {recentExpiredLinks.length > 0 ? (
-          <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80">
-            <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-600 [&::-webkit-details-marker]:hidden">
-              <span className="inline-flex items-center gap-2">
-                Show expired links
-                <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                  {recentExpiredLinks.length}
-                </span>
-              </span>
-              <span className="mt-1 block font-normal text-[11px] text-slate-500">
-                Links appear here for 14 days after they expire, then are hidden.
-              </span>
-            </summary>
-            <div className="space-y-2 border-t border-slate-200 p-3 pt-2">
-              {recentExpiredLinks.map((l) => {
+        <button
+          type="button"
+          onClick={() => setShowActiveLinks((v) => !v)}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600"
+        >
+          <span>Active links</span>
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+            {activeLinks.length}
+          </span>
+          <span>{showActiveLinks ? '▴' : '▾'}</span>
+        </button>
+        {showActiveLinks ? (
+          <>
+            {activeLinks.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-500">No active links yet.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+              {activeLinks.map((l) => {
                 const fullLink = absoluteStayUrl(l.token);
                 return (
                   <div
                     key={l.id}
                     className="rounded-xl border border-slate-200 bg-white p-3"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-slate-800">
-                        {l.guest_name}
-                      </div>
-                      <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
-                        Expired
-                      </span>
+                    <div className="text-sm font-semibold text-slate-800">
+                      {l.guest_name}
                     </div>
                     <div className="mt-1 text-xs text-slate-600">
-                      Checkout: {formatDate(l.checkout_date)}
+                      {l.is_permanent === true ? (
+                        <span>Permanent guest link</span>
+                      ) : (
+                        <span>Checkout: {formatDate(l.checkout_date)}</span>
+                      )}
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <button
@@ -482,17 +463,19 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                       >
                         Copy link
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowExtendId(l.id);
-                          setExtendDate(l.checkout_date ?? '');
-                          setError(null);
-                        }}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-                      >
-                        Extend
-                      </button>
+                      {l.is_permanent !== true ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowExtendId(l.id);
+                            setExtendDate(l.checkout_date ?? '');
+                            setError(null);
+                          }}
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                        >
+                          Extend
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => onDeleteLink(l.id)}
@@ -538,8 +521,115 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                   </div>
                 );
               })}
-            </div>
-          </details>
+              </div>
+            )}
+            {recentExpiredLinks.length > 0 ? (
+              <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80">
+                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-600 [&::-webkit-details-marker]:hidden">
+                  <span className="inline-flex items-center gap-2">
+                    Show expired links
+                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                      {recentExpiredLinks.length}
+                    </span>
+                  </span>
+                  <span className="mt-1 block font-normal text-[11px] text-slate-500">
+                    Links appear here for 14 days after they expire, then are hidden.
+                  </span>
+                </summary>
+                <div className="space-y-2 border-t border-slate-200 p-3 pt-2">
+                  {recentExpiredLinks.map((l) => {
+                    const fullLink = absoluteStayUrl(l.token);
+                    return (
+                      <div
+                        key={l.id}
+                        className="rounded-xl border border-slate-200 bg-white p-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="text-sm font-semibold text-slate-800">
+                            {l.guest_name}
+                          </div>
+                          <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
+                            Expired
+                          </span>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-600">
+                          Checkout: {formatDate(l.checkout_date)}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const copied = await copyToClipboard(fullLink);
+                              setLinkMessage(
+                                copied
+                                  ? 'Link copied to clipboard.'
+                                  : `Copy blocked. Use this link: ${fullLink}`
+                              );
+                            }}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                          >
+                            Copy link
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowExtendId(l.id);
+                              setExtendDate(l.checkout_date ?? '');
+                              setError(null);
+                            }}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                          >
+                            Extend
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onDeleteLink(l.id)}
+                            disabled={submitting}
+                            className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                          >
+                            Delete link
+                          </button>
+                        </div>
+
+                        {showExtendId === l.id ? (
+                          <form
+                            onSubmit={onExtend}
+                            className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2"
+                          >
+                            <label className="text-xs font-semibold text-slate-600">
+                              New checkout date
+                            </label>
+                            <input
+                              required
+                              type="date"
+                              value={extendDate}
+                              onChange={(e) => setExtendDate(e.target.value)}
+                              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                            />
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                disabled={submitting}
+                                className="rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                              >
+                                {submitting ? 'Saving...' : 'Save'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setShowExtendId(null)}
+                                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>
