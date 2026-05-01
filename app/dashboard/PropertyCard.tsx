@@ -102,6 +102,18 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
     return path;
   }
 
+  async function copyToClipboard(text: string) {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      return false;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function onGenerate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -118,8 +130,12 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
       if (!result.ok) throw new Error(result.error);
 
       const fullLink = absoluteStayUrl(result.token);
-      setLinkMessage(fullLink);
-      await navigator.clipboard.writeText(fullLink);
+      const copied = await copyToClipboard(fullLink);
+      setLinkMessage(
+        copied
+          ? fullLink
+          : `${fullLink} (Link created. Copy may be blocked on this device/browser.)`
+      );
       setGuestName('');
       setCheckoutDate('');
       setIsPermanent(false);
@@ -347,8 +363,12 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                     <button
                       type="button"
                       onClick={async () => {
-                        await navigator.clipboard.writeText(fullLink);
-                        setLinkMessage('Link copied to clipboard.');
+                        const copied = await copyToClipboard(fullLink);
+                        setLinkMessage(
+                          copied
+                            ? 'Link copied to clipboard.'
+                            : `Copy blocked. Use this link: ${fullLink}`
+                        );
                       }}
                       className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
                     >
@@ -451,8 +471,12 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                       <button
                         type="button"
                         onClick={async () => {
-                          await navigator.clipboard.writeText(fullLink);
-                          setLinkMessage('Link copied to clipboard.');
+                          const copied = await copyToClipboard(fullLink);
+                          setLinkMessage(
+                            copied
+                              ? 'Link copied to clipboard.'
+                              : `Copy blocked. Use this link: ${fullLink}`
+                          );
                         }}
                         className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
                       >
