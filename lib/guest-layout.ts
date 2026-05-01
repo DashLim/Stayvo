@@ -46,3 +46,23 @@ export function normalizeSectionOrder(
 
   return out;
 }
+
+/** Normalize jsonb / legacy shapes from Postgres for safe client serialization */
+export function parseGuestSectionOrderFromDb(value: unknown): string[] | undefined {
+  if (Array.isArray(value)) {
+    const keys = value.map((x) => String(x).trim()).filter(Boolean);
+    return keys.length ? keys : undefined;
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (Array.isArray(parsed)) {
+        const keys = parsed.map((x) => String(x).trim()).filter(Boolean);
+        return keys.length ? keys : undefined;
+      }
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}

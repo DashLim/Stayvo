@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
 import PreviewClient from '@/app/properties/[propertyId]/preview/PreviewClient';
+import { parseGuestSectionOrderFromDb } from '@/lib/guest-layout';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function PropertyPreviewPage({
   params,
@@ -99,9 +100,7 @@ export default async function PropertyPreviewPage({
         is_displayed: d.is_displayed ?? true,
       }))}
       guestSectionOrder={
-        Array.isArray(property.guest_section_order)
-          ? (property.guest_section_order as string[])
-          : []
+        parseGuestSectionOrderFromDb(property.guest_section_order) ?? []
       }
     />
   );

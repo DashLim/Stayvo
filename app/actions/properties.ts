@@ -1,16 +1,7 @@
 'use server';
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-
-export const BASE_SECTION_KEYS = [
-  'address',
-  'parking',
-  'checkin',
-  'wifi',
-  'rules',
-  'guidebook',
-  'host',
-] as const;
+import { BASE_SECTION_KEYS } from '@/lib/guest-layout';
 
 export type CustomDetailInput = {
   title: string;

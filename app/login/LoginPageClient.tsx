@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { tryCreateSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type AuthMode = 'login' | 'signup';
 
@@ -10,8 +10,9 @@ export default function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/dashboard';
+  const configError = searchParams.get('error') === 'config';
 
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const supabase = useMemo(() => tryCreateSupabaseBrowserClient(), []);
 
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
@@ -26,6 +27,11 @@ export default function LoginPageClient() {
     setInfo(null);
     setSubmitting(true);
     try {
+      if (!supabase) {
+        throw new Error(
+          'Server configuration is incomplete. Ask the deployer to set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY on Vercel, then redeploy.'
+        );
+      }
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -64,6 +70,20 @@ export default function LoginPageClient() {
           <div className="text-xl font-semibold tracking-tight">Stayvo</div>
           <div className="mt-1 text-sm text-slate-600">Host portal login</div>
         </div>
+
+        {!supabase || configError ? (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="font-medium">Supabase environment variables are missing</p>
+            <p className="mt-1 text-amber-800">
+              In the Vercel project, add{' '}
+              <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_SUPABASE_URL</code> and{' '}
+              <code className="rounded bg-amber-100 px-1">
+                NEXT_PUBLIC_SUPABASE_ANON_KEY
+              </code>{' '}
+              (from Supabase → Project Settings → API), save, then redeploy the latest commit.
+            </p>
+          </div>
+        ) : null}
 
         <div className="mb-4 flex gap-2">
           <button
@@ -132,7 +152,7 @@ export default function LoginPageClient() {
           ) : null}
 
           <button
-            disabled={submitting}
+            disabled={submitting || !supabase}
             className="w-full rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
           >
             {submitting

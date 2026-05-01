@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import PropertyForm from '@/app/properties/_components/PropertyForm';
+import { parseGuestSectionOrderFromDb } from '@/lib/guest-layout';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function EditPropertyPage({
@@ -92,9 +93,9 @@ export default async function EditPropertyPage({
           message: d.message ?? '',
           isDisplayed: d.is_displayed ?? true,
         })),
-        guestSectionOrder: Array.isArray(property.guest_section_order)
-          ? (property.guest_section_order as string[])
-          : undefined,
+        guestSectionOrder: parseGuestSectionOrderFromDb(
+          property.guest_section_order
+        ),
       }}
     />
   );
