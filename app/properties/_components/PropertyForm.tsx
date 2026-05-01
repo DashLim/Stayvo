@@ -8,7 +8,11 @@ import type {
   CheckInStepInput,
   PropertyFormInput,
 } from '@/app/actions/properties';
-import { createProperty, updateProperty } from '@/app/actions/properties';
+import {
+  createProperty,
+  deleteProperty,
+  updateProperty,
+} from '@/app/actions/properties';
 
 type PropertyFormProps = {
   mode: 'create' | 'edit';
@@ -30,9 +34,8 @@ export default function PropertyForm({
   const defaults = useMemo<Partial<PropertyFormInput>>(
     () => ({
       propertyName: '',
+      internalName: '',
       fullAddress: '',
-      city: '',
-      state: '',
       googleMapsUrl: '',
       wazeUrl: '',
       parkingDetails: '',
@@ -43,7 +46,6 @@ export default function PropertyForm({
       guidebookTips: [],
       hostName: '',
       hostWhatsappNumber: '',
-      hostResponseTime: '',
       isLive: false,
       ...(initialValues ?? {}),
     }),
@@ -53,11 +55,12 @@ export default function PropertyForm({
   const [propertyName, setPropertyName] = useState(
     ensureString(defaults.propertyName)
   );
+  const [internalName, setInternalName] = useState(
+    ensureString(defaults.internalName)
+  );
   const [fullAddress, setFullAddress] = useState(
     ensureString(defaults.fullAddress)
   );
-  const [city, setCity] = useState(ensureString(defaults.city));
-  const [state, setState] = useState(ensureString(defaults.state));
   const [googleMapsUrl, setGoogleMapsUrl] = useState(
     ensureString(defaults.googleMapsUrl)
   );
@@ -86,13 +89,11 @@ export default function PropertyForm({
   const [hostWhatsappNumber, setHostWhatsappNumber] = useState(
     ensureString(defaults.hostWhatsappNumber)
   );
-  const [hostResponseTime, setHostResponseTime] = useState(
-    ensureString(defaults.hostResponseTime)
-  );
 
   const [isLive, setIsLive] = useState(Boolean(defaults.isLive));
 
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -105,9 +106,8 @@ export default function PropertyForm({
     try {
       const input: PropertyFormInput = {
         propertyName,
+        internalName,
         fullAddress,
-        city,
-        state,
         googleMapsUrl,
         wazeUrl,
         parkingDetails,
@@ -118,7 +118,6 @@ export default function PropertyForm({
         guidebookTips,
         hostName,
         hostWhatsappNumber,
-        hostResponseTime,
         isLive,
       };
 
@@ -135,6 +134,26 @@ export default function PropertyForm({
       setError(err?.message ?? 'Unable to save property.');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function onDeleteProperty() {
+    if (mode !== 'edit' || !propertyId) return;
+    const yes = window.confirm(
+      'Delete this property? This cannot be undone and removes all guest links.'
+    );
+    if (!yes) return;
+
+    setError(null);
+    setDeleting(true);
+    try {
+      const res = await deleteProperty(propertyId);
+      if (!res.ok) throw new Error(res.error);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err?.message ?? 'Unable to delete property.');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -184,10 +203,25 @@ export default function PropertyForm({
               <label className="text-sm font-medium text-slate-700">
                 Property name
               </label>
+              <p className="mt-1 text-xs text-slate-500">Guest will see this.</p>
               <input
                 required
                 value={propertyName}
                 onChange={(e) => setPropertyName(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="text-sm font-medium text-slate-700">
+                Internal name
+              </label>
+              <p className="mt-1 text-xs text-slate-500">
+                For internal record only.
+              </p>
+              <input
+                value={internalName}
+                onChange={(e) => setInternalName(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
@@ -202,29 +236,6 @@ export default function PropertyForm({
                 value={fullAddress}
                 onChange={(e) => setFullAddress(e.target.value)}
                 className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">
-                City
-              </label>
-              <input
-                required
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">
-                State
-              </label>
-              <input
-                required
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
 
@@ -545,9 +556,7 @@ export default function PropertyForm({
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-4">
             <h2 className="text-base font-semibold">Host contact</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              How guests reach you and how quickly you respond.
-            </p>
+            <p className="mt-1 text-sm text-slate-600">How guests reach you.</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -574,24 +583,30 @@ export default function PropertyForm({
                 placeholder="+1 555 123 4567"
               />
             </div>
-            <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">
-                Host response time (e.g. "within 30 minutes")
-              </label>
-              <input
-                required
-                value={hostResponseTime}
-                onChange={(e) => setHostResponseTime(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-              />
-            </div>
           </div>
         </section>
+
+        {mode === 'edit' && propertyId ? (
+          <section className="rounded-2xl border border-rose-200 bg-rose-50/40 p-4 shadow-sm">
+            <h2 className="text-base font-semibold text-rose-900">Danger zone</h2>
+            <p className="mt-1 text-sm text-rose-800/90">
+              Permanently delete this property and all guest links created for it.
+            </p>
+            <button
+              type="button"
+              onClick={onDeleteProperty}
+              disabled={submitting || deleting}
+              className="mt-3 inline-flex items-center justify-center rounded-xl border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-60"
+            >
+              {deleting ? 'Deleting…' : 'Delete property'}
+            </button>
+          </section>
+        ) : null}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || deleting}
             className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:opacity-60"
           >
             {submitting

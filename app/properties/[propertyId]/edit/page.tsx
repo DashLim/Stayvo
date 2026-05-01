@@ -20,7 +20,7 @@ export default async function EditPropertyPage({
   const { data: property, error: propertyError } = await supabase
     .from('properties')
     .select(
-      'id, property_name, full_address, city, state, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, is_live, host_name, host_whatsapp_number, host_response_time'
+      'id, property_name, internal_name, full_address, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, is_live, host_name, host_whatsapp_number'
     )
     .eq('id', propertyId)
     .eq('user_id', user.id)
@@ -59,9 +59,8 @@ export default async function EditPropertyPage({
       initialValues={{
         isLive: Boolean(property.is_live),
         propertyName: property.property_name ?? '',
+        internalName: property.internal_name ?? '',
         fullAddress: property.full_address ?? '',
-        city: property.city ?? '',
-        state: property.state ?? '',
         googleMapsUrl: property.google_maps_url ?? '',
         wazeUrl: property.waze_url ?? '',
         parkingDetails: property.parking_details ?? '',
@@ -69,7 +68,6 @@ export default async function EditPropertyPage({
         wifiPassword: property.wifi_password ?? '',
         hostName: property.host_name ?? '',
         hostWhatsappNumber: property.host_whatsapp_number ?? '',
-        hostResponseTime: property.host_response_time ?? '',
         checkInInstructions: (steps ?? []).map((s) => ({
           instruction: s.instruction ?? '',
         })),

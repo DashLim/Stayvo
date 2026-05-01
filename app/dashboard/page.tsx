@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
   const { data: properties, error: propertiesError } = await supabase
     .from('properties')
-    .select('id, property_name, city, is_live')
+    .select('id, property_name, internal_name, is_live')
     .order('created_at', { ascending: false });
 
   const propertyIds = (properties ?? []).map((p) => p.id);
@@ -25,7 +25,7 @@ export default async function DashboardPage() {
       : await supabase
           .from('guest_links')
           .select(
-            'id, property_id, guest_name, checkout_date, expires_at, token, created_at'
+            'id, property_id, guest_name, checkout_date, expires_at, token, created_at, is_permanent'
           )
           .in('property_id', propertyIds)
           .order('created_at', { ascending: false });

@@ -17,8 +17,9 @@ type PortalPayload = {
   host_whatsapp_number: string;
   host_response_time: string;
   guest_name: string;
-  checkout_date: string;
-  expires_at: string;
+  checkout_date: string | null;
+  expires_at: string | null;
+  is_permanent?: boolean | null;
   check_in_steps: Array<{ instruction: string; step_order: number }>;
   house_rules: Array<{ rule_text: string; rule_order: number }>;
   guidebook_tips: Array<{
@@ -74,7 +75,10 @@ export default async function StayPage({
   }
 
   const portal = data[0] as PortalPayload;
-  const expired = new Date(portal.expires_at).getTime() < Date.now();
+  const expired =
+    portal.is_permanent !== true &&
+    portal.expires_at != null &&
+    new Date(portal.expires_at).getTime() < Date.now();
 
   if (expired) {
     return (
@@ -108,7 +112,18 @@ export default async function StayPage({
       </section>
 
       <section className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-        This link expires on <strong>{formatDate(portal.expires_at)}</strong>.
+        {portal.is_permanent === true ? (
+          <>
+            This is a <strong>permanent</strong> guest link. It stays valid until
+            your host removes it.
+          </>
+        ) : portal.expires_at ? (
+          <>
+            This link expires on <strong>{formatDate(portal.expires_at)}</strong>.
+          </>
+        ) : (
+          <>This guest link has no expiry date set.</>
+        )}
       </section>
 
       <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

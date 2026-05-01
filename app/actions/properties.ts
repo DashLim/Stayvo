@@ -17,9 +17,8 @@ export type GuidebookTipInput = {
 
 export type PropertyFormInput = {
   propertyName: string;
+  internalName: string;
   fullAddress: string;
-  city: string;
-  state: string;
   googleMapsUrl: string;
   wazeUrl: string;
   parkingDetails: string;
@@ -30,7 +29,6 @@ export type PropertyFormInput = {
   guidebookTips: GuidebookTipInput[];
   hostName: string;
   hostWhatsappNumber: string;
-  hostResponseTime: string;
   isLive: boolean;
 };
 
@@ -53,9 +51,11 @@ export async function createProperty(input: PropertyFormInput) {
   const payload = {
     user_id: user.id,
     property_name: normalizeString(input.propertyName),
+    internal_name: normalizeString(input.internalName) || null,
     full_address: normalizeString(input.fullAddress),
-    city: normalizeString(input.city),
-    state: normalizeString(input.state),
+    // Legacy columns kept for backwards compatibility.
+    city: '',
+    state: '',
     google_maps_url: normalizeString(input.googleMapsUrl) || null,
     waze_url: normalizeString(input.wazeUrl) || null,
     parking_details: normalizeString(input.parkingDetails) || null,
@@ -63,7 +63,7 @@ export async function createProperty(input: PropertyFormInput) {
     wifi_password: normalizeString(input.wifiPassword) || null,
     host_name: normalizeString(input.hostName),
     host_whatsapp_number: normalizeString(input.hostWhatsappNumber),
-    host_response_time: normalizeString(input.hostResponseTime),
+    host_response_time: '',
     is_live: input.isLive,
   };
 
@@ -71,11 +71,8 @@ export async function createProperty(input: PropertyFormInput) {
   const requiredFields: Array<[keyof typeof payload, string]> = [
     ['property_name', 'Property name is required.'],
     ['full_address', 'Full address is required.'],
-    ['city', 'City is required.'],
-    ['state', 'State is required.'],
     ['host_name', 'Host name is required.'],
     ['host_whatsapp_number', 'Host WhatsApp number is required.'],
-    ['host_response_time', 'Host response time is required.'],
   ];
 
   for (const [field, message] of requiredFields) {
@@ -193,9 +190,11 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
 
   const payload = {
     property_name: normalizeString(input.propertyName),
+    internal_name: normalizeString(input.internalName) || null,
     full_address: normalizeString(input.fullAddress),
-    city: normalizeString(input.city),
-    state: normalizeString(input.state),
+    // Legacy columns kept for backwards compatibility.
+    city: '',
+    state: '',
     google_maps_url: normalizeString(input.googleMapsUrl) || null,
     waze_url: normalizeString(input.wazeUrl) || null,
     parking_details: normalizeString(input.parkingDetails) || null,
@@ -203,18 +202,15 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     wifi_password: normalizeString(input.wifiPassword) || null,
     host_name: normalizeString(input.hostName),
     host_whatsapp_number: normalizeString(input.hostWhatsappNumber),
-    host_response_time: normalizeString(input.hostResponseTime),
+    host_response_time: '',
     is_live: input.isLive,
   };
 
   const requiredFields: Array<[keyof typeof payload, string]> = [
     ['property_name', 'Property name is required.'],
     ['full_address', 'Full address is required.'],
-    ['city', 'City is required.'],
-    ['state', 'State is required.'],
     ['host_name', 'Host name is required.'],
     ['host_whatsapp_number', 'Host WhatsApp number is required.'],
-    ['host_response_time', 'Host response time is required.'],
   ];
 
   for (const [field, message] of requiredFields) {
@@ -298,6 +294,30 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
       .from('property_guidebook_tips')
       .insert(guidebookTips);
     if (error) return { ok: false as const, error: error.message };
+  }
+
+  return { ok: true as const };
+}
+
+export async function deleteProperty(propertyId: string) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return { ok: false as const, error: 'Unauthorized' };
+  }
+
+  const { error } = await supabase
+    .from('properties')
+    .delete()
+    .eq('id', propertyId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    return { ok: false as const, error: error.message };
   }
 
   return { ok: true as const };
