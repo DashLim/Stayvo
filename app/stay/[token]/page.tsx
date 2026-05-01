@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createSupabasePublicClient } from '@/lib/supabase/public';
 import CopyTextButton from '@/app/stay/[token]/CopyTextButton';
+import { normalizeSectionOrder, type CustomDetail } from '@/lib/guest-layout';
 
 type PortalPayload = {
   property_id: string;
@@ -15,17 +16,25 @@ type PortalPayload = {
   wifi_password: string | null;
   host_name: string;
   host_whatsapp_number: string;
+  host_whatsapp_message: string | null;
   host_response_time: string;
   guest_name: string;
   checkout_date: string | null;
   expires_at: string | null;
   is_permanent?: boolean | null;
-  check_in_steps: Array<{ instruction: string; step_order: number }>;
-  house_rules: Array<{ rule_text: string; rule_order: number }>;
+  guest_section_order?: string[] | null;
+  check_in_steps: Array<{ instruction: string; step_order: number; is_displayed: boolean }>;
+  house_rules: Array<{ rule_text: string; rule_order: number; is_displayed: boolean }>;
   guidebook_tips: Array<{
     label: string;
     description: string;
     tip_order: number;
+  }>;
+  custom_details: Array<{
+    detail_order: number;
+    title: string;
+    message: string;
+    is_displayed: boolean;
   }>;
 };
 
@@ -39,13 +48,16 @@ function formatDate(dateValue: string) {
   });
 }
 
-function toWhatsappUrl(phone: string) {
+function toWhatsappUrl(phone: string, prefilled: string | null) {
   const cleaned = phone.replace(/[^\d+]/g, '').replace(/^00/, '+');
   const withoutPlus = cleaned.startsWith('+') ? cleaned.slice(1) : cleaned;
-  const message = encodeURIComponent(
-    "Hi! I'm your guest and need help with my Stayvo portal details."
-  );
-  return `https://wa.me/${withoutPlus}?text=${message}`;
+  const text = (prefilled ?? '').trim();
+  if (!text) return `https://wa.me/${withoutPlus}`;
+  return `https://wa.me/${withoutPlus}?text=${encodeURIComponent(text)}`;
+}
+
+function hasText(value: string | null | undefined) {
+  return (value ?? '').trim().length > 0;
 }
 
 export default async function StayPage({
@@ -102,6 +114,35 @@ export default async function StayPage({
     );
   }
 
+  const customDetails = ((portal.custom_details ?? []) as Array<
+    CustomDetail & { is_displayed: boolean }
+  >).filter((d) => d.is_displayed && (hasText(d.title) || hasText(d.message)));
+
+  const visibleSectionFlags = new Map<string, boolean>([
+    [
+      'address',
+      hasText(portal.full_address) ||
+        hasText(portal.city) ||
+        hasText(portal.state) ||
+        hasText(portal.google_maps_url) ||
+        hasText(portal.waze_url),
+    ],
+    ['parking', hasText(portal.parking_details)],
+    ['checkin', portal.check_in_steps.some((s) => s.is_displayed)],
+    ['wifi', hasText(portal.wifi_network_name) || hasText(portal.wifi_password)],
+    ['rules', portal.house_rules.some((r) => r.is_displayed)],
+    ['guidebook', portal.guidebook_tips.length > 0],
+    ['host', hasText(portal.host_name) || hasText(portal.host_whatsapp_number)],
+  ]);
+  for (const d of customDetails) {
+    visibleSectionFlags.set(`custom:${d.detail_order}`, true);
+  }
+
+  const orderedSections = normalizeSectionOrder(
+    (portal.guest_section_order ?? []) as string[],
+    customDetails
+  ).filter((key) => visibleSectionFlags.get(key) === true);
+
   return (
     <main className="mx-auto min-h-screen max-w-md bg-slate-50 px-4 py-5">
       <section className="rounded-2xl bg-brand p-5 text-white shadow-sm">
@@ -126,120 +167,195 @@ export default async function StayPage({
         )}
       </section>
 
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Address</h2>
-        <p className="mt-2 text-sm text-slate-700">{portal.full_address}</p>
-        <p className="mt-1 text-sm text-slate-500">
-          {portal.city}, {portal.state}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {portal.google_maps_url ? (
-            <Link
-              href={portal.google_maps_url}
-              target="_blank"
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+      {orderedSections.map((sectionKey) => {
+        if (sectionKey === 'address') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
             >
-              Open Google Maps
-            </Link>
-          ) : null}
-          {portal.waze_url ? (
-            <Link
-              href={portal.waze_url}
-              target="_blank"
-              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+              <h2 className="text-base font-semibold">Address</h2>
+              {hasText(portal.full_address) ? (
+                <p className="mt-2 text-sm text-slate-700">{portal.full_address}</p>
+              ) : null}
+              {(hasText(portal.city) || hasText(portal.state)) && (
+                <p className="mt-1 text-sm text-slate-500">
+                  {[portal.city, portal.state].filter(Boolean).join(', ')}
+                </p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
+                {portal.google_maps_url ? (
+                  <Link
+                    href={portal.google_maps_url}
+                    target="_blank"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+                  >
+                    Open Google Maps
+                  </Link>
+                ) : null}
+                {portal.waze_url ? (
+                  <Link
+                    href={portal.waze_url}
+                    target="_blank"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700"
+                  >
+                    Open Waze
+                  </Link>
+                ) : null}
+              </div>
+            </section>
+          );
+        }
+
+        if (sectionKey === 'parking') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
             >
-              Open Waze
-            </Link>
-          ) : null}
-        </div>
-      </section>
+              <h2 className="text-base font-semibold">Parking details</h2>
+              <p className="mt-2 text-sm text-slate-700">{portal.parking_details}</p>
+            </section>
+          );
+        }
 
-      {portal.parking_details ? (
-        <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-base font-semibold">Parking details</h2>
-          <p className="mt-2 text-sm text-slate-700">{portal.parking_details}</p>
-        </section>
-      ) : null}
+        if (sectionKey === 'checkin') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <h2 className="text-base font-semibold">Check-in guide</h2>
+              <ol className="mt-2 space-y-2">
+                {portal.check_in_steps
+                  .filter((s) => s.is_displayed)
+                  .map((s, idx) => (
+                  <li key={`${s.step_order}-${idx}`} className="flex gap-2">
+                    <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm text-slate-700">{s.instruction}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          );
+        }
 
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Check-in guide</h2>
-        <ol className="mt-2 space-y-2">
-          {portal.check_in_steps.length > 0 ? (
-            portal.check_in_steps.map((s, idx) => (
-              <li key={`${s.step_order}-${idx}`} className="flex gap-2">
-                <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-                  {idx + 1}
-                </span>
-                <span className="text-sm text-slate-700">{s.instruction}</span>
-              </li>
-            ))
-          ) : (
-            <li className="text-sm text-slate-500">No check-in steps provided.</li>
-          )}
-        </ol>
-      </section>
+        if (sectionKey === 'wifi') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <h2 className="text-base font-semibold">Wifi</h2>
+              {hasText(portal.wifi_network_name) ? (
+                <p className="mt-2 text-sm text-slate-700">
+                  Network:{' '}
+                  <span className="font-semibold">{portal.wifi_network_name}</span>
+                </p>
+              ) : null}
+              {hasText(portal.wifi_password) ? (
+                <>
+                  <p className="mt-1 text-sm text-slate-700">
+                    Password: <CopyTextButton text={portal.wifi_password || ''} />
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Tap password to copy on mobile.
+                  </p>
+                </>
+              ) : null}
+            </section>
+          );
+        }
 
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Wifi</h2>
-        <p className="mt-2 text-sm text-slate-700">
-          Network: <span className="font-semibold">{portal.wifi_network_name || '-'}</span>
-        </p>
-        <p className="mt-1 text-sm text-slate-700">
-          Password: <CopyTextButton text={portal.wifi_password || '-'} />
-        </p>
-        <p className="mt-1 text-xs text-slate-500">
-          Tap password to copy on mobile.
-        </p>
-      </section>
+        if (sectionKey === 'rules') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <h2 className="text-base font-semibold">House rules</h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                {portal.house_rules
+                  .filter((r) => r.is_displayed)
+                  .map((r, idx) => (
+                  <li key={`${r.rule_order}-${idx}`}>{r.rule_text}</li>
+                ))}
+              </ul>
+            </section>
+          );
+        }
 
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">House rules</h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-          {portal.house_rules.length > 0 ? (
-            portal.house_rules.map((r, idx) => (
-              <li key={`${r.rule_order}-${idx}`}>{r.rule_text}</li>
-            ))
-          ) : (
-            <li>No house rules provided.</li>
-          )}
-        </ul>
-      </section>
+        if (sectionKey === 'guidebook') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <h2 className="text-base font-semibold">Guidebook tips</h2>
+              <div className="mt-2 space-y-2">
+                {portal.guidebook_tips.map((tip, idx) => (
+                  <article
+                    key={`${tip.tip_order}-${idx}`}
+                    className="rounded-lg border border-slate-200 bg-slate-50 p-3"
+                  >
+                    <h3 className="text-sm font-semibold text-slate-800">{tip.label}</h3>
+                    <p className="mt-1 text-sm text-slate-700">{tip.description}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          );
+        }
 
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Guidebook tips</h2>
-        <div className="mt-2 space-y-2">
-          {portal.guidebook_tips.length > 0 ? (
-            portal.guidebook_tips.map((tip, idx) => (
-              <article
-                key={`${tip.tip_order}-${idx}`}
-                className="rounded-lg border border-slate-200 bg-slate-50 p-3"
-              >
-                <h3 className="text-sm font-semibold text-slate-800">
-                  {tip.label}
-                </h3>
-                <p className="mt-1 text-sm text-slate-700">{tip.description}</p>
-              </article>
-            ))
-          ) : (
-            <p className="text-sm text-slate-500">No tips provided.</p>
-          )}
-        </div>
-      </section>
+        if (sectionKey === 'host') {
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <h2 className="text-base font-semibold">Host contact</h2>
+              {hasText(portal.host_name) ? (
+                <p className="mt-2 text-sm text-slate-700">{portal.host_name}</p>
+              ) : null}
+              {hasText(portal.host_whatsapp_number) ? (
+                <Link
+                  href={toWhatsappUrl(
+                    portal.host_whatsapp_number,
+                    portal.host_whatsapp_message
+                  )}
+                  target="_blank"
+                  className="mt-3 inline-flex rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Contact on WhatsApp
+                </Link>
+              ) : null}
+            </section>
+          );
+        }
 
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-base font-semibold">Host contact</h2>
-        <p className="mt-2 text-sm text-slate-700">{portal.host_name}</p>
-        <p className="mt-1 text-sm text-slate-600">
-          Typically responds {portal.host_response_time}
-        </p>
-        <Link
-          href={toWhatsappUrl(portal.host_whatsapp_number)}
-          target="_blank"
-          className="mt-3 inline-flex rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white"
-        >
-          Contact on WhatsApp
-        </Link>
-      </section>
+        if (sectionKey.startsWith('custom:')) {
+          const idx = Number(sectionKey.split(':')[1] ?? '-1');
+          const detail = customDetails.find((d) => d.detail_order === idx);
+          if (!detail) return null;
+          return (
+            <section
+              key={sectionKey}
+              className="mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              {hasText(detail.title) ? (
+                <h2 className="text-base font-semibold">{detail.title}</h2>
+              ) : null}
+              {hasText(detail.message) ? (
+                <p className="mt-2 text-sm text-slate-700">{detail.message}</p>
+              ) : null}
+            </section>
+          );
+        }
+
+        return null;
+      })}
 
       <p className="mt-6 pb-4 text-center text-xs text-slate-500">
         Powered by Stayvo

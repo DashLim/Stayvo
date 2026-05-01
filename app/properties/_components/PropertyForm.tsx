@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { BASE_SECTION_KEYS } from '@/lib/guest-layout';
 import type {
+  CustomDetailInput,
   HouseRuleInput,
   GuidebookTipInput,
   CheckInStepInput,
@@ -44,8 +46,11 @@ export default function PropertyForm({
       checkInInstructions: [],
       houseRules: [],
       guidebookTips: [],
+      customDetails: [],
+      guestSectionOrder: [...BASE_SECTION_KEYS],
       hostName: '',
       hostWhatsappNumber: '',
+      hostWhatsappMessage: '',
       isLive: false,
       ...(initialValues ?? {}),
     }),
@@ -84,10 +89,21 @@ export default function PropertyForm({
   const [guidebookTips, setGuidebookTips] = useState<GuidebookTipInput[]>(
     defaults.guidebookTips?.length ? (defaults.guidebookTips as any) : []
   );
+  const [customDetails, setCustomDetails] = useState<CustomDetailInput[]>(
+    defaults.customDetails?.length ? (defaults.customDetails as any) : []
+  );
+  const [guestSectionOrder] = useState<string[]>(
+    Array.isArray(defaults.guestSectionOrder)
+      ? (defaults.guestSectionOrder as string[])
+      : [...BASE_SECTION_KEYS]
+  );
 
   const [hostName, setHostName] = useState(ensureString(defaults.hostName));
   const [hostWhatsappNumber, setHostWhatsappNumber] = useState(
     ensureString(defaults.hostWhatsappNumber)
+  );
+  const [hostWhatsappMessage, setHostWhatsappMessage] = useState(
+    ensureString(defaults.hostWhatsappMessage)
   );
 
   const [isLive, setIsLive] = useState(Boolean(defaults.isLive));
@@ -116,8 +132,11 @@ export default function PropertyForm({
         checkInInstructions,
         houseRules,
         guidebookTips,
+        customDetails,
+        guestSectionOrder,
         hostName,
         hostWhatsappNumber,
+        hostWhatsappMessage,
         isLive,
       };
 
@@ -164,17 +183,25 @@ export default function PropertyForm({
           <h1 className="text-2xl font-semibold tracking-tight">
             {mode === 'create' ? 'Add property' : 'Edit property'}
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Phase 1: set up your guest portal details.
-          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push('/dashboard')}
-          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-        >
-          Cancel
-        </button>
+        <div className="flex gap-2">
+          {mode === 'edit' && propertyId ? (
+            <button
+              type="button"
+              onClick={() => router.push(`/properties/${propertyId}/preview`)}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Preview guest view
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard')}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-7">
@@ -196,6 +223,21 @@ export default function PropertyForm({
             <p className="mt-1 text-sm text-slate-600">
               What guests need before arrival.
             </p>
+          </div>
+
+          <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="text-sm font-semibold text-slate-800">Status</div>
+            <label className="inline-flex items-center gap-3">
+              <span className="text-sm font-semibold text-slate-700">
+                {isLive ? 'Live' : 'Draft'}
+              </span>
+              <input
+                type="checkbox"
+                checked={isLive}
+                onChange={(e) => setIsLive(e.target.checked)}
+                className="h-5 w-5 accent-brand"
+              />
+            </label>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -296,27 +338,6 @@ export default function PropertyForm({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div>
-              <div className="text-sm font-semibold text-slate-800">
-                Portal status
-              </div>
-              <div className="text-xs text-slate-600">
-                Live portals show as Live in your dashboard.
-              </div>
-            </div>
-            <label className="inline-flex items-center gap-3">
-              <span className="text-sm font-semibold text-slate-700">
-                {isLive ? 'Live' : 'Draft'}
-              </span>
-              <input
-                type="checkbox"
-                checked={isLive}
-                onChange={(e) => setIsLive(e.target.checked)}
-                className="h-5 w-5 accent-brand"
-              />
-            </label>
-          </div>
         </section>
 
         {/* Check-in steps */}
@@ -344,17 +365,34 @@ export default function PropertyForm({
                   <div className="text-xs font-semibold text-slate-500">
                     Step {idx + 1}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCheckInInstructions((prev) =>
-                        prev.filter((_, i) => i !== idx)
-                      )
-                    }
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(s.isDisplayed)}
+                        onChange={(e) =>
+                          setCheckInInstructions((prev) =>
+                            prev.map((it, i) =>
+                              i === idx ? { ...it, isDisplayed: e.target.checked } : it
+                            )
+                          )
+                        }
+                        className="h-4 w-4 accent-brand"
+                      />
+                      Display
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCheckInInstructions((prev) =>
+                          prev.filter((_, i) => i !== idx)
+                        )
+                      }
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
                 <textarea
                   required={idx === 0}
@@ -380,7 +418,7 @@ export default function PropertyForm({
               onClick={() =>
                 setCheckInInstructions((prev) => [
                   ...prev,
-                  { instruction: '' },
+                  { instruction: '', isDisplayed: true },
                 ])
               }
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -415,17 +453,34 @@ export default function PropertyForm({
                   <div className="text-xs font-semibold text-slate-500">
                     Rule {idx + 1}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setHouseRules((prev) =>
-                        prev.filter((_, i) => i !== idx)
-                      )
-                    }
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(r.isDisplayed)}
+                        onChange={(e) =>
+                          setHouseRules((prev) =>
+                            prev.map((it, i) =>
+                              i === idx ? { ...it, isDisplayed: e.target.checked } : it
+                            )
+                          )
+                        }
+                        className="h-4 w-4 accent-brand"
+                      />
+                      Display
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setHouseRules((prev) =>
+                          prev.filter((_, i) => i !== idx)
+                        )
+                      }
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
                 <input
                   value={r.ruleText}
@@ -447,7 +502,7 @@ export default function PropertyForm({
             <button
               type="button"
               onClick={() =>
-                setHouseRules((prev) => [...prev, { ruleText: '' }])
+                setHouseRules((prev) => [...prev, { ruleText: '', isDisplayed: true }])
               }
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
@@ -552,6 +607,110 @@ export default function PropertyForm({
           </div>
         </section>
 
+        {/* Custom details */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold">Extra details</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Add custom info boxes shown in guest preview.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {customDetails.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600">
+                No extra detail boxes yet.
+              </div>
+            ) : null}
+
+            {customDetails.map((d, idx) => (
+              <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold text-slate-500">
+                    Detail box {idx + 1}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(d.isDisplayed)}
+                        onChange={(e) =>
+                          setCustomDetails((prev) =>
+                            prev.map((it, i) =>
+                              i === idx ? { ...it, isDisplayed: e.target.checked } : it
+                            )
+                          )
+                        }
+                        className="h-4 w-4 accent-brand"
+                      />
+                      Display
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCustomDetails((prev) => prev.filter((_, i) => i !== idx))
+                      }
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600">
+                      Title
+                    </label>
+                    <input
+                      value={d.title}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCustomDetails((prev) =>
+                          prev.map((it, i) => (i === idx ? { ...it, title: v } : it))
+                        );
+                      }}
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600">
+                      Message
+                    </label>
+                    <input
+                      value={d.message}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCustomDetails((prev) =>
+                          prev.map((it, i) =>
+                            i === idx ? { ...it, message: v } : it
+                          )
+                        );
+                      }}
+                      className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() =>
+                setCustomDetails((prev) => [
+                  ...prev,
+                  { title: '', message: '', isDisplayed: true },
+                ])
+              }
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              + Add details
+            </button>
+          </div>
+        </section>
+
         {/* Host Info */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="mb-4">
@@ -581,6 +740,17 @@ export default function PropertyForm({
                 onChange={(e) => setHostWhatsappNumber(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
                 placeholder="+1 555 123 4567"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-sm font-medium text-slate-700">
+                Pre-fileld message (optional)
+              </label>
+              <textarea
+                rows={3}
+                value={hostWhatsappMessage}
+                onChange={(e) => setHostWhatsappMessage(e.target.value)}
+                className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
           </div>
@@ -615,9 +785,6 @@ export default function PropertyForm({
                 ? 'Create property'
                 : 'Save changes'}
           </button>
-          <p className="text-xs text-slate-500">
-            Your guest portal will use this content in Phase 2.
-          </p>
         </div>
       </form>
     </main>
