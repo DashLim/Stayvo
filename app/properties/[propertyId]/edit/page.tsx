@@ -37,7 +37,7 @@ export default async function EditPropertyPage({
   ] = await Promise.all([
     supabase
       .from('property_check_in_steps')
-      .select('instruction, step_order, is_displayed')
+      .select('instruction, step_order, is_displayed, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('step_order', { ascending: true }),
     supabase
@@ -47,12 +47,12 @@ export default async function EditPropertyPage({
       .order('rule_order', { ascending: true }),
     supabase
       .from('property_guidebook_tips')
-      .select('label, description, tip_order')
+      .select('label, description, tip_order, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('tip_order', { ascending: true }),
     supabase
       .from('property_custom_details')
-      .select('title, message, detail_order, is_displayed')
+      .select('title, message, detail_order, is_displayed, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('detail_order', { ascending: true }),
   ]);
@@ -79,6 +79,7 @@ export default async function EditPropertyPage({
         checkInInstructions: (steps ?? []).map((s) => ({
           instruction: s.instruction ?? '',
           isDisplayed: s.is_displayed ?? true,
+          guestImagePath: s.guest_image_path ?? '',
         })),
         houseRules: (rules ?? []).map((r) => ({
           ruleText: r.rule_text ?? '',
@@ -87,11 +88,13 @@ export default async function EditPropertyPage({
         guidebookTips: (tips ?? []).map((t) => ({
           label: t.label ?? '',
           description: t.description ?? '',
+          guestImagePath: t.guest_image_path ?? '',
         })),
         customDetails: (customDetails ?? []).map((d) => ({
           title: d.title ?? '',
           message: d.message ?? '',
           isDisplayed: d.is_displayed ?? true,
+          guestImagePath: d.guest_image_path ?? '',
         })),
         guestSectionOrder: parseGuestSectionOrderFromDb(
           property.guest_section_order

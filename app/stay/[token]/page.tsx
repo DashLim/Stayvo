@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import GuestSectionMedia from '@/app/_components/GuestSectionMedia';
 import { createSupabasePublicClient } from '@/lib/supabase/public';
 import CopyTextButton from '@/app/stay/[token]/CopyTextButton';
 import { normalizeSectionOrder, type CustomDetail } from '@/lib/guest-layout';
@@ -23,18 +24,28 @@ type PortalPayload = {
   expires_at: string | null;
   is_permanent?: boolean | null;
   guest_section_order?: string[] | null;
-  check_in_steps: Array<{ instruction: string; step_order: number; is_displayed: boolean }>;
+  check_in_steps: Array<{
+    instruction: string;
+    step_order: number;
+    is_displayed: boolean;
+    guest_image_path?: string | null;
+    drive_media_url?: string | null;
+  }>;
   house_rules: Array<{ rule_text: string; rule_order: number; is_displayed: boolean }>;
   guidebook_tips: Array<{
     label: string;
     description: string;
     tip_order: number;
+    guest_image_path?: string | null;
+    drive_media_url?: string | null;
   }>;
   custom_details: Array<{
     detail_order: number;
     title: string;
     message: string;
     is_displayed: boolean;
+    guest_image_path?: string | null;
+    drive_media_url?: string | null;
   }>;
 };
 
@@ -117,7 +128,14 @@ export default async function StayPage({
 
   const customDetails = ((portal.custom_details ?? []) as Array<
     CustomDetail & { is_displayed: boolean }
-  >).filter((d) => d.is_displayed && (hasText(d.title) || hasText(d.message)));
+  >).filter(
+    (d) =>
+      d.is_displayed &&
+      (hasText(d.title) ||
+        hasText(d.message) ||
+        hasText(d.guest_image_path) ||
+        hasText(d.drive_media_url))
+  );
 
   const visibleSectionFlags = new Map<string, boolean>([
     [
@@ -129,10 +147,28 @@ export default async function StayPage({
         hasText(portal.waze_url),
     ],
     ['parking', hasText(portal.parking_details)],
-    ['checkin', portal.check_in_steps.some((s) => s.is_displayed)],
+    [
+      'checkin',
+      portal.check_in_steps.some(
+        (s) =>
+          s.is_displayed &&
+          (hasText(s.instruction) ||
+            hasText(s.guest_image_path) ||
+            hasText(s.drive_media_url))
+      ),
+    ],
     ['wifi', hasText(portal.wifi_network_name) || hasText(portal.wifi_password)],
     ['rules', portal.house_rules.some((r) => r.is_displayed)],
-    ['guidebook', portal.guidebook_tips.length > 0],
+    [
+      'guidebook',
+      portal.guidebook_tips.some(
+        (t) =>
+          hasText(t.label) ||
+          hasText(t.description) ||
+          hasText(t.guest_image_path) ||
+          hasText(t.drive_media_url)
+      ),
+    ],
     ['host', hasText(portal.host_name) || hasText(portal.host_whatsapp_number)],
   ]);
   for (const d of customDetails) {
@@ -235,13 +271,32 @@ export default async function StayPage({
               <h2 className="text-base font-semibold">Check-in guide</h2>
               <ol className="mt-2 space-y-2">
                 {portal.check_in_steps
-                  .filter((s) => s.is_displayed)
+                  .filter(
+                    (s) =>
+                      s.is_displayed &&
+                      (hasText(s.instruction) ||
+                        hasText(s.guest_image_path) ||
+                        hasText(s.drive_media_url))
+                  )
                   .map((s, idx) => (
-                  <li key={`${s.step_order}-${idx}`} className="flex gap-2">
-                    <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-                      {idx + 1}
-                    </span>
-                    <span className="text-sm text-slate-700">{s.instruction}</span>
+                  <li
+                    key={`${s.step_order}-${idx}`}
+                    className="flex flex-col gap-2 border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                  >
+                    <div className="flex gap-2">
+                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        {hasText(s.instruction) ? (
+                          <span className="text-sm text-slate-700">{s.instruction}</span>
+                        ) : null}
+                        <GuestSectionMedia
+                          guestImagePath={s.guest_image_path}
+                          driveMediaUrl={s.drive_media_url}
+                        />
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -302,13 +357,29 @@ export default async function StayPage({
             >
               <h2 className="text-base font-semibold">Guidebook tips</h2>
               <div className="mt-2 space-y-2">
-                {portal.guidebook_tips.map((tip, idx) => (
+                {portal.guidebook_tips
+                  .filter(
+                    (tip) =>
+                      hasText(tip.label) ||
+                      hasText(tip.description) ||
+                      hasText(tip.guest_image_path) ||
+                      hasText(tip.drive_media_url)
+                  )
+                  .map((tip, idx) => (
                   <article
                     key={`${tip.tip_order}-${idx}`}
                     className="rounded-lg border border-slate-200 bg-slate-50 p-3"
                   >
-                    <h3 className="text-sm font-semibold text-slate-800">{tip.label}</h3>
-                    <p className="mt-1 text-sm text-slate-700">{tip.description}</p>
+                    {hasText(tip.label) ? (
+                      <h3 className="text-sm font-semibold text-slate-800">{tip.label}</h3>
+                    ) : null}
+                    {hasText(tip.description) ? (
+                      <p className="mt-1 text-sm text-slate-700">{tip.description}</p>
+                    ) : null}
+                    <GuestSectionMedia
+                      guestImagePath={tip.guest_image_path}
+                      driveMediaUrl={tip.drive_media_url}
+                    />
                   </article>
                 ))}
               </div>
@@ -357,6 +428,10 @@ export default async function StayPage({
               {hasText(detail.message) ? (
                 <p className="mt-2 text-sm text-slate-700">{detail.message}</p>
               ) : null}
+              <GuestSectionMedia
+                guestImagePath={detail.guest_image_path}
+                driveMediaUrl={detail.drive_media_url}
+              />
             </section>
           );
         }

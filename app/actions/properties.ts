@@ -1,17 +1,21 @@
 'use server';
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { deleteGuestMediaFolderForProperty } from '@/app/actions/guest-property-media';
+import { GUEST_PROPERTY_MEDIA_BUCKET } from '@/lib/guest-property-media';
 import { BASE_SECTION_KEYS } from '@/lib/guest-layout';
 
 export type CustomDetailInput = {
   title: string;
   message: string;
   isDisplayed: boolean;
+  guestImagePath?: string;
 };
 
 export type CheckInStepInput = {
   instruction: string;
   isDisplayed: boolean;
+  guestImagePath?: string;
 };
 
 export type HouseRuleInput = {
@@ -22,6 +26,7 @@ export type HouseRuleInput = {
 export type GuidebookTipInput = {
   label: string;
   description: string;
+  guestImagePath?: string;
 };
 
 export type PropertyFormInput = {
@@ -75,8 +80,14 @@ function normalizeCustomDetails(input: CustomDetailInput[] | null | undefined) {
       title: normalizeString(d.title),
       message: normalizeString(d.message),
       isDisplayed: Boolean(d.isDisplayed),
+      guestImagePath: normalizeString(d.guestImagePath) || null,
     }))
-    .filter((d) => d.title.length > 0 || d.message.length > 0);
+    .filter(
+      (d) =>
+        d.title.length > 0 ||
+        d.message.length > 0 ||
+        Boolean(d.guestImagePath && d.guestImagePath.length > 0)
+    );
 }
 
 export async function createProperty(input: PropertyFormInput) {
@@ -150,13 +161,20 @@ export async function createProperty(input: PropertyFormInput) {
     .map((s) => ({
       instruction: normalizeString(s.instruction),
       isDisplayed: Boolean(s.isDisplayed),
+      guestImagePath: normalizeString(s.guestImagePath) || null,
     }))
-    .filter((s) => s.instruction.length > 0)
+    .filter(
+      (s) =>
+        s.instruction.length > 0 ||
+        Boolean(s.guestImagePath && s.guestImagePath.length > 0)
+    )
     .map((s, idx) => ({
       property_id: propertyId,
       step_order: idx,
       instruction: s.instruction,
       is_displayed: s.isDisplayed,
+      guest_image_path: s.guestImagePath,
+      drive_media_url: null,
     }));
 
   const houseRules = input.houseRules
@@ -176,13 +194,21 @@ export async function createProperty(input: PropertyFormInput) {
     .map((t) => ({
       label: normalizeString(t.label),
       description: normalizeString(t.description),
+      guestImagePath: normalizeString(t.guestImagePath) || null,
     }))
-    .filter((t) => t.label.length > 0 || t.description.length > 0)
+    .filter(
+      (t) =>
+        t.label.length > 0 ||
+        t.description.length > 0 ||
+        Boolean(t.guestImagePath && t.guestImagePath.length > 0)
+    )
     .map((tip, idx) => ({
       property_id: propertyId,
       tip_order: idx,
       label: tip.label || 'Tip',
       description: tip.description || '',
+      guest_image_path: tip.guestImagePath,
+      drive_media_url: null,
     }));
 
   const customDetailsRows = customDetails.map((detail, idx) => ({
@@ -191,6 +217,8 @@ export async function createProperty(input: PropertyFormInput) {
     title: detail.title || 'Detail',
     message: detail.message || '',
     is_displayed: Boolean(detail.isDisplayed),
+    guest_image_path: detail.guestImagePath,
+    drive_media_url: null,
   }));
 
   if (checkInInstructions.length > 0) {
@@ -300,6 +328,35 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     return { ok: false as const, error: updateError.message };
   }
 
+  const [
+    { data: prevSteps },
+    { data: prevTips },
+    { data: prevDetails },
+  ] = await Promise.all([
+    supabase
+      .from('property_check_in_steps')
+      .select('guest_image_path')
+      .eq('property_id', propertyId),
+    supabase
+      .from('property_guidebook_tips')
+      .select('guest_image_path')
+      .eq('property_id', propertyId),
+    supabase
+      .from('property_custom_details')
+      .select('guest_image_path')
+      .eq('property_id', propertyId),
+  ]);
+
+  const previousImagePaths = new Set<string>();
+  for (const row of [
+    ...(prevSteps ?? []),
+    ...(prevTips ?? []),
+    ...(prevDetails ?? []),
+  ]) {
+    const p = row.guest_image_path?.trim();
+    if (p) previousImagePaths.add(p);
+  }
+
   await supabase.from('property_check_in_steps').delete().eq('property_id', propertyId);
   await supabase.from('property_house_rules').delete().eq('property_id', propertyId);
   await supabase.from('property_guidebook_tips').delete().eq('property_id', propertyId);
@@ -309,13 +366,20 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     .map((s) => ({
       instruction: normalizeString(s.instruction),
       isDisplayed: Boolean(s.isDisplayed),
+      guestImagePath: normalizeString(s.guestImagePath) || null,
     }))
-    .filter((s) => s.instruction.length > 0)
+    .filter(
+      (s) =>
+        s.instruction.length > 0 ||
+        Boolean(s.guestImagePath && s.guestImagePath.length > 0)
+    )
     .map((s, idx) => ({
       property_id: propertyId,
       step_order: idx,
       instruction: s.instruction,
       is_displayed: s.isDisplayed,
+      guest_image_path: s.guestImagePath,
+      drive_media_url: null,
     }));
 
   const houseRules = input.houseRules
@@ -335,13 +399,21 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     .map((t) => ({
       label: normalizeString(t.label),
       description: normalizeString(t.description),
+      guestImagePath: normalizeString(t.guestImagePath) || null,
     }))
-    .filter((t) => t.label.length > 0 || t.description.length > 0)
+    .filter(
+      (t) =>
+        t.label.length > 0 ||
+        t.description.length > 0 ||
+        Boolean(t.guestImagePath && t.guestImagePath.length > 0)
+    )
     .map((tip, idx) => ({
       property_id: propertyId,
       tip_order: idx,
       label: tip.label || 'Tip',
       description: tip.description || '',
+      guest_image_path: tip.guestImagePath,
+      drive_media_url: null,
     }));
 
   const customDetailsRows = customDetails.map((detail, idx) => ({
@@ -350,6 +422,8 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     title: detail.title || 'Detail',
     message: detail.message || '',
     is_displayed: Boolean(detail.isDisplayed),
+    guest_image_path: detail.guestImagePath,
+    drive_media_url: null,
   }));
 
   if (checkInInstructions.length > 0) {
@@ -376,6 +450,25 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
       .from('property_custom_details')
       .insert(customDetailsRows);
     if (error) return { ok: false as const, error: error.message };
+  }
+
+  const nextImagePaths = new Set<string>();
+  for (const row of checkInInstructions) {
+    const p = row.guest_image_path?.trim();
+    if (p) nextImagePaths.add(p);
+  }
+  for (const row of guidebookTips) {
+    const p = row.guest_image_path?.trim();
+    if (p) nextImagePaths.add(p);
+  }
+  for (const row of customDetailsRows) {
+    const p = row.guest_image_path?.trim();
+    if (p) nextImagePaths.add(p);
+  }
+
+  const removedPaths = [...previousImagePaths].filter((p) => !nextImagePaths.has(p));
+  if (removedPaths.length > 0) {
+    await supabase.storage.from(GUEST_PROPERTY_MEDIA_BUCKET).remove(removedPaths);
   }
 
   return { ok: true as const };
@@ -433,6 +526,8 @@ export async function deleteProperty(propertyId: string) {
   if (userError || !user) {
     return { ok: false as const, error: 'Unauthorized' };
   }
+
+  await deleteGuestMediaFolderForProperty(propertyId, user.id);
 
   const { error } = await supabase
     .from('properties')

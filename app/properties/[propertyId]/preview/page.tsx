@@ -39,7 +39,7 @@ export default async function PropertyPreviewPage({
   ] = await Promise.all([
     supabase
       .from('property_check_in_steps')
-      .select('instruction, step_order, is_displayed')
+      .select('instruction, step_order, is_displayed, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('step_order', { ascending: true }),
     supabase
@@ -49,12 +49,12 @@ export default async function PropertyPreviewPage({
       .order('rule_order', { ascending: true }),
     supabase
       .from('property_guidebook_tips')
-      .select('label, description, tip_order')
+      .select('label, description, tip_order, drive_media_url')
       .eq('property_id', propertyId)
       .order('tip_order', { ascending: true }),
     supabase
       .from('property_custom_details')
-      .select('detail_order, title, message, is_displayed')
+      .select('detail_order, title, message, is_displayed, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('detail_order', { ascending: true }),
   ]);
@@ -62,6 +62,8 @@ export default async function PropertyPreviewPage({
   if (stepsError || rulesError || tipsError || customDetailsError) {
     redirect('/dashboard');
   }
+
+  type MediaRow = { guest_image_path?: string | null; drive_media_url?: string | null };
 
   return (
     <PreviewClient
@@ -78,27 +80,42 @@ export default async function PropertyPreviewPage({
       hostName={property.host_name ?? ''}
       hostWhatsappNumber={property.host_whatsapp_number ?? ''}
       hostWhatsappMessage={property.host_whatsapp_message ?? null}
-      checkInSteps={(steps ?? []).map((s) => ({
-        instruction: s.instruction ?? '',
-        step_order: s.step_order ?? 0,
-        is_displayed: s.is_displayed ?? true,
-      }))}
+      checkInSteps={(steps ?? []).map((s) => {
+        const row = s as typeof s & MediaRow;
+        return {
+          instruction: row.instruction ?? '',
+          step_order: row.step_order ?? 0,
+          is_displayed: row.is_displayed ?? true,
+          guest_image_path: row.guest_image_path ?? null,
+          drive_media_url: row.drive_media_url ?? null,
+        };
+      })}
       houseRules={(rules ?? []).map((r) => ({
         rule_text: r.rule_text ?? '',
         rule_order: r.rule_order ?? 0,
         is_displayed: r.is_displayed ?? true,
       }))}
-      guidebookTips={(tips ?? []).map((t) => ({
-        label: t.label ?? '',
-        description: t.description ?? '',
-        tip_order: t.tip_order ?? 0,
-      }))}
-      customDetails={(customDetails ?? []).map((d) => ({
-        detail_order: d.detail_order ?? 0,
-        title: d.title ?? '',
-        message: d.message ?? '',
-        is_displayed: d.is_displayed ?? true,
-      }))}
+      guidebookTips={(tips ?? []).map((t) => {
+        const row = t as typeof t & MediaRow;
+        return {
+          label: row.label ?? '',
+          description: row.description ?? '',
+          tip_order: row.tip_order ?? 0,
+          guest_image_path: row.guest_image_path ?? null,
+          drive_media_url: row.drive_media_url ?? null,
+        };
+      })}
+      customDetails={(customDetails ?? []).map((d) => {
+        const row = d as typeof d & MediaRow;
+        return {
+          detail_order: row.detail_order ?? 0,
+          title: row.title ?? '',
+          message: row.message ?? '',
+          is_displayed: row.is_displayed ?? true,
+          guest_image_path: row.guest_image_path ?? null,
+          drive_media_url: row.drive_media_url ?? null,
+        };
+      })}
       guestSectionOrder={
         parseGuestSectionOrderFromDb(property.guest_section_order) ?? []
       }

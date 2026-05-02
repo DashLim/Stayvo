@@ -14,6 +14,8 @@ export type CustomDetail = {
   detail_order: number;
   title: string;
   message: string;
+  guest_image_path?: string | null;
+  drive_media_url?: string | null;
 };
 
 function normalizeKey(value: string | null | undefined) {

@@ -15,6 +15,7 @@ import {
   deleteProperty,
   updateProperty,
 } from '@/app/actions/properties';
+import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 
 type PropertyFormProps = {
   mode: 'create' | 'edit';
@@ -140,14 +141,17 @@ export default function PropertyForm({
         isLive,
       };
 
-      const res =
-        mode === 'create'
-          ? await createProperty(input)
-          : await updateProperty(propertyId!, input);
+      if (mode === 'create') {
+        const res = await createProperty(input);
+        if (!res.ok) throw new Error(res.error);
+        setSuccess('Property created!');
+        router.push(`/properties/${res.propertyId}/edit`);
+        return;
+      }
 
+      const res = await updateProperty(propertyId!, input);
       if (!res.ok) throw new Error(res.error);
-
-      setSuccess(mode === 'create' ? 'Property created!' : 'Saved!');
+      setSuccess('Saved!');
       router.push('/dashboard');
     } catch (err: any) {
       setError(err?.message ?? 'Unable to save property.');
@@ -395,7 +399,6 @@ export default function PropertyForm({
                   </div>
                 </div>
                 <textarea
-                  required={idx === 0}
                   rows={3}
                   value={s.instruction}
                   onChange={(e) => {
@@ -406,7 +409,20 @@ export default function PropertyForm({
                       )
                     );
                   }}
+                  placeholder="Step instructions (optional if you only add media)"
                   className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                />
+                <GuestImageSlot
+                  propertyId={propertyId}
+                  slot={`checkin:${idx}`}
+                  value={s.guestImagePath ?? ''}
+                  onChange={(v) =>
+                    setCheckInInstructions((prev) =>
+                      prev.map((it, i) =>
+                        i === idx ? { ...it, guestImagePath: v } : it
+                      )
+                    )
+                  }
                 />
               </div>
             ))}
@@ -418,7 +434,7 @@ export default function PropertyForm({
               onClick={() =>
                 setCheckInInstructions((prev) => [
                   ...prev,
-                  { instruction: '', isDisplayed: true },
+                  { instruction: '', isDisplayed: true, guestImagePath: '' },
                 ])
               }
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -587,6 +603,18 @@ export default function PropertyForm({
                     />
                   </div>
                 </div>
+                <GuestImageSlot
+                  propertyId={propertyId}
+                  slot={`tip:${idx}`}
+                  value={t.guestImagePath ?? ''}
+                  onChange={(v) =>
+                    setGuidebookTips((prev) =>
+                      prev.map((it, i) =>
+                        i === idx ? { ...it, guestImagePath: v } : it
+                      )
+                    )
+                  }
+                />
               </div>
             ))}
           </div>
@@ -597,7 +625,7 @@ export default function PropertyForm({
               onClick={() =>
                 setGuidebookTips((prev) => [
                   ...prev,
-                  { label: '', description: '' },
+                  { label: '', description: '', guestImagePath: '' },
                 ])
               }
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
@@ -691,6 +719,18 @@ export default function PropertyForm({
                     />
                   </div>
                 </div>
+                <GuestImageSlot
+                  propertyId={propertyId}
+                  slot={`detail:${idx}`}
+                  value={d.guestImagePath ?? ''}
+                  onChange={(v) =>
+                    setCustomDetails((prev) =>
+                      prev.map((it, i) =>
+                        i === idx ? { ...it, guestImagePath: v } : it
+                      )
+                    )
+                  }
+                />
               </div>
             ))}
           </div>
@@ -701,7 +741,7 @@ export default function PropertyForm({
               onClick={() =>
                 setCustomDetails((prev) => [
                   ...prev,
-                  { title: '', message: '', isDisplayed: true },
+                  { title: '', message: '', isDisplayed: true, guestImagePath: '' },
                 ])
               }
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
