@@ -79,7 +79,6 @@ export async function generateGuestLink(input: {
   }
 
   if (!propertyId) return { ok: false as const, error: 'Property is required.' };
-  if (!guestName) return { ok: false as const, error: 'Guest name is required.' };
   if (!isPermanent && !checkoutDate) {
     return { ok: false as const, error: 'Checkout date is required.' };
   }
@@ -105,7 +104,7 @@ export async function generateGuestLink(input: {
 
     const { error: insertError } = await supabase.from('guest_links').insert({
       property_id: propertyId,
-      guest_name: guestName,
+      guest_name: guestName || null,
       checkout_date: checkoutDb,
       expires_at: expiresAt,
       token,

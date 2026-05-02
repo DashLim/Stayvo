@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ComponentProps } from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -9,10 +10,15 @@ import {
   generateGuestLink,
 } from '@/app/actions/guest-links';
 
+function displayGuestName(name: string | null | undefined) {
+  const t = (name ?? '').trim();
+  return t.length > 0 ? t : '—';
+}
+
 type GuestLinkItem = {
   id: string;
   property_id: string;
-  guest_name: string;
+  guest_name: string | null;
   checkout_date: string | null;
   expires_at: string | null;
   token: string;
@@ -30,6 +36,29 @@ type PropertyCardProps = {
   links: GuestLinkItem[];
   nowIso: string;
 };
+
+/** Native date inputs have a large intrinsic min-width on mobile WebKit; clip inside this shell. */
+function DateField({
+  className = '',
+  ...props
+}: Omit<ComponentProps<'input'>, 'type'>) {
+  const disabled = props.disabled;
+  return (
+    <div
+      className={`w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-brand/30 ${
+        disabled ? 'cursor-not-allowed bg-slate-100' : 'bg-white'
+      } ${className}`}
+    >
+      <input
+        type="date"
+        {...props}
+        className={`block w-full min-w-0 max-w-full bg-transparent py-0.5 text-sm text-slate-900 outline-none [color-scheme:light] ${
+          disabled ? 'cursor-not-allowed text-slate-400' : ''
+        }`}
+      />
+    </div>
+  );
+}
 
 function formatDate(dateValue: string | null) {
   if (!dateValue) return '—';
@@ -285,7 +314,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
       {showGenerate ? (
         <form
           onSubmit={onGenerate}
-          className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"
+          className="mt-4 overflow-x-hidden rounded-xl border border-slate-200 bg-slate-50 p-3"
         >
           <div className="text-sm font-semibold text-slate-800">
             Generate guest link
@@ -311,30 +340,34 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
               </span>
             </label>
           </div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="min-w-0">
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="min-w-0 max-w-full">
               <label className="text-xs font-semibold text-slate-600">
-                Guest name
+                Guest name <span className="font-normal text-slate-400">(optional)</span>
               </label>
               <input
-                required
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
+                placeholder="Leave blank for generic welcome"
                 className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 max-w-full">
               <label className="text-xs font-semibold text-slate-600">
                 Checkout date
               </label>
-              <input
+              <DateField
                 required={!isPermanent}
                 disabled={isPermanent}
-                type="date"
                 value={checkoutDate}
                 onChange={(e) => setCheckoutDate(e.target.value)}
-                className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                className="mt-1"
               />
+              {!isPermanent ? (
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Link expires 2 days after checkout (end of day).
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="mt-3">
@@ -439,7 +472,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                     className="rounded-xl border border-slate-200 bg-white p-3"
                   >
                     <div className="text-sm font-semibold text-slate-800">
-                      {l.guest_name}
+                      {displayGuestName(l.guest_name)}
                     </div>
                     <div className="mt-1 text-xs text-slate-600">
                       {l.is_permanent === true ? (
@@ -494,12 +527,11 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                         <label className="text-xs font-semibold text-slate-600">
                           New checkout date
                         </label>
-                        <input
+                        <DateField
                           required
-                          type="date"
                           value={extendDate}
                           onChange={(e) => setExtendDate(e.target.value)}
-                          className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                          className="mt-1"
                         />
                         <div className="mt-2 flex items-center gap-2">
                           <button
@@ -546,7 +578,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="text-sm font-semibold text-slate-800">
-                            {l.guest_name}
+                            {displayGuestName(l.guest_name)}
                           </div>
                           <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
                             Expired
@@ -599,12 +631,11 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                             <label className="text-xs font-semibold text-slate-600">
                               New checkout date
                             </label>
-                            <input
+                            <DateField
                               required
-                              type="date"
                               value={extendDate}
                               onChange={(e) => setExtendDate(e.target.value)}
-                              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                              className="mt-1"
                             />
                             <div className="mt-2 flex items-center gap-2">
                               <button

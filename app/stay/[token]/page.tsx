@@ -18,7 +18,7 @@ type PortalPayload = {
   host_whatsapp_number: string;
   host_whatsapp_message: string | null;
   host_response_time: string;
-  guest_name: string;
+  guest_name: string | null;
   checkout_date: string | null;
   expires_at: string | null;
   is_permanent?: boolean | null;
@@ -87,6 +87,7 @@ export default async function StayPage({
   }
 
   const portal = data[0] as PortalPayload;
+  const guestFirstName = (portal.guest_name ?? '').trim();
   const expired =
     portal.is_permanent !== true &&
     portal.expires_at != null &&
@@ -148,7 +149,13 @@ export default async function StayPage({
       <section className="rounded-2xl bg-brand p-5 text-white shadow-sm">
         <h1 className="text-2xl font-semibold">{portal.property_name}</h1>
         <p className="mt-1 text-sm text-white/90">
-          Welcome {portal.guest_name}! Everything you need for your stay is here.
+          {guestFirstName ? (
+            <>
+              Welcome {guestFirstName}! Everything you need for your stay is here.
+            </>
+          ) : (
+            <>Welcome! Everything you need for your stay is here.</>
+          )}
         </p>
       </section>
 
