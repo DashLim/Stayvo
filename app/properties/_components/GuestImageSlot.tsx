@@ -28,18 +28,27 @@ async function compressForGuestUpload(file: File): Promise<File> {
     fileType: 'image/webp' as const,
   };
 
+  let compressed: File;
   try {
     const out = await imageCompression(file, options);
-    return out instanceof File ? out : new File([out], 'photo.webp', { type: 'image/webp' });
+    compressed =
+      out instanceof File ? out : new File([out], 'photo.webp', { type: 'image/webp' });
   } catch {
     const fallback = await imageCompression(file, {
       ...options,
       fileType: 'image/jpeg' as const,
     });
-    return fallback instanceof File
-      ? fallback
-      : new File([fallback], 'photo.jpg', { type: 'image/jpeg' });
+    compressed =
+      fallback instanceof File
+        ? fallback
+        : new File([fallback], 'photo.jpg', { type: 'image/jpeg' });
   }
+
+  // Phone/camera JPEGs are often pre-optimized; re-encoding to WebP/JPEG can *increase* size.
+  if (compressed.size < file.size) {
+    return compressed;
+  }
+  return file;
 }
 
 export default function GuestImageSlot({
