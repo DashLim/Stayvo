@@ -1,6 +1,6 @@
 'use client';
 
-import { removeGuestPropertyMedia, uploadGuestImageDeduped } from '@/app/actions/guest-property-media';
+import { removeGuestPropertyMedia, uploadGuestPropertyMedia } from '@/app/actions/guest-property-media';
 import {
   GUEST_IMAGE_MAX_BYTES,
   guestPropertyMediaPublicUrl,
@@ -27,10 +27,12 @@ async function compressForGuestUpload(file: File): Promise<File> {
 
 export default function GuestImageSlot({
   propertyId,
+  slot = 'detail:0',
   value,
   onChange,
 }: {
   propertyId: string | undefined;
+  slot?: string;
   value: string;
   onChange: (nextPath: string) => void;
 }) {
@@ -59,7 +61,10 @@ export default function GuestImageSlot({
       setPhase('upload');
       const fd = new FormData();
       fd.set('file', compressed);
-      const res = await uploadGuestImageDeduped(fd);
+      if (!propertyId) {
+        throw new Error('Please save property first, then upload image.');
+      }
+      const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
       if (!res.ok) throw new Error(res.error);
       onChange(res.path);
     } catch (err: unknown) {
