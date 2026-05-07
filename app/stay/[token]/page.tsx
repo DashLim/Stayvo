@@ -224,6 +224,16 @@ export default async function StayPage({
   const hasWifiSection = visibleSectionFlags.get('wifi') === true;
   const hasRulesSection = visibleSectionFlags.get('rules') === true;
   const callHref = toTelHref(portal.host_whatsapp_number);
+  const quickNavItems: Array<{
+    key: 'checkin' | 'parking' | 'wifi' | 'rules' | 'call';
+    targetId: 'checkin-section' | 'parking-section' | 'wifi-section' | 'rules-section' | 'host-section';
+  }> = [];
+
+  if (hasCheckinSection) quickNavItems.push({ key: 'checkin', targetId: 'checkin-section' });
+  if (hasParkingSection) quickNavItems.push({ key: 'parking', targetId: 'parking-section' });
+  if (hasWifiSection) quickNavItems.push({ key: 'wifi', targetId: 'wifi-section' });
+  if (hasRulesSection) quickNavItems.push({ key: 'rules', targetId: 'rules-section' });
+  if (callHref) quickNavItems.push({ key: 'call', targetId: 'host-section' });
 
   return (
     <main className="relative left-1/2 right-1/2 min-h-screen w-screen -translate-x-1/2 overflow-x-hidden">
@@ -286,13 +296,7 @@ export default async function StayPage({
       </section>
 
       <GuestSectionQuickNav
-        items={[
-          ...(hasCheckinSection ? [{ key: 'checkin', targetId: 'checkin-section' as const }] : []),
-          ...(hasParkingSection ? [{ key: 'parking', targetId: 'parking-section' as const }] : []),
-          ...(hasWifiSection ? [{ key: 'wifi', targetId: 'wifi-section' as const }] : []),
-          ...(hasRulesSection ? [{ key: 'rules', targetId: 'rules-section' as const }] : []),
-          ...(callHref ? [{ key: 'call', targetId: 'host-section' as const }] : []),
-        ]}
+        items={quickNavItems}
         callHref={callHref}
       />
 
