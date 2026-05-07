@@ -18,14 +18,22 @@ export default async function EditPropertyPage({
 
   if (userError || !user) redirect('/login?redirect=/dashboard');
 
-  const { data: property, error: propertyError } = await supabase
-    .from('properties')
-    .select(
-      'id, property_name, internal_name, full_address, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, is_live, host_name, host_whatsapp_number, host_whatsapp_message, guest_section_order'
-    )
-    .eq('id', propertyId)
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const [{ data: property, error: propertyError }, { data: locations }] =
+    await Promise.all([
+      supabase
+        .from('properties')
+        .select(
+          'id, property_name, internal_name, full_address, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, is_live, host_name, host_whatsapp_number, host_whatsapp_message, guest_section_order, location_id, hero_image_path, social_facebook_url, social_instagram_url, social_x_url, social_tiktok_url, social_youtube_url, social_airbnb_url'
+        )
+        .eq('id', propertyId)
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('locations')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('sort_order', { ascending: true }),
+    ]);
 
   if (propertyError || !property) redirect('/dashboard');
 
@@ -33,6 +41,7 @@ export default async function EditPropertyPage({
     { data: steps, error: stepsError },
     { data: rules, error: rulesError },
     { data: tips, error: tipsError },
+    { data: faqs, error: faqsError },
     { data: customDetails, error: customDetailsError },
   ] = await Promise.all([
     supabase
@@ -51,20 +60,27 @@ export default async function EditPropertyPage({
       .eq('property_id', propertyId)
       .order('tip_order', { ascending: true }),
     supabase
+      .from('property_faqs')
+      .select('question, answer, faq_order')
+      .eq('property_id', propertyId)
+      .order('faq_order', { ascending: true }),
+    supabase
       .from('property_custom_details')
       .select('title, message, detail_order, is_displayed, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('detail_order', { ascending: true }),
   ]);
 
-  if (stepsError || rulesError || tipsError || customDetailsError) redirect('/dashboard');
+  if (stepsError || rulesError || tipsError || faqsError || customDetailsError) redirect('/dashboard');
 
   return (
     <PropertyForm
       mode="edit"
       propertyId={propertyId}
+      locations={locations ?? []}
       initialValues={{
         isLive: Boolean(property.is_live),
+        locationId: property.location_id ?? '',
         propertyName: property.property_name ?? '',
         internalName: property.internal_name ?? '',
         fullAddress: property.full_address ?? '',
@@ -90,6 +106,10 @@ export default async function EditPropertyPage({
           description: t.description ?? '',
           guestImagePath: t.guest_image_path ?? '',
         })),
+        faqs: (faqs ?? []).map((f) => ({
+          question: f.question ?? '',
+          answer: f.answer ?? '',
+        })),
         customDetails: (customDetails ?? []).map((d) => ({
           title: d.title ?? '',
           message: d.message ?? '',
@@ -99,6 +119,13 @@ export default async function EditPropertyPage({
         guestSectionOrder: parseGuestSectionOrderFromDb(
           property.guest_section_order
         ),
+        heroImagePath: property.hero_image_path ?? '',
+        socialFacebookUrl: property.social_facebook_url ?? '',
+        socialInstagramUrl: property.social_instagram_url ?? '',
+        socialXUrl: property.social_x_url ?? '',
+        socialTiktokUrl: property.social_tiktok_url ?? '',
+        socialYoutubeUrl: property.social_youtube_url ?? '',
+        socialAirbnbUrl: property.social_airbnb_url ?? '',
       }}
     />
   );
