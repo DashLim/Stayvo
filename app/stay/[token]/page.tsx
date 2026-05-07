@@ -3,6 +3,7 @@ import GuestSectionMedia from '@/app/_components/GuestSectionMedia';
 import GuestSocialLinks from '@/app/_components/GuestSocialLinks';
 import FaqAccordion from '@/app/_components/FaqAccordion';
 import StayOpenTracker from '@/app/stay/[token]/StayOpenTracker';
+import GuestSectionQuickNav from '@/app/stay/[token]/GuestSectionQuickNav';
 import { createSupabasePublicClient } from '@/lib/supabase/public';
 import CopyTextButton from '@/app/stay/[token]/CopyTextButton';
 import { normalizeSectionOrder, type CustomDetail } from '@/lib/guest-layout';
@@ -90,6 +91,14 @@ function toWhatsappUrl(phone: string, prefilled: string | null) {
 
 function hasText(value: string | null | undefined) {
   return (value ?? '').trim().length > 0;
+}
+
+function toTelHref(phone: string | null | undefined) {
+  const raw = (phone ?? '').trim();
+  if (!raw) return null;
+  const cleaned = raw.replace(/[^\d+]/g, '');
+  const normalized = cleaned.startsWith('00') ? `+${cleaned.slice(2)}` : cleaned;
+  return normalized.length > 0 ? `tel:${normalized}` : null;
 }
 
 function SectionHeading({ icon, label }: { icon: ReactNode; label: string }) {
@@ -210,6 +219,11 @@ export default async function StayPage({
   ).filter((key) => visibleSectionFlags.get(key) === true);
 
   const heroImageUrl = guestPropertyMediaPublicUrl(portal.hero_image_path);
+  const hasCheckinSection = visibleSectionFlags.get('checkin') === true;
+  const hasParkingSection = visibleSectionFlags.get('parking') === true;
+  const hasWifiSection = visibleSectionFlags.get('wifi') === true;
+  const hasRulesSection = visibleSectionFlags.get('rules') === true;
+  const callHref = toTelHref(portal.host_whatsapp_number);
 
   return (
     <main className="relative left-1/2 right-1/2 min-h-screen w-screen -translate-x-1/2 overflow-x-hidden">
@@ -271,13 +285,23 @@ export default async function StayPage({
         </div>
       </section>
 
+      <GuestSectionQuickNav
+        items={[
+          ...(hasCheckinSection ? [{ key: 'checkin', targetId: 'checkin-section' as const }] : []),
+          ...(hasParkingSection ? [{ key: 'parking', targetId: 'parking-section' as const }] : []),
+          ...(hasWifiSection ? [{ key: 'wifi', targetId: 'wifi-section' as const }] : []),
+          ...(hasRulesSection ? [{ key: 'rules', targetId: 'rules-section' as const }] : []),
+          ...(callHref ? [{ key: 'call', targetId: 'host-section' as const }] : []),
+        ]}
+        callHref={callHref}
+      />
+
       {/* ── Content card slides over hero ────────────────────────────── */}
       <div
         className="relative left-1/2 right-1/2 z-10 -mt-10 w-screen -translate-x-1/2 rounded-t-[32px]"
         style={{ background: 'linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%)' }}
       >
         <div className="pt-6 pb-12 space-y-3">
-
           {orderedSections.map((sectionKey) => {
 
             /* ── Address ──────────────────────────────────────────── */
@@ -337,7 +361,7 @@ export default async function StayPage({
             /* ── Parking ──────────────────────────────────────────── */
             if (sectionKey === 'parking') {
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section id="parking-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                   <SectionHeading
                     label="Parking"
                     icon={
@@ -361,7 +385,7 @@ export default async function StayPage({
                     hasText(s.drive_media_url))
               );
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+                <section id="checkin-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white shadow-sm">
                   <div className="px-4 pt-4 pb-3">
                     <SectionHeading
                       label="Check-in guide"
@@ -378,7 +402,7 @@ export default async function StayPage({
                       return (
                         <li key={`${s.step_order}-${idx}`}>
                           {/* Step row */}
-                          <div className="flex items-start gap-3 px-4 py-2">
+                          <div className="flex items-start gap-3 px-4 pb-1 pt-3">
                             <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">
                               {idx + 1}
                             </span>
@@ -388,7 +412,7 @@ export default async function StayPage({
                           </div>
                           {/* Full-width photo below the step text */}
                           {hasPhoto ? (
-                            <div className="mt-1 px-4 pb-2">
+                            <div className="mt-0.5 px-4 pb-3">
                               <GuestSectionMedia
                                 guestImagePath={s.guest_image_path}
                                 driveMediaUrl={s.drive_media_url}
@@ -410,7 +434,7 @@ export default async function StayPage({
             /* ── Wi-Fi ────────────────────────────────────────────── */
             if (sectionKey === 'wifi') {
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section id="wifi-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                   <SectionHeading
                     label="Wi-Fi"
                     icon={
@@ -448,7 +472,7 @@ export default async function StayPage({
             /* ── House rules ──────────────────────────────────────── */
             if (sectionKey === 'rules') {
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section id="rules-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                   <SectionHeading
                     label="House rules"
                     icon={
@@ -535,7 +559,7 @@ export default async function StayPage({
             /* ── Host contact ─────────────────────────────────────── */
             if (sectionKey === 'host') {
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section id="host-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
                   <SectionHeading
                     label="Your host"
                     icon={

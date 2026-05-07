@@ -42,6 +42,9 @@ type PropRow = {
 };
 type Group = { location: LocRow; properties: PropRow[] };
 
+const trelloPressFx =
+  'transition duration-150 active:scale-[0.97] active:translate-y-[1px] active:brightness-95';
+
 function DragHandle({
   listeners,
   attributes,
@@ -57,7 +60,7 @@ function DragHandle({
       type="button"
       {...attributes}
       {...listeners}
-      className="touch-none select-none rounded-full glass p-2 text-slate-400 transition hover:text-brand"
+      className={`touch-none select-none rounded-full glass p-2 text-slate-400 transition hover:text-brand ${trelloPressFx}`}
       aria-label="Drag to reorder"
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
@@ -125,7 +128,7 @@ function SortablePropertyRow({
           <Link
             href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
             prefetch={false}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-600 backdrop-blur-sm transition hover:text-slate-900"
+            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-600 backdrop-blur-sm transition hover:text-slate-900 ${trelloPressFx}`}
             title="Edit property"
             aria-label="Edit property"
           >
@@ -153,7 +156,7 @@ function SortablePropertyRow({
               type="button"
               disabled={pending}
               onClick={() => onToggleLive(p.id, !p.is_live)}
-              className={`relative inline-flex h-7 w-[3.25rem] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${p.is_live ? 'bg-brand' : 'bg-slate-300'}`}
+              className={`relative inline-flex h-7 w-[3.25rem] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${p.is_live ? 'bg-brand' : 'bg-slate-300'} ${trelloPressFx}`}
               aria-label={p.is_live ? 'Set to draft' : 'Set to live'}
               title={p.is_live ? 'Live — tap to draft' : 'Draft — tap to go live'}
             >
@@ -166,7 +169,7 @@ function SortablePropertyRow({
               type="button"
               disabled={pending}
               onClick={() => onDeleteProperty(p.id, p.property_name || 'Untitled')}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 ${trelloPressFx}`}
               aria-label="Delete property"
               title="Delete property"
             >
@@ -262,7 +265,7 @@ function SortableLocationCard({
             <Link
               href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
               prefetch={false}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90"
+              className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 ${trelloPressFx}`}
               aria-label={`Add property under ${loc.name}`}
               title={`Add property under ${loc.name}`}
             >
@@ -281,7 +284,7 @@ function SortableLocationCard({
               type="button"
               disabled={pending}
               onClick={() => onDeleteLocation(loc.id, loc.name, properties.length)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50"
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 ${trelloPressFx}`}
               aria-label="Delete location"
               title={
                 properties.length > 0
@@ -512,7 +515,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <button
             type="button"
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${trelloPressFx}`}
             aria-label="Cancel"
             onClick={() => setAddLocOpen(false)}
           />
@@ -531,7 +534,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
               <button
                 type="button"
                 onClick={() => setAddLocOpen(false)}
-                className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700"
+                className={`rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 ${trelloPressFx}`}
               >
                 Cancel
               </button>
@@ -539,7 +542,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 type="button"
                 disabled={!newLocName.trim()}
                 onClick={() => void submitNewLocation()}
-                className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50 hover:opacity-90"
+                className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50 hover:opacity-90 ${trelloPressFx}`}
               >
                 Add
               </button>
