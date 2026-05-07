@@ -3,7 +3,6 @@ import GuestSectionMedia from '@/app/_components/GuestSectionMedia';
 import GuestSocialLinks from '@/app/_components/GuestSocialLinks';
 import FaqAccordion from '@/app/_components/FaqAccordion';
 import StayOpenTracker from '@/app/stay/[token]/StayOpenTracker';
-import HeroScrollFade from '@/app/stay/[token]/HeroScrollFade';
 import { createSupabasePublicClient } from '@/lib/supabase/public';
 import CopyTextButton from '@/app/stay/[token]/CopyTextButton';
 import { normalizeSectionOrder, type CustomDetail } from '@/lib/guest-layout';
@@ -215,8 +214,6 @@ export default async function StayPage({
   return (
     <main className="min-h-screen overflow-x-hidden">
       <StayOpenTracker token={token} />
-      {/* Attaches scroll listener for hero parallax/fade – zero-height, no layout impact */}
-      <HeroScrollFade />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section
@@ -225,15 +222,12 @@ export default async function StayPage({
         {heroImageUrl ? (
           <>
             <img
-              id="hero-img"
               src={heroImageUrl}
               alt=""
               aria-hidden
-              className="absolute inset-0 h-[130%] w-full object-cover"
-              style={{ willChange: 'transform, opacity' }}
+              className="absolute inset-0 h-full w-full object-cover"
             />
             <div
-              id="hero-overlay"
               className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70"
             />
           </>
@@ -279,10 +273,10 @@ export default async function StayPage({
 
       {/* ── Content card slides over hero ────────────────────────────── */}
       <div
-        className="relative z-10 -mt-10 rounded-t-[32px]"
+        className="relative left-1/2 right-1/2 z-10 -mt-10 w-screen -translate-x-1/2 rounded-t-[32px]"
         style={{ background: 'linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%)' }}
       >
-        <div className="px-4 pt-6 pb-12 space-y-3 mx-auto max-w-lg">
+        <div className="pt-6 pb-12 space-y-3">
 
           {orderedSections.map((sectionKey) => {
 
@@ -403,7 +397,7 @@ export default async function StayPage({
                           ) : null}
                           {/* Divider (not last) */}
                           {idx !== visibleSteps.length - 1 ? (
-                            <div className="mx-4 border-b border-slate-100" />
+                            <div className="mx-4 border-b-2 border-slate-200" />
                           ) : null}
                         </li>
                       );
