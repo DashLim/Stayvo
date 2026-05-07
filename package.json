@@ -3,21 +3,29 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev": "next dev --webpack",
-    "dev:webpack": "next dev --webpack",
-    "dev:turbopack": "next dev --turbopack",
-    "dev:clean": "rm -rf .next && next dev --webpack",
+    "clean": "node -e \"const fs=require('fs');if(fs.existsSync('.next'))fs.rmSync('.next',{recursive:true,force:true})\"",
+    "dev": "next dev --webpack -H 0.0.0.0",
+    "dev:webpack": "next dev --webpack -H 0.0.0.0",
+    "dev:turbopack": "next dev --turbopack -H 0.0.0.0",
+    "dev:localhost": "next dev --webpack -H 127.0.0.1",
+    "dev:clean": "npm run clean && next dev --webpack -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1041.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@supabase/ssr": "0.10.2",
     "@supabase/supabase-js": "2.105.1",
     "browser-image-compression": "^2.0.2",
+    "framer-motion": "^12.38.0",
     "next": "16.2.4",
     "react": "19.2.5",
-    "react-dom": "19.2.5"
+    "react-dom": "19.2.5",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "25.6.0",
