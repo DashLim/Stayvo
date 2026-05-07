@@ -1,9 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  allowedDevOrigins: ['192.168.100.101'],
+  // LAN phones hit http://<your-ip>:3000; add your Mac's Wi‑Fi IP when it changes or login → dashboard will fail in dev.
+  allowedDevOrigins: ['192.168.100.101', '192.168.100.120'],
   // Turbopack defaults to on-disk SST cache in dev; on some setups this races/compacts badly (ENOENT .sst).
   experimental: {
+    serverActions: {
+      bodySizeLimit: '5mb',
+    },
     turbopackFileSystemCacheForDev: false,
   },
   // Next 16 defaults to Turbopack for `next build`; empty config acknowledges we also define webpack() for dev.

@@ -1,15 +1,270 @@
 'use server';
 
+import { createHash } from 'node:crypto';
+
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import {
+  r2DeleteGuestMedia,
+  r2DeleteKeysWithPrefix,
+  r2GuestMediaExists,
+  r2PutGuestMedia,
+  isGuestMediaR2Enabled,
+} from '@/lib/guest-media-r2';
 import {
   GUEST_PROPERTY_MEDIA_BUCKET,
   GUEST_IMAGE_MAX_BYTES,
 } from '@/lib/guest-property-media';
+import { DEDUP_SEGMENT, isSharedDedupStoragePath } from '@/lib/host-media-library';
 
-const IMAGE_PREFIX = /^image\//;
+/** iOS often omits `file.type` for camera-roll picks; infer from filename when needed. */
+function resolvedImageMime(file: File): string | null {
+  const t = (file.type || '').trim().toLowerCase();
+  if (t.startsWith('image/') && !t.startsWith('video/')) return t;
+  const n = (file.name || '').toLowerCase();
+  const extToMime: [string, string][] = [
+    ['.heic', 'image/heic'],
+    ['.heif', 'image/heif'],
+    ['.png', 'image/png'],
+    ['.gif', 'image/gif'],
+    ['.webp', 'image/webp'],
+    ['.jpg', 'image/jpeg'],
+    ['.jpeg', 'image/jpeg'],
+    ['.bmp', 'image/bmp'],
+  ];
+  for (const [ext, mime] of extToMime) {
+    if (n.endsWith(ext)) return mime;
+  }
+  return null;
+}
+
+function extFromImageMime(mime: string): string {
+  if (mime === 'image/png') return 'png';
+  if (mime === 'image/webp') return 'webp';
+  if (mime === 'image/gif') return 'gif';
+  if (mime === 'image/heic') return 'heic';
+  if (mime === 'image/heif') return 'heif';
+  if (mime === 'image/bmp') return 'bmp';
+  return 'jpg';
+}
+
+function warnIfR2PublicUrlMissing() {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    isGuestMediaR2Enabled() &&
+    !process.env.NEXT_PUBLIC_GUEST_MEDIA_URL?.trim()
+  ) {
+    console.warn(
+      '[Stayvo] R2 is configured but NEXT_PUBLIC_GUEST_MEDIA_URL is not set. ' +
+        'The app will still build Supabase public URLs in the browser while files are stored on R2, so images will 404. ' +
+        'Set NEXT_PUBLIC_GUEST_MEDIA_URL to your R2 public base URL (from the bucket, no trailing slash) and restart `npm run dev`.'
+    );
+  }
+}
 
 function validateSlot(slot: string) {
   return /^(checkin|tip|detail):\d+$/.test(slot);
+}
+
+function sha256Hex(buffer: Buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
+}
+
+async function uploadBufferToGuestMedia(
+  path: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (isGuestMediaR2Enabled()) {
+    return r2PutGuestMedia(path, buffer, contentType);
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.storage
+    .from(GUEST_PROPERTY_MEDIA_BUCKET)
+    .upload(path, buffer, {
+      cacheControl: '31536000',
+      upsert: false,
+      contentType,
+    });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+async function deleteGuestMediaObject(path: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (isGuestMediaR2Enabled()) {
+    return r2DeleteGuestMedia(path);
+  }
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.storage.from(GUEST_PROPERTY_MEDIA_BUCKET).remove([path]);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+async function guestMediaObjectExists(path: string): Promise<boolean> {
+  if (isGuestMediaR2Enabled()) {
+    return r2GuestMediaExists(path);
+  }
+  const supabase = await createSupabaseServerClient();
+  const slashIdx = path.lastIndexOf('/');
+  const prefix = slashIdx > -1 ? path.slice(0, slashIdx) : '';
+  const filename = slashIdx > -1 ? path.slice(slashIdx + 1) : path;
+  const { data, error } = await supabase.storage
+    .from(GUEST_PROPERTY_MEDIA_BUCKET)
+    .list(prefix, { limit: 100, search: filename });
+  if (error) return false;
+  return (data ?? []).some((item) => item.name === filename);
+}
+
+async function deleteGuestMediaFolderPrefix(userId: string, propertyId: string): Promise<void> {
+  const prefix = `${userId}/${propertyId}`;
+  if (isGuestMediaR2Enabled()) {
+    await r2DeleteKeysWithPrefix(prefix);
+    return;
+  }
+  const supabase = await createSupabaseServerClient();
+  const { data: items, error: listError } = await supabase.storage
+    .from(GUEST_PROPERTY_MEDIA_BUCKET)
+    .list(prefix, { limit: 1000 });
+
+  if (listError || !items?.length) {
+    return;
+  }
+
+  const paths = items.map((item) => `${prefix}/${item.name}`);
+  await supabase.storage.from(GUEST_PROPERTY_MEDIA_BUCKET).remove(paths);
+}
+
+/**
+ * Upload image for guest portal sections. Same file bytes as a prior upload reuse the
+ * existing storage path (no duplicate object). Catalog row in host_media_assets keyed by
+ * (user_id, content_sha256).
+ */
+export async function uploadGuestImageDeduped(formData: FormData) {
+  warnIfR2PublicUrlMissing();
+  // #region agent log
+  fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H4',location:'guest-property-media.ts:uploadGuestImageDeduped',message:'Server action entered uploadGuestImageDeduped',data:{hasFile:formData.get('file') instanceof File},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return { ok: false as const, error: 'Unauthorized' };
+  }
+
+  const file = formData.get('file');
+  if (!(file instanceof File)) {
+    return { ok: false as const, error: 'No file uploaded.' };
+  }
+  // #region agent log
+  fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H5',location:'guest-property-media.ts:uploadGuestImageDeduped',message:'Server action received file metadata',data:{fileSize:file.size,maxBytes:GUEST_IMAGE_MAX_BYTES},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+
+  if (file.size > GUEST_IMAGE_MAX_BYTES) {
+    return { ok: false as const, error: 'Image must be 5 MB or smaller.' };
+  }
+
+  const mime = resolvedImageMime(file);
+  if (!mime) {
+    return { ok: false as const, error: 'Only image files are allowed (no video).' };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const hash = sha256Hex(buffer);
+
+  const { data: existing } = await supabase
+    .from('host_media_assets')
+    .select('storage_path')
+    .eq('user_id', user.id)
+    .eq('content_sha256', hash)
+    .maybeSingle();
+
+  if (existing?.storage_path) {
+    const exists = await guestMediaObjectExists(existing.storage_path);
+    if (!exists) {
+      await supabase
+        .from('host_media_assets')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('content_sha256', hash);
+    } else {
+    return {
+      ok: true as const,
+      path: existing.storage_path as string,
+      reused: true as const,
+    };
+    }
+  }
+
+  const ext = extFromImageMime(mime);
+
+  const assetId = crypto.randomUUID();
+  const filename = `${hash}.${ext}`;
+  const path = `${user.id}/${DEDUP_SEGMENT}/${filename}`;
+
+  const { error: insertError } = await supabase.from('host_media_assets').insert({
+    id: assetId,
+    user_id: user.id,
+    storage_path: path,
+    filename,
+    mime_type: mime,
+    byte_size: buffer.length,
+    content_sha256: hash,
+  });
+
+  if (insertError) {
+    if ((insertError as { code?: string }).code === '23505') {
+      const { data: raceRow } = await supabase
+        .from('host_media_assets')
+        .select('storage_path')
+        .eq('user_id', user.id)
+        .eq('content_sha256', hash)
+        .maybeSingle();
+      if (raceRow?.storage_path) {
+        const exists = await guestMediaObjectExists(raceRow.storage_path);
+        if (!exists) {
+          await supabase
+            .from('host_media_assets')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('content_sha256', hash);
+        } else {
+        return {
+          ok: true as const,
+          path: raceRow.storage_path as string,
+          reused: true as const,
+        };
+        }
+      }
+    }
+    return { ok: false as const, error: insertError.message };
+  }
+
+  const upError = await uploadBufferToGuestMedia(path, buffer, mime);
+
+  if (!upError.ok) {
+    await supabase.from('host_media_assets').delete().eq('id', assetId).eq('user_id', user.id);
+    const msg = upError.error;
+    if (msg.includes('already exists') || msg.includes('Duplicate') || msg.includes('409')) {
+      const { data: raceRow } = await supabase
+        .from('host_media_assets')
+        .select('storage_path')
+        .eq('user_id', user.id)
+        .eq('content_sha256', hash)
+        .maybeSingle();
+      if (raceRow?.storage_path) {
+        return {
+          ok: true as const,
+          path: raceRow.storage_path as string,
+          reused: true as const,
+        };
+      }
+    }
+    return { ok: false as const, error: msg };
+  }
+
+  return { ok: true as const, path, reused: false as const };
 }
 
 /** Upload a compressed image from the host form. Path is `{userId}/{propertyId}/{slot}-{uuid}.ext`. */
@@ -18,6 +273,7 @@ export async function uploadGuestPropertyMedia(
   slot: string,
   formData: FormData
 ) {
+  warnIfR2PublicUrlMissing();
   if (!validateSlot(slot)) {
     return { ok: false as const, error: 'Invalid slot.' };
   }
@@ -49,38 +305,24 @@ export async function uploadGuestPropertyMedia(
   }
 
   if (file.size > GUEST_IMAGE_MAX_BYTES) {
-    return { ok: false as const, error: 'Image must be 2 MB or smaller.' };
+    return { ok: false as const, error: 'Image must be 5 MB or smaller.' };
   }
 
-  const mime = (file.type || '').toLowerCase();
-  if (!IMAGE_PREFIX.test(mime) || mime.startsWith('video/')) {
+  const mime = resolvedImageMime(file);
+  if (!mime) {
     return { ok: false as const, error: 'Only image files are allowed (no video).' };
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const ext =
-    mime === 'image/png'
-      ? 'png'
-      : mime === 'image/webp'
-        ? 'webp'
-        : mime === 'image/gif'
-          ? 'gif'
-          : 'jpg';
+  const ext = extFromImageMime(mime);
 
   const safeSlot = slot.replace(/:/g, '-');
   const filename = `${safeSlot}-${crypto.randomUUID()}.${ext}`;
   const path = `${user.id}/${propertyId}/${filename}`;
 
-  const { error: upError } = await supabase.storage
-    .from(GUEST_PROPERTY_MEDIA_BUCKET)
-    .upload(path, buffer, {
-      cacheControl: '31536000',
-      upsert: false,
-      contentType: mime || 'image/jpeg',
-    });
-
-  if (upError) {
-    return { ok: false as const, error: upError.message };
+  const upRes = await uploadBufferToGuestMedia(path, buffer, mime);
+  if (!upRes.ok) {
+    return { ok: false as const, error: upRes.error };
   }
 
   return { ok: true as const, path };
@@ -102,17 +344,21 @@ export async function removeGuestPropertyMedia(propertyId: string, storagePath: 
     return { ok: false as const, error: 'Unauthorized' };
   }
 
+  if (isSharedDedupStoragePath(user.id, trimmed)) {
+    if (!trimmed.startsWith(`${user.id}/`)) {
+      return { ok: false as const, error: 'Invalid path.' };
+    }
+    return { ok: true as const };
+  }
+
   const prefix = `${user.id}/${propertyId}/`;
   if (!trimmed.startsWith(prefix)) {
     return { ok: false as const, error: 'Invalid path.' };
   }
 
-  const { error } = await supabase.storage
-    .from(GUEST_PROPERTY_MEDIA_BUCKET)
-    .remove([trimmed]);
-
-  if (error) {
-    return { ok: false as const, error: error.message };
+  const del = await deleteGuestMediaObject(trimmed);
+  if (!del.ok) {
+    return { ok: false as const, error: del.error };
   }
 
   return { ok: true as const };
@@ -123,16 +369,5 @@ export async function deleteGuestMediaFolderForProperty(
   propertyId: string,
   userId: string
 ) {
-  const supabase = await createSupabaseServerClient();
-  const folder = `${userId}/${propertyId}`;
-  const { data: items, error: listError } = await supabase.storage
-    .from(GUEST_PROPERTY_MEDIA_BUCKET)
-    .list(folder, { limit: 1000 });
-
-  if (listError || !items?.length) {
-    return;
-  }
-
-  const paths = items.map((item) => `${folder}/${item.name}`);
-  await supabase.storage.from(GUEST_PROPERTY_MEDIA_BUCKET).remove(paths);
+  await deleteGuestMediaFolderPrefix(userId, propertyId);
 }

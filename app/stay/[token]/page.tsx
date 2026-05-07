@@ -212,7 +212,7 @@ export default async function StayPage({
   const heroImageUrl = guestPropertyMediaPublicUrl(portal.hero_image_path);
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="relative left-1/2 right-1/2 min-h-screen w-screen -translate-x-1/2 overflow-x-hidden">
       <StayOpenTracker token={token} />
 
       {/* ── Hero ─────────────────────────────────────────────────────── */}

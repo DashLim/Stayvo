@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import GuestSectionMedia from '@/app/_components/GuestSectionMedia';
-import { useMemo, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { updateGuestSectionOrder } from '@/app/actions/properties';
+import GuestSocialLinks from '@/app/_components/GuestSocialLinks';
+import { useMemo } from 'react';
+import CopyTextButton from '@/app/stay/[token]/CopyTextButton';
+import FaqAccordion from '@/app/_components/FaqAccordion';
 import { normalizeSectionOrder, type CustomDetail } from '@/lib/guest-layout';
+import { guestPropertyMediaPublicUrl } from '@/lib/guest-property-media';
 
 type PreviewClientProps = {
   propertyId: string;
@@ -36,8 +38,20 @@ type PreviewClientProps = {
     guest_image_path?: string | null;
     drive_media_url?: string | null;
   }>;
+  faqs: Array<{
+    question: string;
+    answer: string;
+    faq_order: number;
+  }>;
   customDetails: Array<CustomDetail & { is_displayed: boolean }>;
   guestSectionOrder: string[];
+  heroImagePath?: string | null;
+  socialFacebookUrl?: string | null;
+  socialInstagramUrl?: string | null;
+  socialXUrl?: string | null;
+  socialTiktokUrl?: string | null;
+  socialYoutubeUrl?: string | null;
+  socialAirbnbUrl?: string | null;
 };
 
 function toWhatsappUrl(phone: string, prefilled: string | null) {
@@ -53,11 +67,6 @@ function hasText(value: string | null | undefined) {
 }
 
 export default function PreviewClient(props: PreviewClientProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
   const visibleSections = useMemo(() => {
     const customMap = new Map<number, CustomDetail>();
     for (const detail of props.customDetails) {
@@ -85,6 +94,12 @@ export default function PreviewClient(props: PreviewClientProps) {
         ),
       ],
       ['wifi', hasText(props.wifiNetworkName) || hasText(props.wifiPassword)],
+      [
+        'faq',
+        props.faqs.some(
+          (f) => hasText(f.question) && hasText(f.answer)
+        ),
+      ],
       ['rules', props.houseRules.some((r) => r.is_displayed)],
       [
         'guidebook',
@@ -130,127 +145,53 @@ export default function PreviewClient(props: PreviewClientProps) {
       });
   }, [props]);
 
-  const [order, setOrder] = useState<string[]>(() => visibleSections.map((s) => s.key));
-
-  function moveItem(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= order.length) return;
-    setOrder((prev) => {
-      const next = [...prev];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-    setSuccess(null);
-    setError(null);
-  }
-
-  function onSaveOrder() {
-    setError(null);
-    setSuccess(null);
-    startTransition(async () => {
-      const result = await updateGuestSectionOrder({
-        propertyId: props.propertyId,
-        sectionOrder: order,
-      });
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setSuccess('Preview layout saved. Guest view now uses this order.');
-      router.refresh();
-    });
-  }
+  const order = visibleSections.map((s) => s.key);
 
   return (
-    <main className="mx-auto min-h-screen max-w-4xl px-4 py-6 sm:px-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold">Guest preview: {props.propertyName}</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Rearrange visible boxes. Empty sections are hidden automatically.
-          </p>
-        </div>
+    <main className="mx-auto min-h-screen max-w-md px-4 py-6 sm:px-6">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h1 className="text-base font-semibold text-slate-700">Guest preview</h1>
         <Link
           href={`/properties/${props.propertyId}/edit`}
           className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700"
         >
-          Back to edit property
+          ← Back
         </Link>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[320px,1fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-800">Visible boxes order</h2>
-          <p className="mt-1 text-xs text-slate-500">
-            Move up/down, then save. Hidden empty boxes are excluded.
-          </p>
-
-          <div className="mt-3 space-y-2">
-            {order.map((key, idx) => {
-              const section = visibleSections.find((s) => s.key === key);
-              const label = section?.label ?? key;
-              return (
-                <div
-                  key={key}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-2"
+      <div className="rounded-2xl bg-white shadow-sm">
+        {(() => {
+          const heroUrl = guestPropertyMediaPublicUrl(props.heroImagePath);
+          return (
+            <section
+              className={`relative overflow-hidden rounded-t-2xl ${heroUrl ? '' : 'bg-brand'}`}
+            >
+              {heroUrl ? (
+                <>
+                  <img src={heroUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
+                </>
+              ) : null}
+              <div className="relative px-5 py-6">
+                <h3
+                  className="text-xl font-semibold text-white"
+                  style={{ textShadow: heroUrl ? '0 2px 8px rgba(0,0,0,0.55)' : undefined }}
                 >
-                  <div className="text-sm font-medium text-slate-800">{label}</div>
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => moveItem(idx, -1)}
-                      disabled={idx === 0}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-40"
-                    >
-                      Up
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => moveItem(idx, 1)}
-                      disabled={idx === order.length - 1}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 disabled:opacity-40"
-                    >
-                      Down
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {error ? (
-            <p className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700">
-              {error}
-            </p>
-          ) : null}
-          {success ? (
-            <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700">
-              {success}
-            </p>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={onSaveOrder}
-            disabled={isPending}
-            className="mt-3 w-full rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {isPending ? 'Saving...' : 'Save order'}
-          </button>
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Mobile guest preview
-          </h2>
-          <div className="mx-auto max-w-md rounded-2xl bg-white p-4 shadow-sm">
-            <section className="rounded-2xl bg-brand p-5 text-white">
-              <h3 className="text-xl font-semibold">{props.propertyName}</h3>
-              <p className="mt-1 text-sm text-white/90">Everything guests need for their stay.</p>
+                  {props.propertyName}
+                </h3>
+                <p
+                  className="mt-1 text-sm text-white/90"
+                  style={{ textShadow: heroUrl ? '0 1px 6px rgba(0,0,0,0.5)' : undefined }}
+                >
+                  Everything guests need for their stay.
+                </p>
+              </div>
             </section>
+          );
+        })()}
 
-            <div className="mt-3 space-y-3">
-              {order.map((key) => {
+        <div className="space-y-3 p-4">
+          {order.map((key) => {
                 if (key === 'address') {
                   return (
                     <section key={key} className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -280,7 +221,7 @@ export default function PreviewClient(props: PreviewClientProps) {
                   return (
                     <section key={key} className="rounded-2xl border border-slate-200 bg-white p-4">
                       <h4 className="text-base font-semibold">Check-in guide</h4>
-                      <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+                      <ol className="mt-3 space-y-4">
                         {props.checkInSteps
                           .filter(
                             (step) =>
@@ -290,14 +231,34 @@ export default function PreviewClient(props: PreviewClientProps) {
                                 hasText(step.drive_media_url))
                           )
                           .map((step, idx) => (
-                          <li key={`${step.step_order}-${idx}`} className="space-y-2">
-                            {hasText(step.instruction) ? (
-                              <span>{step.instruction}</span>
-                            ) : null}
-                            <GuestSectionMedia
-                              guestImagePath={step.guest_image_path}
-                              driveMediaUrl={step.drive_media_url}
-                            />
+                          <li key={`${step.step_order}-${idx}`} className="flex gap-3">
+                            <div className="relative flex w-6 shrink-0 justify-center">
+                              <span className="z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+                                {idx + 1}
+                              </span>
+                              {idx !==
+                              props.checkInSteps.filter(
+                                (s) =>
+                                  s.is_displayed &&
+                                  (hasText(s.instruction) ||
+                                    hasText(s.guest_image_path) ||
+                                    hasText(s.drive_media_url))
+                              ).length -
+                                1 ? (
+                                <span className="absolute top-6 h-[calc(100%-0.25rem)] w-px bg-slate-200" />
+                              ) : null}
+                            </div>
+                            <div className="min-w-0 flex-1 pb-1">
+                              {hasText(step.instruction) ? (
+                                <p className="text-sm text-slate-700">{step.instruction}</p>
+                              ) : null}
+                              <div className="mt-2">
+                                <GuestSectionMedia
+                                  guestImagePath={step.guest_image_path}
+                                  driveMediaUrl={step.drive_media_url}
+                                />
+                              </div>
+                            </div>
                           </li>
                         ))}
                       </ol>
@@ -307,14 +268,40 @@ export default function PreviewClient(props: PreviewClientProps) {
 
                 if (key === 'wifi') {
                   return (
-                    <section key={key} className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <section key={key} className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
                       <h4 className="text-base font-semibold">Wifi</h4>
                       {hasText(props.wifiNetworkName) ? (
-                        <p className="mt-2 text-sm text-slate-700">Network: {props.wifiNetworkName}</p>
+                        <p className="mt-2 text-sm text-slate-700">Network</p>
+                      ) : null}
+                      {hasText(props.wifiNetworkName) ? (
+                        <p className="font-mono text-lg font-semibold text-slate-900">{props.wifiNetworkName}</p>
                       ) : null}
                       {hasText(props.wifiPassword) ? (
-                        <p className="mt-1 text-sm text-slate-700">Password: {props.wifiPassword}</p>
+                        <p className="mt-3 text-sm text-slate-700">Password</p>
                       ) : null}
+                      {hasText(props.wifiPassword) ? (
+                        <CopyTextButton
+                          text={props.wifiPassword || ''}
+                          idleLabel={props.wifiPassword || ''}
+                          copiedLabel="Copied!"
+                          className="mt-1 rounded-full border border-blue-300 bg-white px-4 py-2 font-mono text-lg font-semibold text-slate-900"
+                        />
+                      ) : null}
+                    </section>
+                  );
+                }
+
+                if (key === 'faq') {
+                  const faqs = props.faqs.filter(
+                    (f) => hasText(f.question) && hasText(f.answer)
+                  );
+                  return (
+                    <section key={key} className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <h4 className="text-base font-semibold">FAQ</h4>
+                      <FaqAccordion
+                        items={faqs.map((f) => ({ question: f.question, answer: f.answer }))}
+                        className="mt-3"
+                      />
                     </section>
                   );
                 }
@@ -419,9 +406,19 @@ export default function PreviewClient(props: PreviewClientProps) {
 
                 return null;
               })}
-            </div>
-          </div>
-        </section>
+        </div>
+
+        <GuestSocialLinks
+          className="mt-8"
+          links={{
+            facebook: props.socialFacebookUrl,
+            instagram: props.socialInstagramUrl,
+            x: props.socialXUrl,
+            tiktok: props.socialTiktokUrl,
+            youtube: props.socialYoutubeUrl,
+            airbnb: props.socialAirbnbUrl,
+          }}
+        />
       </div>
     </main>
   );

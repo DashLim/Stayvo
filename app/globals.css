@@ -12,7 +12,52 @@ body {
 }
 
 body {
-  background: #f8fafc;
+  /* Warm beige-to-light-amber gradient background */
+  background: linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%);
+  background-attachment: fixed;
   color: #0f172a;
 }
 
+/* Glassmorphism card utility */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .glass-dark {
+    background: rgba(28, 28, 30, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  }
+
+  .glass-header {
+    background: rgba(253, 246, 236, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(224, 162, 77, 0.15);
+  }
+}
+
+/* Global press scale */
+button,
+a[role="button"],
+[type="submit"],
+[type="button"],
+[type="reset"] {
+  transform-origin: center;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+button:active,
+a[role="button"]:active,
+[type="submit"]:active,
+[type="button"]:active,
+[type="reset"]:active {
+  transform: scale(0.96);
+}

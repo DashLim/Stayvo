@@ -3,6 +3,7 @@ export const BASE_SECTION_KEYS = [
   'parking',
   'checkin',
   'wifi',
+  'faq',
   'rules',
   'guidebook',
   'host',

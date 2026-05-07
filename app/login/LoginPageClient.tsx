@@ -11,6 +11,7 @@ export default function LoginPageClient() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/dashboard';
   const configError = searchParams.get('error') === 'config';
+  const accountDeleted = searchParams.get('deleted') === '1';
 
   const supabase = useMemo(() => tryCreateSupabaseBrowserClient(), []);
 
@@ -70,6 +71,12 @@ export default function LoginPageClient() {
           <div className="text-xl font-semibold tracking-tight">Stayvo</div>
           <div className="mt-1 text-sm text-slate-600">Host portal login</div>
         </div>
+
+        {accountDeleted ? (
+          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-800">
+            Your account was deleted. You can create a new one below if you need access again.
+          </div>
+        ) : null}
 
         {!supabase || configError ? (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">

@@ -29,6 +29,11 @@ export type GuidebookTipInput = {
   guestImagePath?: string;
 };
 
+export type FaqInput = {
+  question: string;
+  answer: string;
+};
+
 export type PropertyFormInput = {
   propertyName: string;
   internalName: string;
@@ -41,16 +46,75 @@ export type PropertyFormInput = {
   checkInInstructions: CheckInStepInput[];
   houseRules: HouseRuleInput[];
   guidebookTips: GuidebookTipInput[];
+  faqs: FaqInput[];
   customDetails: CustomDetailInput[];
   guestSectionOrder: string[];
   hostName: string;
   hostWhatsappNumber: string;
   hostWhatsappMessage: string;
   isLive: boolean;
+  locationId: string;
+  heroImagePath?: string;
+  socialFacebookUrl?: string;
+  socialInstagramUrl?: string;
+  socialXUrl?: string;
+  socialTiktokUrl?: string;
+  socialYoutubeUrl?: string;
+  socialAirbnbUrl?: string;
 };
 
 function normalizeString(value: string | null | undefined) {
   return (value ?? '').trim();
+}
+
+function parseHttpUrlForStorage(
+  raw: string | undefined | null,
+  fieldLabel: string
+): { ok: true; value: string | null } | { ok: false; error: string } {
+  const s = normalizeString(raw);
+  if (!s) return { ok: true, value: null };
+  try {
+    const withScheme = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+    const u = new URL(withScheme);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+      return {
+        ok: false,
+        error: `${fieldLabel} must use http or https.`,
+      };
+    }
+    return { ok: true, value: u.href };
+  } catch {
+    return {
+      ok: false,
+      error: `${fieldLabel} doesn’t look like a valid URL.`,
+    };
+  }
+}
+
+function parseSocialUrlsFromForm(input: PropertyFormInput) {
+  const fb = parseHttpUrlForStorage(input.socialFacebookUrl, 'Facebook');
+  if (!fb.ok) return fb;
+  const ig = parseHttpUrlForStorage(input.socialInstagramUrl, 'Instagram');
+  if (!ig.ok) return ig;
+  const x = parseHttpUrlForStorage(input.socialXUrl, 'X');
+  if (!x.ok) return x;
+  const tt = parseHttpUrlForStorage(input.socialTiktokUrl, 'TikTok');
+  if (!tt.ok) return tt;
+  const yt = parseHttpUrlForStorage(input.socialYoutubeUrl, 'YouTube');
+  if (!yt.ok) return yt;
+  const ab = parseHttpUrlForStorage(input.socialAirbnbUrl, 'Airbnb');
+  if (!ab.ok) return ab;
+  return {
+    ok: true as const,
+    urls: {
+      social_facebook_url: fb.value,
+      social_instagram_url: ig.value,
+      social_x_url: x.value,
+      social_tiktok_url: tt.value,
+      social_youtube_url: yt.value,
+      social_airbnb_url: ab.value,
+    },
+  };
 }
 
 function normalizeSectionOrder(order: string[] | null | undefined, customCount: number) {
@@ -72,6 +136,20 @@ function normalizeSectionOrder(order: string[] | null | undefined, customCount: 
   }
 
   return result;
+}
+
+async function nextPropertySortOrderForLocation(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  locationId: string
+) {
+  const { data: maxRow } = await supabase
+    .from('properties')
+    .select('sort_order')
+    .eq('location_id', locationId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (maxRow?.sort_order ?? -1) + 1;
 }
 
 function normalizeCustomDetails(input: CustomDetailInput[] | null | undefined) {
@@ -108,6 +186,29 @@ export async function createProperty(input: PropertyFormInput) {
     customDetails.length
   );
 
+  const locationId = normalizeString(input.locationId);
+  if (!locationId) {
+    return { ok: false as const, error: 'Location is required.' };
+  }
+
+  const { data: locRow, error: locErr } = await supabase
+    .from('locations')
+    .select('id')
+    .eq('id', locationId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (locErr || !locRow) {
+    return { ok: false as const, error: 'Choose a valid location.' };
+  }
+
+  const sortOrder = await nextPropertySortOrderForLocation(supabase, locationId);
+
+  const socialParsed = parseSocialUrlsFromForm(input);
+  if (!socialParsed.ok) {
+    return { ok: false as const, error: socialParsed.error };
+  }
+
   const payload = {
     user_id: user.id,
     property_name: normalizeString(input.propertyName),
@@ -126,13 +227,14 @@ export async function createProperty(input: PropertyFormInput) {
     host_response_time: '',
     is_live: input.isLive,
     guest_section_order: sectionOrder,
+    location_id: locationId,
+    sort_order: sortOrder,
+    hero_image_path: normalizeString(input.heroImagePath) || null,
+    ...socialParsed.urls,
   };
 
   const requiredFields: Array<[keyof typeof payload, string]> = [
     ['property_name', 'Property name is required.'],
-    ['full_address', 'Full address is required.'],
-    ['host_name', 'Host name is required.'],
-    ['host_whatsapp_number', 'Host WhatsApp number is required.'],
   ];
 
   for (const [field, message] of requiredFields) {
@@ -211,6 +313,19 @@ export async function createProperty(input: PropertyFormInput) {
       drive_media_url: null,
     }));
 
+  const faqs = input.faqs
+    .map((f) => ({
+      question: normalizeString(f.question),
+      answer: normalizeString(f.answer),
+    }))
+    .filter((f) => f.question.length > 0 || f.answer.length > 0)
+    .map((f, idx) => ({
+      property_id: propertyId,
+      faq_order: idx,
+      question: f.question,
+      answer: f.answer,
+    }));
+
   const customDetailsRows = customDetails.map((detail, idx) => ({
     property_id: propertyId,
     detail_order: idx,
@@ -237,6 +352,11 @@ export async function createProperty(input: PropertyFormInput) {
     const { error } = await supabase
       .from('property_guidebook_tips')
       .insert(guidebookTips);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  if (faqs.length > 0) {
+    const { error } = await supabase.from('property_faqs').insert(faqs);
     if (error) return { ok: false as const, error: error.message };
   }
 
@@ -267,7 +387,7 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     error: existingError,
   } = await supabase
     .from('properties')
-    .select('id')
+    .select('id, location_id, sort_order')
     .eq('id', propertyId)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -284,6 +404,32 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     input.guestSectionOrder,
     customDetails.length
   );
+
+  const newLocationId = normalizeString(input.locationId);
+  if (!newLocationId) {
+    return { ok: false as const, error: 'Location is required.' };
+  }
+
+  const { data: locRow, error: locErr } = await supabase
+    .from('locations')
+    .select('id')
+    .eq('id', newLocationId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (locErr || !locRow) {
+    return { ok: false as const, error: 'Choose a valid location.' };
+  }
+
+  let sortOrder = existing.sort_order ?? 0;
+  if (newLocationId !== existing.location_id) {
+    sortOrder = await nextPropertySortOrderForLocation(supabase, newLocationId);
+  }
+
+  const socialParsed = parseSocialUrlsFromForm(input);
+  if (!socialParsed.ok) {
+    return { ok: false as const, error: socialParsed.error };
+  }
 
   const payload = {
     property_name: normalizeString(input.propertyName),
@@ -302,13 +448,14 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     host_response_time: '',
     is_live: input.isLive,
     guest_section_order: sectionOrder,
+    location_id: newLocationId,
+    sort_order: sortOrder,
+    hero_image_path: normalizeString(input.heroImagePath) || null,
+    ...socialParsed.urls,
   };
 
   const requiredFields: Array<[keyof typeof payload, string]> = [
     ['property_name', 'Property name is required.'],
-    ['full_address', 'Full address is required.'],
-    ['host_name', 'Host name is required.'],
-    ['host_whatsapp_number', 'Host WhatsApp number is required.'],
   ];
 
   for (const [field, message] of requiredFields) {
@@ -360,6 +507,7 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
   await supabase.from('property_check_in_steps').delete().eq('property_id', propertyId);
   await supabase.from('property_house_rules').delete().eq('property_id', propertyId);
   await supabase.from('property_guidebook_tips').delete().eq('property_id', propertyId);
+  await supabase.from('property_faqs').delete().eq('property_id', propertyId);
   await supabase.from('property_custom_details').delete().eq('property_id', propertyId);
 
   const checkInInstructions = input.checkInInstructions
@@ -416,6 +564,19 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
       drive_media_url: null,
     }));
 
+  const faqs = input.faqs
+    .map((f) => ({
+      question: normalizeString(f.question),
+      answer: normalizeString(f.answer),
+    }))
+    .filter((f) => f.question.length > 0 || f.answer.length > 0)
+    .map((f, idx) => ({
+      property_id: propertyId,
+      faq_order: idx,
+      question: f.question,
+      answer: f.answer,
+    }));
+
   const customDetailsRows = customDetails.map((detail, idx) => ({
     property_id: propertyId,
     detail_order: idx,
@@ -442,6 +603,11 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     const { error } = await supabase
       .from('property_guidebook_tips')
       .insert(guidebookTips);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  if (faqs.length > 0) {
+    const { error } = await supabase.from('property_faqs').insert(faqs);
     if (error) return { ok: false as const, error: error.message };
   }
 

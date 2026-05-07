@@ -1,46 +1,36 @@
 import { redirect } from 'next/navigation';
-import DashboardClient from '@/app/dashboard/DashboardClient';
+import { getGuestLinkOpenStatsForLinkIds } from '@/app/actions/guest-link-open-stats';
+import TrackGuestLinksClient from '@/app/dashboard/track/TrackGuestLinksClient';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-export default async function DashboardPage() {
-  const nowIso = new Date().toISOString();
+export default async function DashboardTrackPage() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) redirect('/login?redirect=/dashboard');
+  if (userError || !user) redirect('/login?redirect=/dashboard/track');
 
-  const [
-    { data: locations, error: locationsError },
-    { data: properties, error: propertiesError },
-    { count: totalPropertyCount },
-  ] = await Promise.all([
-    supabase
-      .from('locations')
-      .select('id, name, sort_order')
-      .eq('user_id', user.id)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('properties')
-      .select('id, property_name, internal_name, is_live, location_id, sort_order')
-      .eq('user_id', user.id)
-      .eq('is_live', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id),
-  ]);
+  const [{ data: locations, error: locationsError }, { data: properties, error: propertiesError }] =
+    await Promise.all([
+      supabase
+        .from('locations')
+        .select('id, name, sort_order')
+        .eq('user_id', user.id)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('properties')
+        .select('id, property_name, internal_name, is_live, location_id, sort_order')
+        .eq('user_id', user.id)
+        .eq('is_live', true)
+        .order('sort_order', { ascending: true }),
+    ]);
 
   if (locationsError || propertiesError) {
     return (
       <main className="py-10">
-        <h1 className="text-lg font-semibold">Dashboard</h1>
-        <p className="mt-2 text-sm text-rose-700">
-          Unable to load your properties.
-        </p>
+        <p className="mt-2 text-sm text-rose-700">Unable to load data.</p>
       </main>
     );
   }
@@ -60,19 +50,12 @@ export default async function DashboardPage() {
   }
 
   const sections = locList.map((loc) => ({
-    locationId: loc.id as string,
     locationName: (loc.name as string) ?? 'Location',
     properties: (byLocation.get(loc.id as string) ?? []).map((p) => ({
       id: p.id as string,
       property_name: (p.property_name as string) ?? '',
       internal_name: p.internal_name as string | null,
-      is_live: Boolean(p.is_live),
     })),
-  }));
-
-  const locationOptions = locList.map((l) => ({
-    id: l.id as string,
-    name: (l.name as string) ?? 'Location',
   }));
 
   const propertyIds = propList.map((p) => p.id as string);
@@ -87,16 +70,21 @@ export default async function DashboardPage() {
           .in('property_id', propertyIds)
           .order('created_at', { ascending: false });
 
+  const linkIds = (guestLinks ?? []).map((l) => l.id as string);
+  const openStatsByLinkId =
+    linkIds.length > 0 ? await getGuestLinkOpenStatsForLinkIds(linkIds) : {};
+
   return (
     <main className="py-10">
-      <DashboardClient
-        userId={user.id}
-        nowIso={nowIso}
+      <p className="mt-1 text-sm text-slate-600">
+        See whether guest links were opened and approx. how many devices loaded the portal.
+      </p>
+
+      <TrackGuestLinksClient
         sections={sections}
-        locationOptions={locationOptions}
         guestLinks={guestLinks ?? []}
         guestLinksError={Boolean(guestLinksError)}
-        hasAnyProperty={(totalPropertyCount ?? 0) > 0}
+        openStatsByLinkId={openStatsByLinkId}
       />
     </main>
   );

@@ -23,7 +23,7 @@ export default async function PropertyPreviewPage({
   const { data: property, error: propertyError } = await supabase
     .from('properties')
     .select(
-      'id, property_name, full_address, city, state, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, host_name, host_whatsapp_number, host_whatsapp_message, guest_section_order'
+      'id, property_name, full_address, city, state, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, host_name, host_whatsapp_number, host_whatsapp_message, guest_section_order, hero_image_path, social_facebook_url, social_instagram_url, social_x_url, social_tiktok_url, social_youtube_url, social_airbnb_url'
     )
     .eq('id', propertyId)
     .eq('user_id', user.id)
@@ -35,6 +35,7 @@ export default async function PropertyPreviewPage({
     { data: steps, error: stepsError },
     { data: rules, error: rulesError },
     { data: tips, error: tipsError },
+    { data: faqs, error: faqsError },
     { data: customDetails, error: customDetailsError },
   ] = await Promise.all([
     supabase
@@ -53,13 +54,18 @@ export default async function PropertyPreviewPage({
       .eq('property_id', propertyId)
       .order('tip_order', { ascending: true }),
     supabase
+      .from('property_faqs')
+      .select('question, answer, faq_order')
+      .eq('property_id', propertyId)
+      .order('faq_order', { ascending: true }),
+    supabase
       .from('property_custom_details')
       .select('detail_order, title, message, is_displayed, guest_image_path, drive_media_url')
       .eq('property_id', propertyId)
       .order('detail_order', { ascending: true }),
   ]);
 
-  if (stepsError || rulesError || tipsError || customDetailsError) {
+  if (stepsError || rulesError || tipsError || faqsError || customDetailsError) {
     redirect('/dashboard');
   }
 
@@ -105,6 +111,11 @@ export default async function PropertyPreviewPage({
           drive_media_url: row.drive_media_url ?? null,
         };
       })}
+      faqs={(faqs ?? []).map((f) => ({
+        question: f.question ?? '',
+        answer: f.answer ?? '',
+        faq_order: f.faq_order ?? 0,
+      }))}
       customDetails={(customDetails ?? []).map((d) => {
         const row = d as typeof d & MediaRow;
         return {
@@ -119,6 +130,13 @@ export default async function PropertyPreviewPage({
       guestSectionOrder={
         parseGuestSectionOrderFromDb(property.guest_section_order) ?? []
       }
+      heroImagePath={property.hero_image_path ?? null}
+      socialFacebookUrl={property.social_facebook_url ?? null}
+      socialInstagramUrl={property.social_instagram_url ?? null}
+      socialXUrl={property.social_x_url ?? null}
+      socialTiktokUrl={property.social_tiktok_url ?? null}
+      socialYoutubeUrl={property.social_youtube_url ?? null}
+      socialAirbnbUrl={property.social_airbnb_url ?? null}
     />
   );
 }

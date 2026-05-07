@@ -103,7 +103,11 @@ function isRecentlyExpired(l: GuestLinkItem, nowIso: string) {
   return now <= exp + EXPIRED_GRACE_MS;
 }
 
-export default function PropertyCard({ property, links, nowIso }: PropertyCardProps) {
+export default function PropertyCard({
+  property,
+  links,
+  nowIso,
+}: PropertyCardProps) {
   const router = useRouter();
   const [showGenerate, setShowGenerate] = useState(false);
   const [showExtendId, setShowExtendId] = useState<string | null>(null);
@@ -120,6 +124,18 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [generatedLinkCopied, setGeneratedLinkCopied] = useState(false);
+  const [copiedLinkIds, setCopiedLinkIds] = useState<Set<string>>(new Set());
+
+  function markCopied(linkId: string) {
+    setCopiedLinkIds((prev) => new Set(prev).add(linkId));
+    setTimeout(() => {
+      setCopiedLinkIds((prev) => {
+        const next = new Set(prev);
+        next.delete(linkId);
+        return next;
+      });
+    }, 2000);
+  }
 
   const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '');
 
@@ -261,65 +277,44 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
   const recentExpiredLinks = links.filter((l) => isRecentlyExpired(l, nowIso));
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold">{displayTitle}</h2>
-        </div>
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-            property.is_live
-              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-              : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'
-          }`}
-        >
-          {property.is_live ? (
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          ) : (
-            <span className="h-2 w-2 rounded-full bg-slate-400" />
-          )}
-        </span>
-      </div>
+    <div className="glass rounded-[20px] p-5">
+      <h2 className="min-w-0 text-left text-base font-semibold text-slate-900">
+        {displayTitle}
+      </h2>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center justify-start gap-2">
+        <button
+          type="button"
+          onClick={() => setShowActiveLinks((v) => !v)}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80"
+        >
+          <span>Active links</span>
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+            {activeLinks.length}
+          </span>
+          <span>{showActiveLinks ? '▴' : '▾'}</span>
+        </button>
         <button
           type="button"
           onClick={() => {
             setShowGenerate((v) => !v);
             setError(null);
           }}
-          className="rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:opacity-95"
+          className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
         >
           Generate Link
         </button>
-        <Link
-          href={`/properties/${property.id}/edit`}
-          aria-label="Edit property settings"
-          title="Edit property settings"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
-        >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-            <path
-              d="M10.5 3h3l.6 2.1c.4.2.9.4 1.3.7l2-.8 2.1 2.1-.8 2c.3.4.5.9.7 1.3L21 11v3l-2.1.6c-.2.4-.4.9-.7 1.3l.8 2-2.1 2.1-2-.8c-.4.3-.9.5-1.3.7L13.5 21h-3l-.6-2.1c-.4-.2-.9-.4-1.3-.7l-2 .8L4.5 17l.8-2c-.3-.4-.5-.9-.7-1.3L3 14v-3l2.1-.6c.2-.4.4-.9.7-1.3l-.8-2L7.1 5l2 .8c.4-.3.9-.5 1.3-.7L10.5 3Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="12" cy="12" r="2.75" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </Link>
       </div>
 
       {showGenerate ? (
         <form
           onSubmit={onGenerate}
-          className="mt-4 overflow-x-hidden rounded-xl border border-slate-200 bg-slate-50 p-3"
+          className="mt-4 overflow-x-hidden rounded-2xl border border-white/50 bg-white/50 p-4 backdrop-blur-sm"
         >
           <div className="text-sm font-semibold text-slate-800">
             Generate guest link
           </div>
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-2">
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
             <input
               id={`perm-${property.id}`}
               type="checkbox"
@@ -328,16 +323,13 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                 setIsPermanent(e.target.checked);
                 if (e.target.checked) setCheckoutDate('');
               }}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300"
+              className="h-4 w-4 rounded border-slate-300"
             />
             <label
               htmlFor={`perm-${property.id}`}
-              className="text-xs font-medium text-slate-700"
+              className="text-xs font-semibold text-slate-700"
             >
-              <span className="font-semibold">Permanent link</span>
-              <span className="mt-0.5 block font-normal text-slate-500">
-                No checkout date; link stays valid until you delete it.
-              </span>
+              Permanent Link
             </label>
           </div>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -348,7 +340,6 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
               <input
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
-                placeholder="Leave blank for generic welcome"
                 className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
@@ -377,7 +368,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
             <input
               value={customSlug}
               onChange={(e) => setCustomSlug(e.target.value)}
-              placeholder="Leave blank for a random ~10 character link"
+              placeholder="Leave blank for random link"
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
             />
             <p className="mt-1 text-[11px] text-slate-500">
@@ -388,14 +379,14 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
           <div className="mt-3 flex items-center gap-2">
             <button
               disabled={submitting}
-              className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
             >
               {submitting ? 'Generating...' : 'Create Link'}
             </button>
             <button
               type="button"
               onClick={() => setShowGenerate(false)}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+              className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700"
             >
               Cancel
             </button>
@@ -446,30 +437,18 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
         </div>
       ) : null}
 
-      <div className="mt-4">
-        <button
-          type="button"
-          onClick={() => setShowActiveLinks((v) => !v)}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600"
-        >
-          <span>Active links</span>
-          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-            {activeLinks.length}
-          </span>
-          <span>{showActiveLinks ? '▴' : '▾'}</span>
-        </button>
-        {showActiveLinks ? (
-          <>
-            {activeLinks.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-500">No active links yet.</p>
-            ) : (
-              <div className="mt-2 space-y-2">
+      {showActiveLinks ? (
+        <div className="mt-4">
+          {activeLinks.length === 0 ? (
+            <p className="text-sm text-slate-500">No active links yet.</p>
+          ) : (
+            <div className="space-y-2">
               {activeLinks.map((l) => {
                 const fullLink = absoluteStayUrl(l.token);
                 return (
                   <div
                     key={l.id}
-                    className="rounded-xl border border-slate-200 bg-white p-3"
+                    className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
                   >
                     <div className="text-sm font-semibold text-slate-800">
                       {displayGuestName(l.guest_name)}
@@ -486,15 +465,15 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                         type="button"
                         onClick={async () => {
                           const copied = await copyToClipboard(fullLink);
-                          setLinkMessage(
-                            copied
-                              ? 'Link copied to clipboard.'
-                              : `Copy blocked. Use this link: ${fullLink}`
-                          );
+                          if (copied) {
+                            markCopied(l.id);
+                          } else {
+                            setLinkMessage(`Copy blocked. Use this link: ${fullLink}`);
+                          }
                         }}
-                        className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                        className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
                       >
-                        Copy link
+                        {copiedLinkIds.has(l.id) ? 'Copied ✓' : 'Copy link'}
                       </button>
                       {l.is_permanent !== true ? (
                         <button
@@ -504,7 +483,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                             setExtendDate(l.checkout_date ?? '');
                             setError(null);
                           }}
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                          className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
                         >
                           Extend
                         </button>
@@ -513,16 +492,16 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                         type="button"
                         onClick={() => onDeleteLink(l.id)}
                         disabled={submitting}
-                        className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                        className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
                       >
-                        Delete link
+                        Delete
                       </button>
                     </div>
 
                     {showExtendId === l.id ? (
                       <form
                         onSubmit={onExtend}
-                        className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2"
+                        className="mt-3 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
                       >
                         <label className="text-xs font-semibold text-slate-600">
                           New checkout date
@@ -536,14 +515,14 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                         <div className="mt-2 flex items-center gap-2">
                           <button
                             disabled={submitting}
-                            className="rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                            className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
                           >
                             {submitting ? 'Saving...' : 'Save'}
                           </button>
                           <button
                             type="button"
                             onClick={() => setShowExtendId(null)}
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                            className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-700"
                           >
                             Cancel
                           </button>
@@ -556,7 +535,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
               </div>
             )}
             {recentExpiredLinks.length > 0 ? (
-              <details className="mt-3 rounded-xl border border-slate-200 bg-slate-50/80">
+              <details className="mt-3 rounded-2xl border border-white/40 bg-white/30 backdrop-blur-sm">
                 <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-600 [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
                     Show expired links
@@ -574,34 +553,22 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                     return (
                       <div
                         key={l.id}
-                        className="rounded-xl border border-slate-200 bg-white p-3"
+                        className="rounded-2xl border border-white/40 bg-white/40 p-3 backdrop-blur-sm"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="text-sm font-semibold text-slate-800">
-                            {displayGuestName(l.guest_name)}
+                        <div className="opacity-50">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-sm font-semibold text-slate-600">
+                              {displayGuestName(l.guest_name)}
+                            </div>
+                            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
+                              Expired
+                            </span>
                           </div>
-                          <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
-                            Expired
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-600">
-                          Checkout: {formatDate(l.checkout_date)}
+                          <div className="mt-1 text-xs text-slate-500">
+                            Checkout: {formatDate(l.checkout_date)}
+                          </div>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const copied = await copyToClipboard(fullLink);
-                              setLinkMessage(
-                                copied
-                                  ? 'Link copied to clipboard.'
-                                  : `Copy blocked. Use this link: ${fullLink}`
-                              );
-                            }}
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
-                          >
-                            Copy link
-                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -609,7 +576,7 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                               setExtendDate(l.checkout_date ?? '');
                               setError(null);
                             }}
-                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                            className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
                           >
                             Extend
                           </button>
@@ -617,16 +584,16 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                             type="button"
                             onClick={() => onDeleteLink(l.id)}
                             disabled={submitting}
-                            className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                            className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
                           >
-                            Delete link
+                            Delete
                           </button>
                         </div>
 
                         {showExtendId === l.id ? (
                           <form
                             onSubmit={onExtend}
-                            className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-2"
+                            className="mt-3 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
                           >
                             <label className="text-xs font-semibold text-slate-600">
                               New checkout date
@@ -640,14 +607,14 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                             <div className="mt-2 flex items-center gap-2">
                               <button
                                 disabled={submitting}
-                                className="rounded-lg bg-slate-900 px-2 py-1 text-xs font-semibold text-white disabled:opacity-60"
+                                className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
                               >
                                 {submitting ? 'Saving...' : 'Save'}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setShowExtendId(null)}
-                                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700"
+                                className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-700"
                               >
                                 Cancel
                               </button>
@@ -660,9 +627,8 @@ export default function PropertyCard({ property, links, nowIso }: PropertyCardPr
                 </div>
               </details>
             ) : null}
-          </>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
