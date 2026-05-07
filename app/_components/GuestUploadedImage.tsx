@@ -33,13 +33,13 @@ export default function GuestUploadedImage({ path }: { path: string }) {
       <button
         type="button"
         onClick={() => setLightboxOpen(true)}
-        className="group mt-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className="group mt-3 w-full overflow-hidden rounded-2xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         aria-label="Enlarge image"
       >
         <img
           src={url}
           alt=""
-          className="max-h-[min(480px,70vh)] w-full cursor-zoom-in object-contain transition group-hover:opacity-95"
+          className="aspect-[4/3] w-full cursor-zoom-in object-cover transition group-hover:opacity-95"
         />
       </button>
       {lightboxOpen
