@@ -3,7 +3,18 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { deleteGuestMediaFolderForProperty } from '@/app/actions/guest-property-media';
 import { GUEST_PROPERTY_MEDIA_BUCKET } from '@/lib/guest-property-media';
-import { BASE_SECTION_KEYS } from '@/lib/guest-layout';
+import {
+  normalizeSectionOrder as normalizeGuestSectionOrder,
+  type CustomDetail as GuestCustomDetailStub,
+} from '@/lib/guest-layout';
+
+function customDetailStubsForSectionOrder(count: number): GuestCustomDetailStub[] {
+  return Array.from({ length: count }, (_, i) => ({
+    detail_order: i,
+    title: '',
+    message: '',
+  }));
+}
 
 export type CustomDetailInput = {
   title: string;
@@ -51,7 +62,8 @@ export type PropertyFormInput = {
   guestSectionOrder: string[];
   hostName: string;
   hostWhatsappNumber: string;
-  hostWhatsappMessage: string;
+  /** WhatsApp chat (wa.me); optional, separate from Call. */
+  hostWhatsappChatNumber: string;
   isLive: boolean;
   locationId: string;
   heroImagePath?: string;
@@ -60,11 +72,15 @@ export type PropertyFormInput = {
   socialXUrl?: string;
   socialTiktokUrl?: string;
   socialYoutubeUrl?: string;
-  socialAirbnbUrl?: string;
 };
 
 function normalizeString(value: string | null | undefined) {
   return (value ?? '').trim();
+}
+
+/** DB without migration 0017 has no host_whatsapp_chat_number — retry without it. */
+function missingHostWhatsappChatColumn(err: { message?: string } | null | undefined) {
+  return Boolean(err?.message?.includes('host_whatsapp_chat_number'));
 }
 
 function parseHttpUrlForStorage(
@@ -102,8 +118,6 @@ function parseSocialUrlsFromForm(input: PropertyFormInput) {
   if (!tt.ok) return tt;
   const yt = parseHttpUrlForStorage(input.socialYoutubeUrl, 'YouTube');
   if (!yt.ok) return yt;
-  const ab = parseHttpUrlForStorage(input.socialAirbnbUrl, 'Airbnb');
-  if (!ab.ok) return ab;
   return {
     ok: true as const,
     urls: {
@@ -112,30 +126,9 @@ function parseSocialUrlsFromForm(input: PropertyFormInput) {
       social_x_url: x.value,
       social_tiktok_url: tt.value,
       social_youtube_url: yt.value,
-      social_airbnb_url: ab.value,
+      social_airbnb_url: null,
     },
   };
-}
-
-function normalizeSectionOrder(order: string[] | null | undefined, customCount: number) {
-  const allowedCustom = new Set(
-    Array.from({ length: customCount }, (_, idx) => `custom:${idx}`)
-  );
-  const allowed = new Set<string>([...BASE_SECTION_KEYS, ...Array.from(allowedCustom)]);
-
-  const result: string[] = [];
-  for (const raw of order ?? []) {
-    const key = normalizeString(raw);
-    if (!key || !allowed.has(key) || result.includes(key)) continue;
-    result.push(key);
-  }
-
-  const defaults = [...BASE_SECTION_KEYS, ...Array.from(allowedCustom)];
-  for (const key of defaults) {
-    if (!result.includes(key)) result.push(key);
-  }
-
-  return result;
 }
 
 async function nextPropertySortOrderForLocation(
@@ -181,9 +174,9 @@ export async function createProperty(input: PropertyFormInput) {
   }
 
   const customDetails = normalizeCustomDetails(input.customDetails);
-  const sectionOrder = normalizeSectionOrder(
+  const sectionOrder = normalizeGuestSectionOrder(
     input.guestSectionOrder,
-    customDetails.length
+    customDetailStubsForSectionOrder(customDetails.length)
   );
 
   const locationId = normalizeString(input.locationId);
@@ -223,7 +216,8 @@ export async function createProperty(input: PropertyFormInput) {
     wifi_password: normalizeString(input.wifiPassword) || null,
     host_name: normalizeString(input.hostName),
     host_whatsapp_number: normalizeString(input.hostWhatsappNumber),
-    host_whatsapp_message: normalizeString(input.hostWhatsappMessage) || null,
+    host_whatsapp_chat_number: normalizeString(input.hostWhatsappChatNumber) || null,
+    host_whatsapp_message: null,
     host_response_time: '',
     is_live: input.isLive,
     guest_section_order: sectionOrder,
@@ -244,11 +238,25 @@ export async function createProperty(input: PropertyFormInput) {
     }
   }
 
-  const { data: property, error: propertyError } = await supabase
+  let { data: property, error: propertyError } = await supabase
     .from('properties')
     .insert(payload)
     .select('id')
     .single();
+
+  if (propertyError && missingHostWhatsappChatColumn(propertyError)) {
+    const { host_whatsapp_chat_number: _omit, ...payloadCompat } = payload as Record<
+      string,
+      unknown
+    >;
+    const retry = await supabase
+      .from('properties')
+      .insert(payloadCompat)
+      .select('id')
+      .single();
+    property = retry.data;
+    propertyError = retry.error;
+  }
 
   if (propertyError || !property) {
     return {
@@ -400,9 +408,9 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
   }
 
   const customDetails = normalizeCustomDetails(input.customDetails);
-  const sectionOrder = normalizeSectionOrder(
+  const sectionOrder = normalizeGuestSectionOrder(
     input.guestSectionOrder,
-    customDetails.length
+    customDetailStubsForSectionOrder(customDetails.length)
   );
 
   const newLocationId = normalizeString(input.locationId);
@@ -444,7 +452,8 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     wifi_password: normalizeString(input.wifiPassword) || null,
     host_name: normalizeString(input.hostName),
     host_whatsapp_number: normalizeString(input.hostWhatsappNumber),
-    host_whatsapp_message: normalizeString(input.hostWhatsappMessage) || null,
+    host_whatsapp_chat_number: normalizeString(input.hostWhatsappChatNumber) || null,
+    host_whatsapp_message: null,
     host_response_time: '',
     is_live: input.isLive,
     guest_section_order: sectionOrder,
@@ -465,11 +474,24 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     }
   }
 
-  const { error: updateError } = await supabase
+  let { error: updateError } = await supabase
     .from('properties')
     .update(payload)
     .eq('id', propertyId)
     .eq('user_id', user.id);
+
+  if (updateError && missingHostWhatsappChatColumn(updateError)) {
+    const { host_whatsapp_chat_number: _omit, ...payloadCompat } = payload as Record<
+      string,
+      unknown
+    >;
+    const retry = await supabase
+      .from('properties')
+      .update(payloadCompat)
+      .eq('id', propertyId)
+      .eq('user_id', user.id);
+    updateError = retry.error;
+  }
 
   if (updateError) {
     return { ok: false as const, error: updateError.message };
@@ -670,7 +692,10 @@ export async function updateGuestSectionOrder(input: {
   }
 
   const customCount = (details ?? []).length;
-  const sectionOrder = normalizeSectionOrder(input.sectionOrder, customCount);
+  const sectionOrder = normalizeGuestSectionOrder(
+    input.sectionOrder,
+    customDetailStubsForSectionOrder(customCount)
+  );
 
   const { error } = await supabase
     .from('properties')
@@ -706,4 +731,179 @@ export async function deleteProperty(propertyId: string) {
   }
 
   return { ok: true as const };
+}
+
+export async function cloneProperty(propertyId: string) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return { ok: false as const, error: 'Unauthorized' };
+  }
+
+  const { data: source, error: sourceError } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('id', propertyId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (sourceError || !source) {
+    return { ok: false as const, error: sourceError?.message ?? 'Property not found.' };
+  }
+
+  const locationId = source.location_id as string;
+  const sortOrder = await nextPropertySortOrderForLocation(supabase, locationId);
+
+  const sourcePropertyName = normalizeString(source.property_name) || 'Untitled';
+  const sourceInternalName = normalizeString(source.internal_name);
+  const clonedPropertyName = `${sourcePropertyName} (Copy)`;
+  const clonedInternalName = sourceInternalName ? `${sourceInternalName} (Copy)` : null;
+
+  const {
+    id: _oldId,
+    created_at: _oldCreatedAt,
+    updated_at: _oldUpdatedAt,
+    ...rest
+  } = source as Record<string, unknown>;
+
+  const payload = {
+    ...rest,
+    user_id: user.id,
+    property_name: clonedPropertyName,
+    internal_name: clonedInternalName,
+    sort_order: sortOrder,
+  };
+
+  let { data: inserted, error: insertError } = await supabase
+    .from('properties')
+    .insert(payload)
+    .select('id')
+    .single();
+
+  if (insertError && missingHostWhatsappChatColumn(insertError)) {
+    const { host_whatsapp_chat_number: _omit, ...payloadCompat } = payload as Record<
+      string,
+      unknown
+    >;
+    const retry = await supabase
+      .from('properties')
+      .insert(payloadCompat)
+      .select('id')
+      .single();
+    inserted = retry.data;
+    insertError = retry.error;
+  }
+
+  if (insertError || !inserted) {
+    return { ok: false as const, error: insertError?.message ?? 'Unable to clone property.' };
+  }
+
+  const newPropertyId = inserted.id as string;
+
+  const [
+    { data: steps, error: stepsError },
+    { data: rules, error: rulesError },
+    { data: tips, error: tipsError },
+    { data: faqs, error: faqsError },
+    { data: customDetails, error: customError },
+  ] = await Promise.all([
+    supabase
+      .from('property_check_in_steps')
+      .select('step_order, instruction, is_displayed, guest_image_path, drive_media_url')
+      .eq('property_id', propertyId)
+      .order('step_order', { ascending: true }),
+    supabase
+      .from('property_house_rules')
+      .select('rule_order, rule_text, is_displayed')
+      .eq('property_id', propertyId)
+      .order('rule_order', { ascending: true }),
+    supabase
+      .from('property_guidebook_tips')
+      .select('tip_order, label, description, guest_image_path, drive_media_url')
+      .eq('property_id', propertyId)
+      .order('tip_order', { ascending: true }),
+    supabase
+      .from('property_faqs')
+      .select('faq_order, question, answer')
+      .eq('property_id', propertyId)
+      .order('faq_order', { ascending: true }),
+    supabase
+      .from('property_custom_details')
+      .select('detail_order, title, message, is_displayed, guest_image_path, drive_media_url')
+      .eq('property_id', propertyId)
+      .order('detail_order', { ascending: true }),
+  ]);
+
+  if (stepsError || rulesError || tipsError || faqsError || customError) {
+    await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
+    return { ok: false as const, error: 'Unable to copy all property sections.' };
+  }
+
+  if ((steps ?? []).length > 0) {
+    const rows = (steps ?? []).map((row) => ({
+      property_id: newPropertyId,
+      step_order: row.step_order,
+      instruction: row.instruction,
+      is_displayed: row.is_displayed,
+      guest_image_path: row.guest_image_path,
+      drive_media_url: row.drive_media_url,
+    }));
+    const { error } = await supabase.from('property_check_in_steps').insert(rows);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  if ((rules ?? []).length > 0) {
+    const rows = (rules ?? []).map((row) => ({
+      property_id: newPropertyId,
+      rule_order: row.rule_order,
+      rule_text: row.rule_text,
+      is_displayed: row.is_displayed,
+    }));
+    const { error } = await supabase.from('property_house_rules').insert(rows);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  if ((tips ?? []).length > 0) {
+    const rows = (tips ?? []).map((row) => ({
+      property_id: newPropertyId,
+      tip_order: row.tip_order,
+      label: row.label,
+      description: row.description,
+      guest_image_path: row.guest_image_path,
+      drive_media_url: row.drive_media_url,
+    }));
+    const { error } = await supabase.from('property_guidebook_tips').insert(rows);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  if ((faqs ?? []).length > 0) {
+    const rows = (faqs ?? []).map((row) => ({
+      property_id: newPropertyId,
+      faq_order: row.faq_order,
+      question: row.question,
+      answer: row.answer,
+    }));
+    const { error } = await supabase.from('property_faqs').insert(rows);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  if ((customDetails ?? []).length > 0) {
+    const rows = (customDetails ?? []).map((row) => ({
+      property_id: newPropertyId,
+      detail_order: row.detail_order,
+      title: row.title,
+      message: row.message,
+      is_displayed: row.is_displayed,
+      guest_image_path: row.guest_image_path,
+      drive_media_url: row.drive_media_url,
+    }));
+    const { error } = await supabase.from('property_custom_details').insert(rows);
+    if (error) return { ok: false as const, error: error.message };
+  }
+
+  return { ok: true as const, propertyId: newPropertyId };
 }

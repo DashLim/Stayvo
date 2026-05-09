@@ -87,6 +87,9 @@ export default async function DashboardPage() {
           .in('property_id', propertyIds)
           .order('created_at', { ascending: false });
 
+  const meta = user.user_metadata as { host_display_name?: string } | null;
+  const hostDisplayName = meta?.host_display_name ?? null;
+
   return (
     <main className="py-10">
       <DashboardClient
@@ -97,6 +100,7 @@ export default async function DashboardPage() {
         guestLinks={guestLinks ?? []}
         guestLinksError={Boolean(guestLinksError)}
         hasAnyProperty={(totalPropertyCount ?? 0) > 0}
+        hostDisplayName={hostDisplayName}
       />
     </main>
   );

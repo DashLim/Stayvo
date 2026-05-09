@@ -6,7 +6,6 @@ export type GuestSocialLinksInput = {
   x?: string | null;
   tiktok?: string | null;
   youtube?: string | null;
-  airbnb?: string | null;
 };
 
 type Entry = { key: keyof GuestSocialLinksInput; href: string; label: string; icon: ReactNode };
@@ -51,14 +50,6 @@ function SocialIconYouTube() {
   );
 }
 
-function SocialIconAirbnb() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
-      <path d="M12 3c-3.8 0-6.9 3.1-6.9 6.9 0 1.3.4 2.5 1 3.5 1.2 1.9 3.4 3.3 5.9 5.6 2.5-2.3 4.7-3.7 5.9-5.6.6-1 1-2.2 1-3.5C18.9 6.1 15.8 3 12 3Zm0 3.2c2 0 3.6 1.6 3.6 3.6S14 13.4 12 13.4 8.4 11.8 8.4 9.8 10 6.2 12 6.2Z" />
-    </svg>
-  );
-}
-
 function trimUrl(value: string | null | undefined) {
   return (value ?? '').trim();
 }
@@ -75,7 +66,6 @@ export default function GuestSocialLinks({
   const order: Array<{ key: keyof GuestSocialLinksInput; label: string; icon: ReactNode }> = [
     { key: 'instagram', label: 'Instagram', icon: <SocialIconInstagram /> },
     { key: 'facebook', label: 'Facebook', icon: <SocialIconFacebook /> },
-    { key: 'airbnb', label: 'Airbnb listing', icon: <SocialIconAirbnb /> },
     { key: 'tiktok', label: 'TikTok', icon: <SocialIconTikTok /> },
     { key: 'youtube', label: 'YouTube', icon: <SocialIconYouTube /> },
     { key: 'x', label: 'X', icon: <SocialIconX /> },

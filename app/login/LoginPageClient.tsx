@@ -24,6 +24,15 @@ export default function LoginPageClient() {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const submittedEmail = String(formData.get('email') ?? '').trim();
+    const submittedPassword = String(formData.get('password') ?? '');
+
+    // iOS autofill can populate DOM inputs without triggering React onChange.
+    // Sync state from submitted form values so login works consistently.
+    setEmail(submittedEmail);
+    setPassword(submittedPassword);
+
     setError(null);
     setInfo(null);
     setSubmitting(true);
@@ -35,8 +44,8 @@ export default function LoginPageClient() {
       }
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+          email: submittedEmail,
+          password: submittedPassword,
         });
         if (error) throw error;
         router.replace(redirect);
@@ -44,8 +53,8 @@ export default function LoginPageClient() {
       }
 
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: submittedEmail,
+        password: submittedPassword,
       });
       if (error) throw error;
 
@@ -125,6 +134,7 @@ export default function LoginPageClient() {
             <input
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               type="email"
+              name="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -138,6 +148,7 @@ export default function LoginPageClient() {
             <input
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               type="password"
+              name="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

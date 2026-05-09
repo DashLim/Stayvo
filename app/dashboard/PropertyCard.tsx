@@ -9,6 +9,7 @@ import {
   extendGuestLink,
   generateGuestLink,
 } from '@/app/actions/guest-links';
+import { guestPortalAbsoluteUrl } from '@/lib/guest-portal-url';
 
 function displayGuestName(name: string | null | undefined) {
   const t = (name ?? '').trim();
@@ -35,6 +36,7 @@ type PropertyCardProps = {
   };
   links: GuestLinkItem[];
   nowIso: string;
+  hostDisplayName: string | null;
 };
 
 /** Native date inputs have a large intrinsic min-width on mobile WebKit; clip inside this shell. */
@@ -107,6 +109,7 @@ export default function PropertyCard({
   property,
   links,
   nowIso,
+  hostDisplayName,
 }: PropertyCardProps) {
   const router = useRouter();
   const [showGenerate, setShowGenerate] = useState(false);
@@ -137,17 +140,10 @@ export default function PropertyCard({
     }, 2000);
   }
 
-  const configuredBaseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '');
-
-  function relativeStayPath(token: string) {
-    return `/stay/${token}`;
-  }
-
-  function absoluteStayUrl(token: string) {
-    const path = relativeStayPath(token);
-    if (configuredBaseUrl) return `${configuredBaseUrl}${path}`;
-    if (typeof window !== 'undefined') return `${window.location.origin}${path}`;
-    return path;
+  function absoluteGuestPortalUrl(token: string) {
+    return guestPortalAbsoluteUrl(hostDisplayName, token, {
+      baseUrl: process.env.NEXT_PUBLIC_APP_URL,
+    });
   }
 
   async function copyToClipboard(text: string) {
@@ -211,7 +207,7 @@ export default function PropertyCard({
       });
       if (!result.ok) throw new Error(result.error);
 
-      const fullLink = absoluteStayUrl(result.token);
+      const fullLink = absoluteGuestPortalUrl(result.token);
       setGeneratedLink(fullLink);
       setGuestName('');
       setCheckoutDate('');
@@ -238,7 +234,7 @@ export default function PropertyCard({
       });
       if (!result.ok) throw new Error(result.error);
 
-      const fullLink = absoluteStayUrl(result.token);
+      const fullLink = absoluteGuestPortalUrl(result.token);
       setLinkMessage(`Extended successfully: ${fullLink}`);
       setShowExtendId(null);
       setExtendDate('');
@@ -444,7 +440,7 @@ export default function PropertyCard({
           ) : (
             <div className="space-y-2">
               {activeLinks.map((l) => {
-                const fullLink = absoluteStayUrl(l.token);
+                const fullLink = absoluteGuestPortalUrl(l.token);
                 return (
                   <div
                     key={l.id}
@@ -549,7 +545,7 @@ export default function PropertyCard({
                 </summary>
                 <div className="space-y-2 border-t border-slate-200 p-3 pt-2">
                   {recentExpiredLinks.map((l) => {
-                    const fullLink = absoluteStayUrl(l.token);
+                    const fullLink = absoluteGuestPortalUrl(l.token);
                     return (
                       <div
                         key={l.id}

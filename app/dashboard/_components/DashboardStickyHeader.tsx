@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
@@ -17,6 +18,21 @@ export default function DashboardStickyHeader() {
   const title = active?.title ?? 'Dashboard';
   const isDashboard = normalizedPath === '/dashboard';
   const isManage = normalizedPath.startsWith('/dashboard/manage');
+
+  const [manageEditActive, setManageEditActive] = useState(false);
+
+  useEffect(() => {
+    const onManageEditState = (e: Event) => {
+      const ce = e as CustomEvent<{ active?: boolean }>;
+      setManageEditActive(Boolean(ce.detail?.active));
+    };
+    window.addEventListener('stayvo:manage-edit-state', onManageEditState);
+    return () => window.removeEventListener('stayvo:manage-edit-state', onManageEditState);
+  }, []);
+
+  useEffect(() => {
+    if (!isManage) setManageEditActive(false);
+  }, [isManage]);
 
   return (
     <header className="glass-header sticky top-0 z-30 -mx-4 px-4 pt-[env(safe-area-inset-top)]">
@@ -48,25 +64,36 @@ export default function DashboardStickyHeader() {
               type="button"
               onClick={() => window.dispatchEvent(new Event('stayvo:manage-toggle-edit'))}
               className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900"
-              title="Edit"
-              aria-label="Edit"
+              title={manageEditActive ? 'Exit edit mode' : 'Edit'}
+              aria-label={manageEditActive ? 'Exit edit mode' : 'Edit'}
             >
-              <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden>
-                <path
-                  d="M10 3H5.5A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9A2.5 2.5 0 0 0 17 14.5V10"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="m12.5 3.5 2.5 2.5m-2.5-2.5-4 4-.5 2.5 2.5-.5 4-4a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0Z"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              {manageEditActive ? (
+                <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden>
+                  <path
+                    d="M5 5l10 10M15 5L5 15"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" aria-hidden>
+                  <path
+                    d="M10 3H5.5A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9A2.5 2.5 0 0 0 17 14.5V10"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="m12.5 3.5 2.5 2.5m-2.5-2.5-4 4-.5 2.5 2.5-.5 4-4a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
             </button>
             <button
               type="button"

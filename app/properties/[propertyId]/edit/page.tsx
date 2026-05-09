@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import PropertyForm from '@/app/properties/_components/PropertyForm';
+import PropertyFormClient from '@/app/properties/_components/PropertyFormClient';
 import { parseGuestSectionOrderFromDb } from '@/lib/guest-layout';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -22,9 +22,8 @@ export default async function EditPropertyPage({
     await Promise.all([
       supabase
         .from('properties')
-        .select(
-          'id, property_name, internal_name, full_address, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, is_live, host_name, host_whatsapp_number, host_whatsapp_message, guest_section_order, location_id, hero_image_path, social_facebook_url, social_instagram_url, social_x_url, social_tiktok_url, social_youtube_url, social_airbnb_url'
-        )
+        // Use * so older DBs without optional columns (e.g. host_whatsapp_chat_number) still load.
+        .select('*')
         .eq('id', propertyId)
         .eq('user_id', user.id)
         .maybeSingle(),
@@ -36,6 +35,12 @@ export default async function EditPropertyPage({
     ]);
 
   if (propertyError || !property) redirect('/dashboard');
+
+  const row = property as Record<string, unknown>;
+  const hostWhatsappChat =
+    typeof row.host_whatsapp_chat_number === 'string'
+      ? row.host_whatsapp_chat_number
+      : '';
 
   const [
     { data: steps, error: stepsError },
@@ -74,7 +79,7 @@ export default async function EditPropertyPage({
   if (stepsError || rulesError || tipsError || faqsError || customDetailsError) redirect('/dashboard');
 
   return (
-    <PropertyForm
+    <PropertyFormClient
       mode="edit"
       propertyId={propertyId}
       locations={locations ?? []}
@@ -91,7 +96,7 @@ export default async function EditPropertyPage({
         wifiPassword: property.wifi_password ?? '',
         hostName: property.host_name ?? '',
         hostWhatsappNumber: property.host_whatsapp_number ?? '',
-        hostWhatsappMessage: property.host_whatsapp_message ?? '',
+        hostWhatsappChatNumber: hostWhatsappChat,
         checkInInstructions: (steps ?? []).map((s) => ({
           instruction: s.instruction ?? '',
           isDisplayed: s.is_displayed ?? true,
@@ -125,9 +130,9 @@ export default async function EditPropertyPage({
         socialXUrl: property.social_x_url ?? '',
         socialTiktokUrl: property.social_tiktok_url ?? '',
         socialYoutubeUrl: property.social_youtube_url ?? '',
-        socialAirbnbUrl: property.social_airbnb_url ?? '',
       }}
     />
   );
 }
+
 

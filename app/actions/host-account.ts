@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabasePublicEnv } from '@/lib/supabase/env';
+import {
+  isForbiddenHostDisplayNameForGuestPath,
+  sanitizeHostDisplayNameInput,
+} from '@/lib/guest-portal-url';
 
 function normalize(s: string | null | undefined) {
   return (s ?? '').trim();
@@ -53,7 +57,14 @@ export async function updateHostDisplayName(displayName: string) {
   } = await supabase.auth.getUser();
   if (!user) return { ok: false as const, error: 'Not signed in.' };
 
-  const name = normalize(displayName);
+  const name = sanitizeHostDisplayNameInput(normalize(displayName));
+  if (isForbiddenHostDisplayNameForGuestPath(name)) {
+    return {
+      ok: false as const,
+      error:
+        'That name maps to a reserved URL path. Use letters and numbers that are not a system path (e.g. api, login, dashboard).',
+    };
+  }
   const { error } = await supabase.auth.updateUser({
     data: { host_display_name: name || null },
   });

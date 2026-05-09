@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   DndContext,
@@ -20,7 +20,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { BASE_SECTION_KEYS } from '@/lib/guest-layout';
+import {
+  BASE_SECTION_KEYS,
+  FIXED_BOTTOM_SECTIONS,
+  FIXED_TOP_SECTIONS,
+  getMiddleSectionKeysFromOrder,
+  normalizeSectionOrder,
+  type CustomDetail as GuestLayoutCustomDetail,
+} from '@/lib/guest-layout';
 import type {
   CustomDetailInput,
   HouseRuleInput,
@@ -36,7 +43,7 @@ import {
 } from '@/app/actions/properties';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 
-type PropertyFormProps = {
+export type PropertyFormProps = {
   mode: 'create' | 'edit';
   propertyId?: string;
   /** Host’s locations (for grouping on dashboard). */
@@ -46,6 +53,14 @@ type PropertyFormProps = {
 
 function ensureString(v: any) {
   return typeof v === 'string' ? v : '';
+}
+
+function customInputsToOrderStubs(details: CustomDetailInput[]): GuestLayoutCustomDetail[] {
+  return details.map((_, i) => ({
+    detail_order: i,
+    title: '',
+    message: '',
+  }));
 }
 
 const SECTION_LABELS: Record<string, string> = {
@@ -58,6 +73,25 @@ const SECTION_LABELS: Record<string, string> = {
   guidebook: 'Guidebook',
   host: 'Host contact',
 };
+
+function FixedSectionRow({ sectionKey }: { sectionKey: string }) {
+  const label = SECTION_LABELS[sectionKey] ?? sectionKey;
+  return (
+    <li className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-slate-100/70 px-3 py-2.5 opacity-[0.82] backdrop-blur-sm">
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-slate-400/80" aria-hidden>
+        <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor">
+          <circle cx="8" cy="4" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="8" cy="12" r="1.5" />
+        </svg>
+      </span>
+      <span className="text-sm font-medium text-slate-500">{label}</span>
+      <span className="ml-auto shrink-0 rounded-full bg-slate-300/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+        Fixed
+      </span>
+    </li>
+  );
+}
 
 function SortableSectionRow({ id }: { id: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -83,14 +117,10 @@ function SortableSectionRow({ id }: { id: string }) {
         className="select-none text-slate-400"
         aria-label="Drag to reorder"
       >
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-          <path
-            d="M9 4v16m0 0-3-3m3 3 3-3M15 20V4m0 0-3 3m3-3 3 3"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+          <circle cx="12" cy="6" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="12" cy="18" r="2" />
         </svg>
       </button>
       <span className="text-sm font-medium text-slate-800">{label}</span>
@@ -128,7 +158,7 @@ export default function PropertyForm({
       guestSectionOrder: [...BASE_SECTION_KEYS],
       hostName: '',
       hostWhatsappNumber: '',
-      hostWhatsappMessage: '',
+      hostWhatsappChatNumber: '',
       isLive: false,
       locationId: '',
       socialFacebookUrl: '',
@@ -136,7 +166,6 @@ export default function PropertyForm({
       socialXUrl: '',
       socialTiktokUrl: '',
       socialYoutubeUrl: '',
-      socialAirbnbUrl: '',
       ...(initialValues ?? {}),
     }),
     [initialValues]
@@ -180,12 +209,31 @@ export default function PropertyForm({
   const [customDetails, setCustomDetails] = useState<CustomDetailInput[]>(
     defaults.customDetails?.length ? (defaults.customDetails as any) : []
   );
-  const [guestSectionOrder, setGuestSectionOrder] = useState<string[]>(
-    Array.isArray(defaults.guestSectionOrder)
-      ? (defaults.guestSectionOrder as string[])
-      : [...BASE_SECTION_KEYS]
+  const [guestSectionOrder, setGuestSectionOrder] = useState<string[]>(() =>
+    normalizeSectionOrder(
+      Array.isArray(defaults.guestSectionOrder)
+        ? (defaults.guestSectionOrder as string[])
+        : [...BASE_SECTION_KEYS],
+      customInputsToOrderStubs((defaults.customDetails as CustomDetailInput[]) ?? [])
+    )
   );
   const [sectionOrderOpen, setSectionOrderOpen] = useState(false);
+
+  useEffect(() => {
+    setGuestSectionOrder((prev) =>
+      normalizeSectionOrder(prev, customInputsToOrderStubs(customDetails))
+    );
+  }, [customDetails]);
+
+  const sectionOrderStubs = useMemo(
+    () => customInputsToOrderStubs(customDetails),
+    [customDetails]
+  );
+
+  const middleSectionKeys = useMemo(
+    () => getMiddleSectionKeysFromOrder(guestSectionOrder, sectionOrderStubs),
+    [guestSectionOrder, sectionOrderStubs]
+  );
 
   const sectionOrderSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -195,11 +243,14 @@ export default function PropertyForm({
   function onSectionDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    const stubs = customInputsToOrderStubs(customDetails);
     setGuestSectionOrder((prev) => {
-      const oldIdx = prev.indexOf(active.id as string);
-      const newIdx = prev.indexOf(over.id as string);
+      const middle = getMiddleSectionKeysFromOrder(prev, stubs);
+      const oldIdx = middle.indexOf(active.id as string);
+      const newIdx = middle.indexOf(over.id as string);
       if (oldIdx < 0 || newIdx < 0) return prev;
-      return arrayMove(prev, oldIdx, newIdx);
+      const nextMiddle = arrayMove(middle, oldIdx, newIdx);
+      return [...FIXED_TOP_SECTIONS, ...nextMiddle, ...FIXED_BOTTOM_SECTIONS];
     });
   }
 
@@ -207,8 +258,8 @@ export default function PropertyForm({
   const [hostWhatsappNumber, setHostWhatsappNumber] = useState(
     ensureString(defaults.hostWhatsappNumber)
   );
-  const [hostWhatsappMessage, setHostWhatsappMessage] = useState(
-    ensureString(defaults.hostWhatsappMessage)
+  const [hostWhatsappChatNumber, setHostWhatsappChatNumber] = useState(
+    ensureString(defaults.hostWhatsappChatNumber)
   );
 
   const [isLive, setIsLive] = useState(Boolean(defaults.isLive));
@@ -228,9 +279,6 @@ export default function PropertyForm({
   );
   const [socialYoutubeUrl, setSocialYoutubeUrl] = useState(
     ensureString(defaults.socialYoutubeUrl)
-  );
-  const [socialAirbnbUrl, setSocialAirbnbUrl] = useState(
-    ensureString(defaults.socialAirbnbUrl)
   );
 
   const [locationId, setLocationId] = useState(
@@ -267,7 +315,7 @@ export default function PropertyForm({
         guestSectionOrder,
         hostName,
         hostWhatsappNumber,
-        hostWhatsappMessage,
+        hostWhatsappChatNumber,
         isLive,
         locationId,
         heroImagePath,
@@ -276,7 +324,6 @@ export default function PropertyForm({
         socialXUrl,
         socialTiktokUrl,
         socialYoutubeUrl,
-        socialAirbnbUrl,
       };
 
       if (mode === 'create') {
@@ -346,7 +393,9 @@ export default function PropertyForm({
                 title="Reorder sections"
               >
                 <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M10 2.5a.75.75 0 0 1 .57.26l2.5 3a.75.75 0 1 1-1.14.98L10 4.84l-1.93 2.9a.75.75 0 1 1-1.14-.98l2.5-3A.75.75 0 0 1 10 2.5ZM3.75 8.5a.75.75 0 0 1 .75-.75h11a.75.75 0 0 1 0 1.5h-11a.75.75 0 0 1-.75-.75ZM3.75 11.5a.75.75 0 0 1 .75-.75h11a.75.75 0 0 1 0 1.5h-11a.75.75 0 0 1-.75-.75ZM7.43 14.26a.75.75 0 0 1 1.14-.98L10 15.16l1.93-1.88a.75.75 0 1 1 1.14.98l-2.5 2.24a.75.75 0 0 1-1.14 0l-2.5-2.24Z" />
+                  <circle cx="10" cy="5" r="1.75" />
+                  <circle cx="10" cy="10" r="1.75" />
+                  <circle cx="10" cy="15" r="1.75" />
                 </svg>
               </button>
               {propertyId ? (
@@ -379,19 +428,28 @@ export default function PropertyForm({
               />
               <div className="glass relative w-[calc(100%-2rem)] max-w-sm rounded-[20px] p-5">
                 <h2 className="text-base font-semibold text-slate-900">Reorder sections</h2>
-                <p className="mt-1 text-xs text-slate-500">Drag to change the order shown to guests.</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Address, Check-in, and Parking stay at the top; Host contact stays at the bottom.
+                  Drag the sections in between to change their order on the guest page.
+                </p>
                 <DndContext
                   sensors={sectionOrderSensors}
                   collisionDetection={closestCenter}
                   onDragEnd={onSectionDragEnd}
                 >
-                  <SortableContext items={guestSectionOrder} strategy={verticalListSortingStrategy}>
-                    <ul className="mt-4 space-y-2">
-                      {guestSectionOrder.map((key) => (
+                  <ul className="mt-4 space-y-2">
+                    {FIXED_TOP_SECTIONS.map((key) => (
+                      <FixedSectionRow key={key} sectionKey={key} />
+                    ))}
+                    <SortableContext items={middleSectionKeys} strategy={verticalListSortingStrategy}>
+                      {middleSectionKeys.map((key) => (
                         <SortableSectionRow key={key} id={key} />
                       ))}
-                    </ul>
-                  </SortableContext>
+                    </SortableContext>
+                    {FIXED_BOTTOM_SECTIONS.map((key) => (
+                      <FixedSectionRow key={key} sectionKey={key} />
+                    ))}
+                  </ul>
                 </DndContext>
                 <button
                   type="button"
@@ -406,7 +464,7 @@ export default function PropertyForm({
           )
         : null}
 
-      <form onSubmit={onSubmit} className="mt-6 space-y-7">
+      <form onSubmit={onSubmit} autoComplete="off" className="mt-6 space-y-7">
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {error}
@@ -519,7 +577,7 @@ export default function PropertyForm({
                 rows={3}
                 value={fullAddress}
                 onChange={(e) => setFullAddress(e.target.value)}
-                className="mt-1 w-full resize-none rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
 
@@ -562,8 +620,10 @@ export default function PropertyForm({
                 Wifi network name
               </label>
               <input
+                name="stayvo_wifi_ssid"
                 value={wifiNetworkName}
                 onChange={(e) => setWifiNetworkName(e.target.value)}
+                autoComplete="off"
                 className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
               />
             </div>
@@ -572,10 +632,16 @@ export default function PropertyForm({
                 Wifi password
               </label>
               <input
+                name="stayvo_wifi_passphrase"
                 value={wifiPassword}
                 onChange={(e) => setWifiPassword(e.target.value)}
                 className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-                type="password"
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
           </div>
@@ -648,7 +714,7 @@ export default function PropertyForm({
                     );
                   }}
                   placeholder="Step instructions (optional if you only add media)"
-                  className="mt-2 w-full resize-none rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                  className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
                 />
                 <GuestImageSlot
                   propertyId={propertyId}
@@ -992,17 +1058,6 @@ export default function PropertyForm({
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600">Airbnb listing</label>
-              <input
-                value={socialAirbnbUrl}
-                onChange={(e) => setSocialAirbnbUrl(e.target.value)}
-                placeholder="https://airbnb.com/rooms/..."
-                inputMode="url"
-                autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-              />
-            </div>
-            <div>
               <label className="text-xs font-semibold text-slate-600">TikTok</label>
               <input
                 value={socialTiktokUrl}
@@ -1173,9 +1228,7 @@ export default function PropertyForm({
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">
-                Host WhatsApp number
-              </label>
+              <label className="text-sm font-medium text-slate-700">Call</label>
               <input
                 value={hostWhatsappNumber}
                 onChange={(e) => setHostWhatsappNumber(e.target.value)}
@@ -1184,14 +1237,12 @@ export default function PropertyForm({
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">
-                Pre-fileld message (optional)
-              </label>
-              <textarea
-                rows={3}
-                value={hostWhatsappMessage}
-                onChange={(e) => setHostWhatsappMessage(e.target.value)}
-                className="mt-1 w-full resize-none rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+              <label className="text-sm font-medium text-slate-700">WhatsApp</label>
+              <input
+                value={hostWhatsappChatNumber}
+                onChange={(e) => setHostWhatsappChatNumber(e.target.value)}
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                placeholder="+1 555 987 6543"
               />
             </div>
           </div>

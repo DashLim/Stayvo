@@ -1,12 +1,12 @@
+export const FIXED_TOP_SECTIONS = ['address', 'checkin', 'parking'] as const;
+export const MIDDLE_BASE_SECTIONS = ['wifi', 'faq', 'rules', 'guidebook'] as const;
+export const FIXED_BOTTOM_SECTIONS = ['host'] as const;
+
+/** Default guest section order (no custom blocks). Top/bottom are fixed; middle is reorderable. */
 export const BASE_SECTION_KEYS = [
-  'address',
-  'parking',
-  'checkin',
-  'wifi',
-  'faq',
-  'rules',
-  'guidebook',
-  'host',
+  ...FIXED_TOP_SECTIONS,
+  ...MIDDLE_BASE_SECTIONS,
+  ...FIXED_BOTTOM_SECTIONS,
 ] as const;
 
 export type BaseSectionKey = (typeof BASE_SECTION_KEYS)[number];
@@ -25,29 +25,60 @@ function normalizeKey(value: string | null | undefined) {
 
 export function buildAllowedSectionKeys(customDetails: CustomDetail[]) {
   return [
-    ...BASE_SECTION_KEYS,
+    ...FIXED_TOP_SECTIONS,
+    ...MIDDLE_BASE_SECTIONS,
     ...customDetails.map((d) => `custom:${d.detail_order}`),
+    ...FIXED_BOTTOM_SECTIONS,
   ];
 }
 
+/**
+ * Full section order: Address → Check-in → Parking (fixed), then middle blocks
+ * (Wi‑Fi, FAQ, rules, guidebook, custom boxes in host-chosen order), then Host (fixed last).
+ */
 export function normalizeSectionOrder(
   order: string[] | null | undefined,
   customDetails: CustomDetail[]
 ) {
-  const allowed = new Set(buildAllowedSectionKeys(customDetails));
-  const out: string[] = [];
+  const allowedMiddle = new Set<string>([
+    ...MIDDLE_BASE_SECTIONS,
+    ...customDetails.map((d) => `custom:${d.detail_order}`),
+  ]);
 
+  const middleFromOrder: string[] = [];
   for (const raw of order ?? []) {
     const key = normalizeKey(raw);
-    if (!key || !allowed.has(key) || out.includes(key)) continue;
-    out.push(key);
+    if (!key || !allowedMiddle.has(key) || middleFromOrder.includes(key)) continue;
+    middleFromOrder.push(key);
   }
 
-  for (const key of buildAllowedSectionKeys(customDetails)) {
-    if (!out.includes(key)) out.push(key);
+  const defaultMiddle: string[] = [
+    ...MIDDLE_BASE_SECTIONS,
+    ...customDetails.map((d) => `custom:${d.detail_order}`),
+  ];
+  for (const key of defaultMiddle) {
+    if (allowedMiddle.has(key) && !middleFromOrder.includes(key)) {
+      middleFromOrder.push(key);
+    }
   }
 
-  return out;
+  return [
+    ...FIXED_TOP_SECTIONS,
+    ...middleFromOrder,
+    ...FIXED_BOTTOM_SECTIONS,
+  ] as string[];
+}
+
+/** Middle keys from a stored full order (for drag UI). */
+export function getMiddleSectionKeysFromOrder(
+  order: string[],
+  customDetails: CustomDetail[]
+): string[] {
+  const allowedMiddle = new Set<string>([
+    ...MIDDLE_BASE_SECTIONS,
+    ...customDetails.map((d) => `custom:${d.detail_order}`),
+  ]);
+  return order.filter((k) => allowedMiddle.has(k));
 }
 
 /** Normalize jsonb / legacy shapes from Postgres for safe client serialization */

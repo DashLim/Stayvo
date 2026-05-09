@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   // LAN phones hit http://<your-ip>:3000; add your Mac's Wi‑Fi IP when it changes or login → dashboard will fail in dev.
-  allowedDevOrigins: ['192.168.100.101', '192.168.100.120'],
+  allowedDevOrigins: ['192.168.100.101', '192.168.100.109', '192.168.100.120'],
   // Turbopack defaults to on-disk SST cache in dev; on some setups this races/compacts badly (ENOENT .sst).
   experimental: {
     serverActions: {

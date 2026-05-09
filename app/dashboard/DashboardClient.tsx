@@ -44,6 +44,7 @@ export default function DashboardClient({
   guestLinks,
   guestLinksError,
   hasAnyProperty,
+  hostDisplayName,
 }: {
   userId: string;
   nowIso: string;
@@ -53,6 +54,8 @@ export default function DashboardClient({
   guestLinksError: boolean;
   /** True if user has at least one property (live or draft). */
   hasAnyProperty: boolean;
+  /** Profile host display name — first segment of generated guest portal URLs. */
+  hostDisplayName: string | null;
 }) {
   const hasLiveByLocation = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -321,6 +324,7 @@ export default function DashboardClient({
                         property={p}
                         links={linksForProperty}
                         nowIso={nowIso}
+                        hostDisplayName={hostDisplayName}
                       />
                     );
                   })}

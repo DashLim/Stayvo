@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   deleteHostAccount,
   signOutHost,
@@ -9,6 +9,7 @@ import {
   updateHostProfileEmail,
   updateHostProfilePassword,
 } from '@/app/actions/host-account';
+import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
 
 export default function ProfileClient({
   email,
@@ -18,13 +19,20 @@ export default function ProfileClient({
   initialHostName: string;
 }) {
   const router = useRouter();
-  const [hostName, setHostName] = useState(initialHostName);
+  const [hostName, setHostName] = useState(() =>
+    sanitizeHostDisplayNameInput(initialHostName)
+  );
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  const exampleGuestLink = useMemo(
+    () => guestPortalAbsoluteUrl(hostName, 'zCqWY5WeiP'),
+    [hostName]
+  );
 
   async function onSaveHostName(e: React.FormEvent) {
     e.preventDefault();
@@ -147,14 +155,21 @@ export default function ProfileClient({
       <form onSubmit={onSaveHostName} className="glass rounded-[20px] p-4">
         <h2 className="text-sm font-semibold text-slate-900">Host display name</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Optional label for your account. Property listings still use each property&apos;s own host name.
+          Sets the first part of your guest links (letters and numbers only). Leave empty to use{' '}
+          <span className="font-mono text-slate-600">stay</span> in the URL. Property listings still use each
+          property&apos;s own host name.
         </p>
         <input
           value={hostName}
-          onChange={(e) => setHostName(e.target.value)}
+          onChange={(e) => setHostName(sanitizeHostDisplayNameInput(e.target.value))}
           placeholder="Your name"
+          autoComplete="nickname"
           className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
         />
+        <p className="mt-2 break-all text-xs text-slate-500">
+          <span className="font-semibold text-slate-600">Guest link example:</span>{' '}
+          <span className="font-mono text-slate-700">{exampleGuestLink}</span>
+        </p>
         <button
           type="submit"
           disabled={busy}

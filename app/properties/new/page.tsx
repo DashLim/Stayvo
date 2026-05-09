@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import PropertyForm from '@/app/properties/_components/PropertyForm';
+import PropertyFormClient from '@/app/properties/_components/PropertyFormClient';
 import { ensureGeneralLocation } from '@/app/actions/locations';
 import { BASE_SECTION_KEYS } from '@/lib/guest-layout';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -46,7 +46,7 @@ export default async function NewPropertyPage({
   const defaultLocationId = queryLocationValid ? selectedFromQuery : locRes.locationId;
 
   return (
-    <PropertyForm
+    <PropertyFormClient
       mode="create"
       locations={list}
       initialValues={{

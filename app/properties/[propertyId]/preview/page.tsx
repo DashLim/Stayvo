@@ -22,14 +22,19 @@ export default async function PropertyPreviewPage({
 
   const { data: property, error: propertyError } = await supabase
     .from('properties')
-    .select(
-      'id, property_name, full_address, city, state, google_maps_url, waze_url, parking_details, wifi_network_name, wifi_password, host_name, host_whatsapp_number, host_whatsapp_message, guest_section_order, hero_image_path, social_facebook_url, social_instagram_url, social_x_url, social_tiktok_url, social_youtube_url, social_airbnb_url'
-    )
+    // Use * so older DBs without optional columns (e.g. host_whatsapp_chat_number) still load.
+    .select('*')
     .eq('id', propertyId)
     .eq('user_id', user.id)
     .maybeSingle();
 
   if (propertyError || !property) redirect('/dashboard');
+
+  const previewRow = property as Record<string, unknown>;
+  const hostWhatsappChat =
+    typeof previewRow.host_whatsapp_chat_number === 'string'
+      ? previewRow.host_whatsapp_chat_number
+      : '';
 
   const [
     { data: steps, error: stepsError },
@@ -85,7 +90,7 @@ export default async function PropertyPreviewPage({
       wifiPassword={property.wifi_password ?? null}
       hostName={property.host_name ?? ''}
       hostWhatsappNumber={property.host_whatsapp_number ?? ''}
-      hostWhatsappMessage={property.host_whatsapp_message ?? null}
+      hostWhatsappChatNumber={hostWhatsappChat}
       checkInSteps={(steps ?? []).map((s) => {
         const row = s as typeof s & MediaRow;
         return {

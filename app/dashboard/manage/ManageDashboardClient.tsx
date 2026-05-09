@@ -21,7 +21,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { deleteProperty } from '@/app/actions/properties';
+import { cloneProperty, deleteProperty } from '@/app/actions/properties';
 import {
   createLocation,
   deleteLocation,
@@ -63,14 +63,10 @@ function DragHandle({
       className={`touch-none select-none rounded-full glass p-2 text-slate-400 transition hover:text-brand ${trelloPressFx}`}
       aria-label="Drag to reorder"
     >
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-        <path
-          d="M9 4v16m0 0-3-3m3 3 3-3M15 20V4m0 0-3 3m3-3 3 3"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+        <circle cx="12" cy="6" r="2" />
+        <circle cx="12" cy="12" r="2" />
+        <circle cx="12" cy="18" r="2" />
       </svg>
     </button>
   );
@@ -84,6 +80,7 @@ function SortablePropertyRow({
   onMoveProperty,
   onToggleLive,
   onDeleteProperty,
+  onCloneProperty,
 }: {
   p: PropRow;
   flatLocations: LocRow[];
@@ -92,6 +89,7 @@ function SortablePropertyRow({
   onMoveProperty: (id: string, locId: string) => void;
   onToggleLive: (id: string, live: boolean) => void;
   onDeleteProperty: (id: string, name: string) => void;
+  onCloneProperty: (id: string, name: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: p.id, disabled: !editMode || pending });
@@ -102,6 +100,17 @@ function SortablePropertyRow({
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 10 : undefined,
   };
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleOutsideClick() {
+      setMenuOpen(false);
+    }
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, [menuOpen]);
 
   return (
     <li
@@ -125,30 +134,51 @@ function SortablePropertyRow({
           </div>
         </div>
         {!editMode ? (
-          <Link
-            href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
-            prefetch={false}
-            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-600 backdrop-blur-sm transition hover:text-slate-900 ${trelloPressFx}`}
-            title="Edit property"
-            aria-label="Edit property"
-          >
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
-              <path
-                d="M10 3H5.5A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9A2.5 2.5 0 0 0 17 14.5V10"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="m12.5 3.5 2.5 2.5m-2.5-2.5-4 4-.5 2.5 2.5-.5 4-4a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0Z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Link>
+          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-600 backdrop-blur-sm transition hover:text-slate-900 ${trelloPressFx}`}
+              title="Property actions"
+              aria-label="Property actions"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+                <path d="M4.5 10a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 4.5 10Zm5.5 0a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 10 10Zm5.5 0a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 15.5 10Z" />
+              </svg>
+            </button>
+            {menuOpen ? (
+              <div className="absolute bottom-full right-0 z-50 mb-2 w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                <Link
+                  href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
+                  prefetch={false}
+                  className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Edit
+                </Link>
+                <button
+                  type="button"
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onCloneProperty(p.id, p.property_name || 'Untitled');
+                  }}
+                >
+                  Clone
+                </button>
+                <button
+                  type="button"
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDeleteProperty(p.id, p.property_name || 'Untitled');
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null}
+          </div>
         ) : (
           <div className="flex shrink-0 items-center gap-2">
             {/* iOS-style toggle switch */}
@@ -216,6 +246,7 @@ function SortableLocationCard({
   onToggleLive,
   onDeleteLocation,
   onDeleteProperty,
+  onCloneProperty,
   onPropertyDragEnd,
 }: {
   group: Group;
@@ -226,6 +257,7 @@ function SortableLocationCard({
   onToggleLive: (id: string, live: boolean) => void;
   onDeleteLocation: (id: string, name: string, count: number) => void;
   onDeleteProperty: (id: string, name: string) => void;
+  onCloneProperty: (id: string, name: string) => void;
   onPropertyDragEnd: (locationId: string, event: DragEndEvent) => void;
 }) {
   const { loc, properties } = { loc: group.location, properties: group.properties };
@@ -329,6 +361,7 @@ function SortableLocationCard({
                   onMoveProperty={onMoveProperty}
                   onToggleLive={onToggleLive}
                   onDeleteProperty={onDeleteProperty}
+                  onCloneProperty={onCloneProperty}
                 />
               ))}
             </ul>
@@ -346,6 +379,13 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
   const [groups, setGroups] = useState(locationGroups);
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('stayvo:manage-edit-state', { detail: { active: editMode } })
+    );
+  }, [editMode]);
+
   const [addLocOpen, setAddLocOpen] = useState(false);
   const [newLocName, setNewLocName] = useState('');
 
@@ -480,6 +520,18 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     refresh();
   }
 
+  async function onCloneProperty(propertyId: string, propertyName: string) {
+    setError(null);
+    const ok = window.confirm(`Clone property "${propertyName}"?`);
+    if (!ok) return;
+    const res = await cloneProperty(propertyId);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    refresh();
+  }
+
   async function onDeleteLocation(locationId: string, locationName: string, count: number) {
     setError(null);
     const label = locationName.trim() || 'this location';
@@ -576,6 +628,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 onToggleLive={onToggleLive}
                 onDeleteLocation={onDeleteLocation}
                 onDeleteProperty={onDeleteProperty}
+                onCloneProperty={onCloneProperty}
                 onPropertyDragEnd={onPropertyDragEnd}
               />
             ))}
