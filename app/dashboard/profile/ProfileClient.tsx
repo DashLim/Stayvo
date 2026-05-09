@@ -154,11 +154,6 @@ export default function ProfileClient({
 
       <form onSubmit={onSaveHostName} className="glass rounded-[20px] p-4">
         <h2 className="text-sm font-semibold text-slate-900">Host display name</h2>
-        <p className="mt-1 text-xs text-slate-500">
-          Sets the first part of your guest links (letters and numbers only). Leave empty to use{' '}
-          <span className="font-mono text-slate-600">stay</span> in the URL. Property listings still use each
-          property&apos;s own host name.
-        </p>
         <input
           value={hostName}
           onChange={(e) => setHostName(sanitizeHostDisplayNameInput(e.target.value))}

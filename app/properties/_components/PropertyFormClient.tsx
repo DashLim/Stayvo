@@ -14,9 +14,15 @@ const PropertyForm = dynamic(
     loading: () => (
       <main className="mx-auto w-full max-w-5xl pb-10">
         <header className="glass-header sticky top-0 z-30 -mx-4 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
-          <div className="mx-auto flex w-full max-w-5xl items-center gap-3">
-            <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-slate-200/80" />
-            <div className="h-7 flex-1 animate-pulse rounded-lg bg-slate-200/80" />
+          <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-3">
+            <div className="flex flex-1 items-center gap-2">
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-slate-200/80" />
+              <div className="h-7 flex-1 animate-pulse rounded-full bg-slate-200/80" />
+            </div>
+            <div className="ml-auto flex gap-2">
+              <div className="h-10 w-10 animate-pulse rounded-full bg-slate-200/80" />
+              <div className="h-10 min-w-[5.5rem] animate-pulse rounded-full bg-slate-200/80" />
+            </div>
           </div>
         </header>
         <div className="mt-6 space-y-5 px-1">

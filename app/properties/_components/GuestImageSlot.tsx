@@ -47,17 +47,11 @@ export default function GuestImageSlot({
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    // #region agent log
-    fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H1',location:'GuestImageSlot.tsx:onPick',message:'Client selected file for upload',data:{fileSize:file.size,fileType:file.type || null,maxBytes:GUEST_IMAGE_MAX_BYTES},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
 
     setError(null);
     setBusy(true);
     try {
       const compressed = await compressForGuestUpload(file);
-      // #region agent log
-      fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H2',location:'GuestImageSlot.tsx:onPick',message:'Client compressed file before server action',data:{originalSize:file.size,compressedSize:compressed.size},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setPhase('upload');
       const fd = new FormData();
       fd.set('file', compressed);
@@ -68,9 +62,6 @@ export default function GuestImageSlot({
       if (!res.ok) throw new Error(res.error);
       onChange(res.path);
     } catch (err: unknown) {
-      // #region agent log
-      fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H3',location:'GuestImageSlot.tsx:onPick',message:'Client upload flow failed',data:{errorMessage:err instanceof Error ? err.message : String(err)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       setError(err instanceof Error ? err.message : 'Upload failed.');
     } finally {
       setBusy(false);
@@ -98,7 +89,7 @@ export default function GuestImageSlot({
 
   const canInteract = !busy;
   const uploadControlClassName =
-    'inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50';
+    'inline-flex min-h-[2.25rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50';
 
   return (
     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
@@ -115,11 +106,11 @@ export default function GuestImageSlot({
             className="sr-only"
             disabled={!canInteract}
             onChange={onPick}
-            aria-label="Upload image"
+            aria-label={hasPath ? 'Replace image' : 'Upload image'}
           />
           {canInteract ? (
             <label htmlFor={inputId} className={`${uploadControlClassName} cursor-pointer`}>
-              Upload
+              {hasPath ? 'Replace' : 'Upload'}
             </label>
           ) : (
             <span className={`${uploadControlClassName} cursor-wait opacity-60`} aria-live="polite">
@@ -131,7 +122,7 @@ export default function GuestImageSlot({
               type="button"
               disabled={busy}
               onClick={() => void onRemove()}
-              className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+              className="inline-flex min-h-[2.25rem] items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
             >
               Remove
             </button>

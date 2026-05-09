@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   DndContext,
@@ -290,6 +290,7 @@ export default function PropertyForm({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -369,26 +370,45 @@ export default function PropertyForm({
     <main className="pb-10">
       {/* Sticky header */}
       <header className="glass-header sticky top-0 z-30 -mx-4 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
-        <div className="mx-auto flex w-full max-w-5xl items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.push(returnTo)}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
-            aria-label="Back"
-          >
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 0 1 0 1.414L9.414 10l3.293 3.293a1 1 0 0 1-1.414 1.414l-4-4a1 1 0 0 1 0-1.414l4-4a1 1 0 0 1 1.414 0Z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <h1 className="flex-1 text-xl font-semibold tracking-tight text-slate-900">
-            {mode === 'create' ? 'Add property' : 'Edit'}
-          </h1>
-          {mode === 'edit' ? (
-            <div className="flex items-center gap-2">
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(returnTo)}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+              aria-label="Back"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+                <path
+                  fillRule="evenodd"
+                  d="M12.707 5.293a1 1 0 0 1 0 1.414L9.414 10l3.293 3.293a1 1 0 0 1-1.414 1.414l-4-4a1 1 0 0 1 0-1.414l4-4a1 1 0 0 1 1.414 0Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-slate-900">
+              {mode === 'create' ? 'Add property' : 'Edit'}
+            </h1>
+          </div>
+          <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2 sm:ml-auto">
+            {mode === 'edit' && propertyId ? (
+              <Link
+                href={`/properties/${propertyId}/preview`}
+                prefetch={false}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                aria-label="Preview guest view"
+                title="Preview guest view"
+              >
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+                  <path d="M10 3C5.5 3 2 10 2 10s3.5 7 8 7 8-7 8-7-3.5-7-8-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+                </svg>
+              </Link>
+            ) : null}
+            {mode === 'edit' ? (
               <button
                 type="button"
                 onClick={() => setSectionOrderOpen(true)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
                 aria-label="Reorder sections"
                 title="Reorder sections"
               >
@@ -398,21 +418,20 @@ export default function PropertyForm({
                   <circle cx="10" cy="15" r="1.75" />
                 </svg>
               </button>
-              {propertyId ? (
-                <Link
-                  href={`/properties/${propertyId}/preview`}
-                  prefetch={false}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
-                  aria-label="Preview guest view"
-                  title="Preview guest view"
-                >
-                  <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-                    <path d="M10 3C5.5 3 2 10 2 10s3.5 7 8 7 8-7 8-7-3.5-7-8-7Zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
-                  </svg>
-                </Link>
-              ) : null}
-            </div>
-          ) : null}
+            ) : null}
+            <button
+              type="button"
+              disabled={submitting || deleting}
+              onClick={() => formRef.current?.requestSubmit()}
+              className="inline-flex h-10 min-w-[5.5rem] shrink-0 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 disabled:opacity-60"
+            >
+              {submitting
+                ? 'Saving…'
+                : mode === 'create'
+                  ? 'Create'
+                  : 'Save'}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -464,7 +483,13 @@ export default function PropertyForm({
           )
         : null}
 
-      <form onSubmit={onSubmit} autoComplete="off" className="mt-6 space-y-7">
+      <form
+        ref={formRef}
+        id="stayvo-property-form"
+        onSubmit={onSubmit}
+        autoComplete="off"
+        className="mt-6 space-y-7"
+      >
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             {error}
