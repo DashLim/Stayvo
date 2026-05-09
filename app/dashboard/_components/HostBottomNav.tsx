@@ -125,7 +125,7 @@ export default function HostBottomNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="glass-dark rounded-full px-1.5 py-2"
+            className="glass-nav-crystal rounded-full px-1.5 py-2"
             aria-label="Host navigation"
           >
             <LayoutGroup id="host-bottom-nav">
@@ -148,13 +148,13 @@ export default function HostBottomNav() {
                         onClick={() => setOptimisticHref(tab.href)}
                         aria-current={active ? 'page' : undefined}
                         className={`relative flex w-[4.5rem] flex-col items-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold transition-colors duration-150 ${
-                          active ? 'text-brand' : 'text-white/55'
+                          active ? 'text-amber-950' : 'text-slate-700/90'
                         }`}
                       >
                         {active ? (
                           <motion.div
                             layoutId="hostNavActiveBubble"
-                            className="absolute inset-0 z-0 rounded-full bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-white/10"
+                            className="absolute inset-0 z-0 rounded-full bg-gradient-to-b from-[rgba(238,210,165,0.55)] to-[rgba(218,175,115,0.52)] shadow-[0_2px_12px_rgba(224,162,77,0.22),inset_0_1px_0_rgba(255,255,255,0.38),inset_0_-2px_6px_rgba(160,110,45,0.12)]"
                             transition={ACTIVE_BUBBLE_SPRING}
                           />
                         ) : null}
