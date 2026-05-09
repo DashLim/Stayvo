@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stayvo-v1';
+const CACHE_NAME = 'stayvo-v2';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ['/', '/dashboard', '/offline.html'];
@@ -41,11 +41,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets (_next/static, fonts, images) → cache-first
-  if (
-    url.pathname.startsWith('/_next/static/') ||
-    url.pathname.match(/\.(ico|png|svg|webp|jpg|jpeg|woff2?|ttf|css|js)$/)
-  ) {
+  // Next.js chunks under /_next/static must be network-first: cache-first serves stale JS after
+  // rebuilds (dev HMR, redeploy) and causes ChunkLoadError when loading route bundles.
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Other static assets → cache-first
+  if (url.pathname.match(/\.(ico|png|svg|webp|jpg|jpeg|woff2?|ttf|css|js)$/)) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>

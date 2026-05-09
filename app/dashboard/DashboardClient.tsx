@@ -154,6 +154,10 @@ export default function DashboardClient({
   }
 
   const storageReady = selectedIds !== null;
+  const [openLinksPanel, setOpenLinksPanel] = useState<{
+    propertyId: string;
+    panel: 'active' | 'generate';
+  } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const filteredLocationOptions = useMemo(() => {
@@ -233,6 +237,20 @@ export default function DashboardClient({
                         links={linksForProperty}
                         nowIso={nowIso}
                         hostDisplayName={hostDisplayName}
+                        linksPanel={
+                          openLinksPanel?.propertyId === p.id
+                            ? openLinksPanel.panel
+                            : null
+                        }
+                        onLinksPanelChange={(next) => {
+                          setOpenLinksPanel((prev) => {
+                            if (next === null) {
+                              if (prev?.propertyId === p.id) return null;
+                              return prev;
+                            }
+                            return { propertyId: p.id, panel: next };
+                          });
+                        }}
                       />
                     );
                   })}

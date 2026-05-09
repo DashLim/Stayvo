@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import {
@@ -242,6 +243,27 @@ export default function ProfileClient({
           Delete account
         </PressButton>
       </div>
+
+      <section className="glass rounded-[20px] p-4">
+        <h2 className="text-sm font-semibold text-slate-900">Legal</h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Review the latest Privacy Policy and Terms of Service.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href="/privacy"
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+          >
+            Privacy Policy
+          </Link>
+          <Link
+            href="/terms"
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+          >
+            Terms of Service
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

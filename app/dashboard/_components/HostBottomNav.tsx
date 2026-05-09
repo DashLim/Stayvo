@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { usePathname } from 'next/navigation';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { usePathname, useRouter } from 'next/navigation';
 
 const tabs = [
   {
@@ -61,15 +61,35 @@ const tabs = [
   },
 ] as const;
 
+/** Shared layout spring — slightly soft / inertial (liquid tab bubble). */
+const ACTIVE_BUBBLE_SPRING = {
+  type: 'spring' as const,
+  stiffness: 360,
+  damping: 26,
+  mass: 0.88,
+};
+
 export default function HostBottomNav() {
+  const router = useRouter();
   const pathname = usePathname() ?? '';
   const path = pathname.replace(/\/$/, '') || '/';
   const [mounted, setMounted] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [addLocationOpen, setAddLocationOpen] = useState(false);
+  /** Shown tab updates immediately on tap; cleared when URL catches up. */
   const [optimisticHref, setOptimisticHref] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    setOptimisticHref(null);
+  }, [path]);
+
+  useEffect(() => {
+    for (const tab of tabs) {
+      router.prefetch(tab.href);
+    }
+  }, [router]);
 
   useEffect(() => {
     function onOpen() { setFilterOpen(true); }
@@ -93,11 +113,6 @@ export default function HostBottomNav() {
     };
   }, []);
 
-  useEffect(() => {
-    // Navigation completed; route is source of truth again.
-    setOptimisticHref(null);
-  }, [path]);
-
   if (!mounted) return null;
 
   return createPortal(
@@ -113,42 +128,44 @@ export default function HostBottomNav() {
             className="glass-dark rounded-full px-1.5 py-2"
             aria-label="Host navigation"
           >
-            <div className="flex items-center">
-              {tabs.map((tab) => {
-                const active = optimisticHref
-                  ? optimisticHref === tab.href
-                  : tab.match(path);
-                return (
-                  <motion.div
-                    key={tab.href}
-                    whileTap={{ scale: 0.8 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  >
-                    <Link
-                      href={tab.href}
-                      prefetch={false}
-                      onClick={() => setOptimisticHref(tab.href)}
-                      aria-current={active ? 'page' : undefined}
-                      className="relative flex w-[4.5rem] flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold"
+            <LayoutGroup id="host-bottom-nav">
+              <div className="flex items-center">
+                {tabs.map((tab) => {
+                  const active =
+                    optimisticHref != null
+                      ? optimisticHref === tab.href
+                      : tab.match(path);
+                  return (
+                    <motion.div
+                      key={tab.href}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 38 }}
                     >
-                      {active && (
-                        <motion.div
-                          layoutId="activeTab"
-                          className="absolute inset-0 rounded-full bg-white/15"
-                          transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                        />
-                      )}
-                      <span className={`relative z-10 transition-colors duration-150 ${active ? 'text-brand' : 'text-white/55'}`}>
-                        {tab.icon}
-                      </span>
-                      <span className={`relative z-10 transition-colors duration-150 ${active ? 'text-brand' : 'text-white/55'}`}>
-                        {tab.label}
-                      </span>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      <Link
+                        href={tab.href}
+                        prefetch
+                        onPointerDown={() => setOptimisticHref(tab.href)}
+                        onClick={() => setOptimisticHref(tab.href)}
+                        aria-current={active ? 'page' : undefined}
+                        className={`relative flex w-[4.5rem] flex-col items-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold transition-colors duration-150 ${
+                          active ? 'text-brand' : 'text-white/55'
+                        }`}
+                      >
+                        {active ? (
+                          <motion.div
+                            layoutId="hostNavActiveBubble"
+                            className="absolute inset-0 z-0 rounded-full bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] ring-1 ring-white/10"
+                            transition={ACTIVE_BUBBLE_SPRING}
+                          />
+                        ) : null}
+                        <span className="relative z-10">{tab.icon}</span>
+                        <span className="relative z-10">{tab.label}</span>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </LayoutGroup>
           </motion.nav>
         </div>
       )}

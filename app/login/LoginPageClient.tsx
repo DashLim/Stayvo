@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PressButton from '@/app/_components/PressButton';
@@ -22,6 +23,7 @@ export default function LoginPageClient() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [agreedToLegal, setAgreedToLegal] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -36,6 +38,10 @@ export default function LoginPageClient() {
 
     setError(null);
     setInfo(null);
+    if (!agreedToLegal) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
     setSubmitting(true);
     try {
       if (!supabase) {
@@ -170,8 +176,29 @@ export default function LoginPageClient() {
             </div>
           ) : null}
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={agreedToLegal}
+              onChange={(e) => setAgreedToLegal(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-brand"
+              aria-required="true"
+            />
+            <span>
+              I agree to the{' '}
+              <Link href="/terms" className="font-semibold text-brand underline-offset-2 hover:underline">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="font-semibold text-brand underline-offset-2 hover:underline">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+
           <PressButton
-            disabled={submitting || !supabase}
+            disabled={submitting || !supabase || !agreedToLegal}
             className="w-full rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
           >
             {submitting

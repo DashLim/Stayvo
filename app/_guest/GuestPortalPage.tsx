@@ -314,7 +314,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
         className="relative left-1/2 right-1/2 z-10 -mt-10 w-screen -translate-x-1/2 rounded-t-[32px]"
         style={{ background: 'linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%)' }}
       >
-        <div className="pt-6 pb-12 space-y-3">
+        <div className="space-y-8 pt-8 pb-12 sm:space-y-10">
           {orderedSections.map((sectionKey) => {
 
             /* ── Address ──────────────────────────────────────────── */
@@ -415,7 +415,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       return (
                         <li key={`${s.step_order}-${idx}`}>
                           {/* Step row */}
-                          <div className="flex items-start gap-3 px-4 pb-1 pt-3">
+                          <div className="flex items-start gap-3 px-4 pb-2 pt-4">
                             <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">
                               {idx + 1}
                             </span>
@@ -425,7 +425,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                           </div>
                           {/* Full-width photo below the step text */}
                           {hasPhoto ? (
-                            <div className="mt-0.5 px-4 pb-3">
+                            <div className="mt-1 px-4 pb-4">
                               <GuestSectionMedia
                                 guestImagePath={s.guest_image_path}
                                 driveMediaUrl={s.drive_media_url}
@@ -456,7 +456,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </svg>
                     }
                   />
-                  <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="mt-4 grid grid-cols-2 gap-3">
                     {hasText(portal.wifi_network_name) ? (
                       <div className="rounded-xl bg-slate-50 px-3 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Network</p>
@@ -492,7 +492,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </svg>
                     }
                   />
-                  <ul className="mt-3 space-y-2.5">
+                  <ul className="mt-4 space-y-3.5">
                     {portal.house_rules
                       .filter((r) => r.is_displayed)
                       .map((r, idx) => (
@@ -521,7 +521,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </svg>
                     }
                   />
-                  <FaqAccordion items={faqItems} className="mt-3" />
+                  <FaqAccordion items={faqItems} className="mt-4" />
                 </section>
               );
             }
@@ -538,7 +538,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </svg>
                     }
                   />
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-4 space-y-6">
                     {portal.guidebook_tips
                       .filter(
                         (tip) =>
@@ -549,7 +549,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       )
                       .map((tip, idx) => (
                         <div key={`${tip.tip_order}-${idx}`}>
-                          {idx > 0 ? <div className="mb-3 border-t border-slate-100" /> : null}
+                          {idx > 0 ? <div className="mb-4 border-t border-slate-100" /> : null}
                           {hasText(tip.label) ? (
                             <h3 className="text-sm font-semibold text-slate-800">{tip.label}</h3>
                           ) : null}
@@ -651,7 +651,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
 
           {/* Social links */}
           <GuestSocialLinks
-            className="pt-4"
+            className="pt-2"
             links={{
               facebook: portal.social_facebook_url,
               instagram: portal.social_instagram_url,

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ComponentProps } from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   deleteGuestLink,
   extendGuestLink,
@@ -39,6 +39,9 @@ type PropertyCardProps = {
   links: GuestLinkItem[];
   nowIso: string;
   hostDisplayName: string | null;
+  /** When set with `onLinksPanelChange`, expansion is controlled by the parent (e.g. one open tab across the dashboard). */
+  linksPanel?: 'active' | 'generate' | null;
+  onLinksPanelChange?: (panel: 'active' | 'generate' | null) => void;
 };
 
 /** Native date inputs have a large intrinsic min-width on mobile WebKit; clip inside this shell. */
@@ -97,6 +100,15 @@ function isActiveLink(l: GuestLinkItem, nowIso: string) {
 
 const EXPIRED_GRACE_MS = 14 * 24 * 60 * 60 * 1000;
 
+const LINKS_PANEL_EASE = [0.25, 0.1, 0.25, 1] as const;
+
+const linksPanelMotionProps = {
+  initial: { opacity: 0, height: 0, y: -10 },
+  animate: { opacity: 1, height: 'auto' as const, y: 0 },
+  exit: { opacity: 0, height: 0, y: -6 },
+  transition: { duration: 0.28, ease: LINKS_PANEL_EASE },
+};
+
 /** Expired, but still within 14 days after expires_at (then hidden everywhere). */
 function isRecentlyExpired(l: GuestLinkItem, nowIso: string) {
   if (l.is_permanent === true) return false;
@@ -112,11 +124,25 @@ export default function PropertyCard({
   links,
   nowIso,
   hostDisplayName,
+  linksPanel: linksPanelProp,
+  onLinksPanelChange,
 }: PropertyCardProps) {
   const router = useRouter();
-  const [showGenerate, setShowGenerate] = useState(false);
+  const [localLinksPanel, setLocalLinksPanel] = useState<
+    'active' | 'generate' | null
+  >(null);
+  const linksPanelControlled = onLinksPanelChange != null;
+  const linksPanel = linksPanelControlled ? (linksPanelProp ?? null) : localLinksPanel;
+
+  function setLinksPanel(next: 'active' | 'generate' | null) {
+    if (linksPanelControlled) {
+      onLinksPanelChange(next);
+    } else {
+      setLocalLinksPanel(next);
+    }
+  }
+
   const [showExtendId, setShowExtendId] = useState<string | null>(null);
-  const [showActiveLinks, setShowActiveLinks] = useState(false);
 
   const [guestName, setGuestName] = useState('');
   const [checkoutDate, setCheckoutDate] = useState('');
@@ -215,7 +241,7 @@ export default function PropertyCard({
       setCheckoutDate('');
       setIsPermanent(false);
       setCustomSlug('');
-      setShowGenerate(false);
+      setLinksPanel(null);
       router.refresh();
     } catch (err: any) {
       setError(err?.message ?? 'Unable to generate link.');
@@ -290,21 +316,23 @@ export default function PropertyCard({
           type="button"
           whileTap={{ scale: 0.92 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          onClick={() => setShowActiveLinks((v) => !v)}
+          onClick={() =>
+            setLinksPanel(linksPanel === 'active' ? null : 'active')
+          }
           className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80"
         >
           <span>Active links</span>
           <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
             {activeLinks.length}
           </span>
-          <span>{showActiveLinks ? '▴' : '▾'}</span>
+          <span>{linksPanel === 'active' ? '▴' : '▾'}</span>
         </motion.button>
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           onClick={() => {
-            setShowGenerate((v) => !v);
+            setLinksPanel(linksPanel === 'generate' ? null : 'generate');
             setError(null);
           }}
           className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
@@ -313,93 +341,101 @@ export default function PropertyCard({
         </motion.button>
       </div>
 
-      {showGenerate ? (
-        <form
-          onSubmit={onGenerate}
-          className="mt-4 overflow-x-hidden rounded-2xl border border-white/50 bg-white/50 p-4 backdrop-blur-sm"
-        >
-          <div className="text-sm font-semibold text-slate-800">
-            Generate guest link
-          </div>
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
-            <input
-              id={`perm-${property.id}`}
-              type="checkbox"
-              checked={isPermanent}
-              onChange={(e) => {
-                setIsPermanent(e.target.checked);
-                if (e.target.checked) setCheckoutDate('');
-              }}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            <label
-              htmlFor={`perm-${property.id}`}
-              className="text-xs font-semibold text-slate-700"
+      <AnimatePresence initial={false}>
+        {linksPanel === 'generate' ? (
+          <motion.div
+            key={`generate-${property.id}`}
+            className="overflow-hidden"
+            {...linksPanelMotionProps}
+          >
+            <form
+              onSubmit={onGenerate}
+              className="mt-4 overflow-x-hidden rounded-2xl border border-white/50 bg-white/50 p-4 backdrop-blur-sm"
             >
-              Permanent Link
-            </label>
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="min-w-0 max-w-full">
-              <label className="text-xs font-semibold text-slate-600">
-                Guest name <span className="font-normal text-slate-400">(optional)</span>
-              </label>
-              <input
-                value={guestName}
-                onChange={(e) => setGuestName(e.target.value)}
-                className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-              />
-            </div>
-            <div className="min-w-0 max-w-full">
-              <label className="text-xs font-semibold text-slate-600">
-                Checkout date
-              </label>
-              <DateField
-                required={!isPermanent}
-                disabled={isPermanent}
-                value={checkoutDate}
-                onChange={(e) => setCheckoutDate(e.target.value)}
-                className="mt-1"
-              />
-              {!isPermanent ? (
+              <div className="text-sm font-semibold text-slate-800">
+                Generate guest link
+              </div>
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                <input
+                  id={`perm-${property.id}`}
+                  type="checkbox"
+                  checked={isPermanent}
+                  onChange={(e) => {
+                    setIsPermanent(e.target.checked);
+                    if (e.target.checked) setCheckoutDate('');
+                  }}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                <label
+                  htmlFor={`perm-${property.id}`}
+                  className="text-xs font-semibold text-slate-700"
+                >
+                  Permanent Link
+                </label>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="min-w-0 max-w-full">
+                  <label className="text-xs font-semibold text-slate-600">
+                    Guest name <span className="font-normal text-slate-400">(optional)</span>
+                  </label>
+                  <input
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                  />
+                </div>
+                <div className="min-w-0 max-w-full">
+                  <label className="text-xs font-semibold text-slate-600">
+                    Checkout date
+                  </label>
+                  <DateField
+                    required={!isPermanent}
+                    disabled={isPermanent}
+                    value={checkoutDate}
+                    onChange={(e) => setCheckoutDate(e.target.value)}
+                    className="mt-1"
+                  />
+                  {!isPermanent ? (
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Link expires 2 days after checkout (end of day).
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="text-xs font-semibold text-slate-600">
+                  Custom link (optional)
+                </label>
+                <input
+                  value={customSlug}
+                  onChange={(e) => setCustomSlug(e.target.value)}
+                  placeholder="Leave blank for random link"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                />
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Link expires 2 days after checkout (end of day).
+                  Lowercase letters, numbers, hyphens only. 4–24 characters. Must be
+                  unique.
                 </p>
-              ) : null}
-            </div>
-          </div>
-          <div className="mt-3">
-            <label className="text-xs font-semibold text-slate-600">
-              Custom link (optional)
-            </label>
-            <input
-              value={customSlug}
-              onChange={(e) => setCustomSlug(e.target.value)}
-              placeholder="Leave blank for random link"
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-            />
-            <p className="mt-1 text-[11px] text-slate-500">
-              Lowercase letters, numbers, hyphens only. 4–24 characters. Must be
-              unique.
-            </p>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <PressButton
-              disabled={submitting}
-              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
-            >
-              {submitting ? 'Generating...' : 'Create Link'}
-            </PressButton>
-            <PressButton
-              type="button"
-              onClick={() => setShowGenerate(false)}
-              className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700"
-            >
-              Cancel
-            </PressButton>
-          </div>
-        </form>
-      ) : null}
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <PressButton
+                  disabled={submitting}
+                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                >
+                  {submitting ? 'Generating...' : 'Create Link'}
+                </PressButton>
+                <PressButton
+                  type="button"
+                  onClick={() => setLinksPanel(null)}
+                  className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700"
+                >
+                  Cancel
+                </PressButton>
+              </div>
+            </form>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {error ? (
         <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700">
@@ -444,8 +480,14 @@ export default function PropertyCard({
         </div>
       ) : null}
 
-      {showActiveLinks ? (
-        <div className="mt-4">
+      <AnimatePresence initial={false}>
+        {linksPanel === 'active' ? (
+          <motion.div
+            key={`active-${property.id}`}
+            className="overflow-hidden"
+            {...linksPanelMotionProps}
+          >
+            <div className="mt-4">
           {activeLinks.length === 0 ? (
             <p className="text-sm text-slate-500">No active links yet.</p>
           ) : (
@@ -634,8 +676,10 @@ export default function PropertyCard({
                 </div>
               </details>
             ) : null}
-        </div>
-      ) : null}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }
