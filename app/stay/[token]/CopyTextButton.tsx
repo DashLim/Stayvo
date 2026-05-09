@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import PressButton from '@/app/_components/PressButton';
 
 type CopyTextButtonProps = {
   text: string;
@@ -21,7 +22,7 @@ export default function CopyTextButton({
   const classes = className ?? 'font-semibold text-slate-900 underline';
 
   return (
-    <button
+    <PressButton
       type="button"
       className={classes}
       onClick={async () => {
@@ -35,6 +36,6 @@ export default function CopyTextButton({
       }}
     >
       {label}
-    </button>
+    </PressButton>
   );
 }

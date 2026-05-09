@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { motion } from 'framer-motion';
 
 type QuickNavItem = {
   key: 'checkin' | 'parking' | 'wifi' | 'rules' | 'call' | 'whatsapp';
@@ -114,9 +115,11 @@ export default function GuestSectionQuickNav({
           if (item.key === 'call') {
             if (!callHref) return null;
             return (
-              <a
+              <motion.a
                 key={item.key}
                 href={callHref}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition duration-150 active:scale-95 ${
                   isActive ? 'bg-brand/12' : 'hover:bg-white/70'
                 }`}
@@ -131,18 +134,20 @@ export default function GuestSectionQuickNav({
                     strokeLinejoin="round"
                   />
                 </svg>
-              </a>
+              </motion.a>
             );
           }
 
           if (item.key === 'whatsapp') {
             if (!whatsappHref) return null;
             return (
-              <a
+              <motion.a
                 key={item.key}
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition duration-150 active:scale-95 ${
                   isActive ? 'bg-brand/12' : 'hover:bg-white/70'
                 }`}
@@ -151,15 +156,17 @@ export default function GuestSectionQuickNav({
                 <svg viewBox="0 0 24 24" className="h-5 w-5 text-[#25D366]" fill="currentColor" aria-hidden>
                   <path d="M20.52 3.48A11.88 11.88 0 0 0 12.06 0C5.52 0 .29 5.23.29 11.66c0 2.06.54 4.07 1.57 5.86L0 24l6.63-1.74a11.7 11.7 0 0 0 5.43 1.38h.01c6.54 0 11.77-5.23 11.77-11.66 0-3.12-1.22-6.05-3.32-8.5ZM12.06 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.8 1 1.02-3.7-.22-.36a9.43 9.43 0 0 1-1.44-5.01c0-5.2 4.24-9.43 9.47-9.43 2.53 0 4.9.99 6.68 2.77a9.36 9.36 0 0 1 2.77 6.66c0 5.2-4.24 9.44-9.47 9.44Zm5.48-7.49c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.8-1.49-1.79-1.66-2.09-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.64-.93-2.25-.25-.58-.5-.5-.68-.51l-.58-.01c-.2 0-.52.07-.79.37-.28.3-1.05 1.02-1.05 2.5 0 1.47 1.08 2.9 1.23 3.1.15.2 2.12 3.23 5.14 4.52.72.31 1.28.5 1.72.64.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.18-1.42-.08-.12-.28-.2-.58-.35Z" />
                 </svg>
-              </a>
+              </motion.a>
             );
           }
 
           if (!item.targetId) return null;
           return (
-            <button
+            <motion.button
               key={item.key}
               type="button"
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => onJump(item.targetId!)}
               className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition duration-150 active:scale-95 ${
                 isActive ? 'bg-brand/12' : 'hover:bg-white/70'
@@ -186,7 +193,7 @@ export default function GuestSectionQuickNav({
                   <path d="M4.25 2.5A1.75 1.75 0 0 0 2.5 4.25v11.5c0 .97.78 1.75 1.75 1.75h11.5c.97 0 1.75-.78 1.75-1.75V7.38a1.75 1.75 0 0 0-.51-1.24l-3.63-3.63a1.75 1.75 0 0 0-1.24-.51H4.25Zm2.25 4a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5h-5A.75.75 0 0 1 6.5 6.5Zm0 3.5a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1-.75-.75Zm0 3.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1-.75-.75Z" />
                 </svg>
               ) : null}
-            </button>
+            </motion.button>
           );
         })}
       </div>

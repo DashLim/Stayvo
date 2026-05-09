@@ -5,6 +5,7 @@ import {
   googleDriveImageViewUrl,
   googleDrivePreviewEmbedUrl,
 } from '@/lib/google-drive-embed';
+import PressButton from '@/app/_components/PressButton';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -126,7 +127,7 @@ export default function DriveMediaEmbed({
   if (kind === 'iframe') {
     return (
       <>
-        <button
+        <PressButton
           type="button"
           onClick={() => setVideoModalOpen(true)}
           className="group relative mt-3 flex w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
@@ -155,7 +156,7 @@ export default function DriveMediaEmbed({
               </svg>
             </span>
           </span>
-        </button>
+        </PressButton>
         <DriveIframeModal
           src={previewSrc}
           open={videoModalOpen}
@@ -167,7 +168,7 @@ export default function DriveMediaEmbed({
 
   return (
     <>
-      <button
+      <PressButton
         type="button"
         onClick={() => setLightboxOpen(true)}
         className="group mt-3 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
@@ -179,7 +180,7 @@ export default function DriveMediaEmbed({
           referrerPolicy="no-referrer"
           className="max-h-[min(480px,70vh)] w-full cursor-zoom-in object-contain transition group-hover:opacity-95"
         />
-      </button>
+      </PressButton>
       {lightboxOpen
         ? createPortal(
             <div

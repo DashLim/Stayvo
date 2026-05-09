@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import PressButton from '@/app/_components/PressButton';
 import { tryCreateSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type AuthMode = 'login' | 'signup';
@@ -102,7 +103,7 @@ export default function LoginPageClient() {
         ) : null}
 
         <div className="mb-4 flex gap-2">
-          <button
+          <PressButton
             type="button"
             className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
               mode === 'login'
@@ -112,8 +113,8 @@ export default function LoginPageClient() {
             onClick={() => setMode('login')}
           >
             Log in
-          </button>
-          <button
+          </PressButton>
+          <PressButton
             type="button"
             className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition ${
               mode === 'signup'
@@ -123,7 +124,7 @@ export default function LoginPageClient() {
             onClick={() => setMode('signup')}
           >
             Sign up
-          </button>
+          </PressButton>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-3">
@@ -169,7 +170,7 @@ export default function LoginPageClient() {
             </div>
           ) : null}
 
-          <button
+          <PressButton
             disabled={submitting || !supabase}
             className="w-full rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
           >
@@ -178,7 +179,7 @@ export default function LoginPageClient() {
               : mode === 'login'
                 ? 'Log in'
                 : 'Create account'}
-          </button>
+          </PressButton>
         </form>
       </section>
     </main>

@@ -9,6 +9,7 @@ import {
   updateHostProfileEmail,
   updateHostProfilePassword,
 } from '@/app/actions/host-account';
+import PressButton from '@/app/_components/PressButton';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
 
 export default function ProfileClient({
@@ -165,13 +166,13 @@ export default function ProfileClient({
           <span className="font-semibold text-slate-600">Guest link example:</span>{' '}
           <span className="font-mono text-slate-700">{exampleGuestLink}</span>
         </p>
-        <button
+        <PressButton
           type="submit"
           disabled={busy}
           className="mt-3 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60"
         >
           Save name
-        </button>
+        </PressButton>
       </form>
 
       <form onSubmit={onChangeEmail} className="glass rounded-[20px] p-4">
@@ -185,13 +186,13 @@ export default function ProfileClient({
           autoComplete="email"
           className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
         />
-        <button
+        <PressButton
           type="submit"
           disabled={busy}
           className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60"
         >
           Update email
-        </button>
+        </PressButton>
       </form>
 
       <form onSubmit={onChangePassword} className="glass rounded-[20px] p-4">
@@ -214,32 +215,32 @@ export default function ProfileClient({
           autoComplete="new-password"
           className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
         />
-        <button
+        <PressButton
           type="submit"
           disabled={busy}
           className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60"
         >
           Update password
-        </button>
+        </PressButton>
       </form>
 
       <div className="glass flex flex-col gap-3 rounded-[20px] p-4">
-        <button
+        <PressButton
           type="button"
           disabled={busy}
           onClick={() => void onSignOut()}
           className="rounded-full border border-slate-300 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60"
         >
           Log out
-        </button>
-        <button
+        </PressButton>
+        <PressButton
           type="button"
           disabled={busy}
           onClick={() => void onDeleteAccount()}
           className="rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-800 disabled:opacity-60"
         >
           Delete account
-        </button>
+        </PressButton>
       </div>
     </div>
   );

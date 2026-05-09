@@ -41,6 +41,7 @@ import {
   deleteProperty,
   updateProperty,
 } from '@/app/actions/properties';
+import PressButton from '@/app/_components/PressButton';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 
 export type PropertyFormProps = {
@@ -73,6 +74,9 @@ const SECTION_LABELS: Record<string, string> = {
   guidebook: 'Guidebook',
   host: 'Host contact',
 };
+const CHECKIN_STEPS_LIMIT = 10;
+const GUIDEBOOK_TIPS_LIMIT = 10;
+const EXTRA_DETAILS_LIMIT = 10;
 
 function FixedSectionRow({ sectionKey }: { sectionKey: string }) {
   const label = SECTION_LABELS[sectionKey] ?? sectionKey;
@@ -112,7 +116,7 @@ function SortableSectionRow({ id }: { id: string }) {
       {...listeners}
       className="flex touch-none items-center gap-3 rounded-2xl border border-white/50 bg-white/50 px-3 py-2.5 backdrop-blur-sm"
     >
-      <button
+      <PressButton
         type="button"
         className="select-none text-slate-400"
         aria-label="Drag to reorder"
@@ -122,7 +126,7 @@ function SortableSectionRow({ id }: { id: string }) {
           <circle cx="12" cy="12" r="2" />
           <circle cx="12" cy="18" r="2" />
         </svg>
-      </button>
+      </PressButton>
       <span className="text-sm font-medium text-slate-800">{label}</span>
     </li>
   );
@@ -372,7 +376,7 @@ export default function PropertyForm({
       <header className="glass-header sticky top-0 z-30 -mx-4 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-3 gap-y-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <button
+            <PressButton
               type="button"
               onClick={() => router.push(returnTo)}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
@@ -385,7 +389,7 @@ export default function PropertyForm({
                   clipRule="evenodd"
                 />
               </svg>
-            </button>
+            </PressButton>
             <h1 className="min-w-0 text-xl font-semibold tracking-tight text-slate-900">
               {mode === 'create' ? 'Add property' : 'Edit'}
             </h1>
@@ -405,7 +409,7 @@ export default function PropertyForm({
               </Link>
             ) : null}
             {mode === 'edit' ? (
-              <button
+              <PressButton
                 type="button"
                 onClick={() => setSectionOrderOpen(true)}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
@@ -417,9 +421,9 @@ export default function PropertyForm({
                   <circle cx="10" cy="10" r="1.75" />
                   <circle cx="10" cy="15" r="1.75" />
                 </svg>
-              </button>
+              </PressButton>
             ) : null}
-            <button
+            <PressButton
               type="button"
               disabled={submitting || deleting}
               onClick={() => formRef.current?.requestSubmit()}
@@ -430,7 +434,7 @@ export default function PropertyForm({
                 : mode === 'create'
                   ? 'Create'
                   : 'Save'}
-            </button>
+            </PressButton>
           </div>
         </div>
       </header>
@@ -439,7 +443,7 @@ export default function PropertyForm({
       {sectionOrderOpen && typeof document !== 'undefined'
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-center justify-center">
-              <button
+              <PressButton
                 type="button"
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 aria-label="Close"
@@ -470,13 +474,13 @@ export default function PropertyForm({
                     ))}
                   </ul>
                 </DndContext>
-                <button
+                <PressButton
                   type="button"
                   onClick={() => setSectionOrderOpen(false)}
                   className="mt-4 w-full rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md hover:opacity-90"
                 >
                   Done
-                </button>
+                </PressButton>
               </div>
             </div>,
             document.body
@@ -714,7 +718,7 @@ export default function PropertyForm({
                       />
                       Display
                     </label>
-                    <button
+                    <PressButton
                       type="button"
                       onClick={() =>
                         setCheckInInstructions((prev) =>
@@ -724,7 +728,7 @@ export default function PropertyForm({
                       className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                     >
                       Remove
-                    </button>
+                    </PressButton>
                   </div>
                 </div>
                 <textarea
@@ -758,18 +762,22 @@ export default function PropertyForm({
           </div>
 
           <div className="mt-3">
-            <button
+            <PressButton
               type="button"
+              disabled={checkInInstructions.length >= CHECKIN_STEPS_LIMIT}
               onClick={() =>
                 setCheckInInstructions((prev) => [
                   ...prev,
                   { instruction: '', isDisplayed: true, guestImagePath: '' },
                 ])
               }
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition disabled:opacity-50"
             >
               + Add step
-            </button>
+            </PressButton>
+            <p className="mt-1 text-xs text-slate-500">
+              {checkInInstructions.length}/{CHECKIN_STEPS_LIMIT} steps
+            </p>
           </div>
         </section>
 
@@ -814,7 +822,7 @@ export default function PropertyForm({
                       />
                       Display
                     </label>
-                    <button
+                    <PressButton
                       type="button"
                       onClick={() =>
                         setHouseRules((prev) =>
@@ -824,7 +832,7 @@ export default function PropertyForm({
                       className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                     >
                       Remove
-                    </button>
+                    </PressButton>
                   </div>
                 </div>
                 <input
@@ -844,15 +852,15 @@ export default function PropertyForm({
           </div>
 
           <div className="mt-3">
-            <button
+            <PressButton
               type="button"
               onClick={() =>
                 setHouseRules((prev) => [...prev, { ruleText: '', isDisplayed: true }])
               }
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition disabled:opacity-50"
             >
               + Add rule
-            </button>
+            </PressButton>
           </div>
         </section>
 
@@ -881,7 +889,7 @@ export default function PropertyForm({
                   <div className="text-xs font-semibold text-slate-500">
                     Tip {idx + 1}
                   </div>
-                  <button
+                  <PressButton
                     type="button"
                     onClick={() =>
                       setGuidebookTips((prev) =>
@@ -891,7 +899,7 @@ export default function PropertyForm({
                     className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Remove
-                  </button>
+                  </PressButton>
                 </div>
 
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -949,18 +957,22 @@ export default function PropertyForm({
           </div>
 
           <div className="mt-3">
-            <button
+            <PressButton
               type="button"
+              disabled={guidebookTips.length >= GUIDEBOOK_TIPS_LIMIT}
               onClick={() =>
                 setGuidebookTips((prev) => [
                   ...prev,
                   { label: '', description: '', guestImagePath: '' },
                 ])
               }
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition disabled:opacity-50"
             >
               + Add tip
-            </button>
+            </PressButton>
+            <p className="mt-1 text-xs text-slate-500">
+              {guidebookTips.length}/{GUIDEBOOK_TIPS_LIMIT} tips
+            </p>
           </div>
         </section>
 
@@ -989,13 +1001,13 @@ export default function PropertyForm({
                   <div className="text-xs font-semibold text-slate-500">
                     FAQ {idx + 1}
                   </div>
-                  <button
+                  <PressButton
                     type="button"
                     onClick={() => setFaqs((prev) => prev.filter((_, i) => i !== idx))}
                     className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Remove
-                  </button>
+                  </PressButton>
                 </div>
 
                 <div className="mt-3 grid gap-3">
@@ -1038,7 +1050,7 @@ export default function PropertyForm({
           </div>
 
           <div className="mt-3">
-            <button
+            <PressButton
               type="button"
               onClick={() =>
                 setFaqs((prev) => [...prev, { question: '', answer: '' }])
@@ -1046,7 +1058,7 @@ export default function PropertyForm({
               className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
             >
               + Add FAQ
-            </button>
+            </PressButton>
           </div>
         </section>
 
@@ -1156,7 +1168,7 @@ export default function PropertyForm({
                       />
                       Display
                     </label>
-                    <button
+                    <PressButton
                       type="button"
                       onClick={() =>
                         setCustomDetails((prev) => prev.filter((_, i) => i !== idx))
@@ -1164,7 +1176,7 @@ export default function PropertyForm({
                       className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                     >
                       Remove
-                    </button>
+                    </PressButton>
                   </div>
                 </div>
 
@@ -1219,8 +1231,9 @@ export default function PropertyForm({
           </div>
 
           <div className="mt-3">
-            <button
+            <PressButton
               type="button"
+              disabled={customDetails.length >= EXTRA_DETAILS_LIMIT}
               onClick={() =>
                 setCustomDetails((prev) => [
                   ...prev,
@@ -1230,7 +1243,10 @@ export default function PropertyForm({
               className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
             >
               + Add details
-            </button>
+            </PressButton>
+            <p className="mt-1 text-xs text-slate-500">
+              {customDetails.length}/{EXTRA_DETAILS_LIMIT} details
+            </p>
           </div>
         </section>
 
@@ -1279,19 +1295,19 @@ export default function PropertyForm({
             <p className="mt-1 text-sm text-rose-800/90">
               Permanently delete this property and all guest links created for it.
             </p>
-            <button
+            <PressButton
               type="button"
               onClick={onDeleteProperty}
               disabled={submitting || deleting}
               className="mt-3 inline-flex items-center justify-center rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
             >
               {deleting ? 'Deleting…' : 'Delete property'}
-            </button>
+            </PressButton>
           </section>
         ) : null}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button
+          <PressButton
             type="submit"
             disabled={submitting || deleting}
             className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90 disabled:opacity-60"
@@ -1301,7 +1317,7 @@ export default function PropertyForm({
               : mode === 'create'
                 ? 'Create property'
                 : 'Save changes'}
-          </button>
+          </PressButton>
         </div>
       </form>
     </main>

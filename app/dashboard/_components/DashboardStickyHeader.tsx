@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (path) => path === '/dashboard', title: 'Dashboard' },
@@ -40,8 +41,10 @@ export default function DashboardStickyHeader() {
         <h1 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h1>
 
         {isDashboard ? (
-          <button
+          <motion.button
             type="button"
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             onClick={() => window.dispatchEvent(new Event('stayvo:dashboard-open-filter'))}
             className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900"
             aria-label="Open filter"
@@ -55,13 +58,15 @@ export default function DashboardStickyHeader() {
                 strokeLinecap="round"
               />
             </svg>
-          </button>
+          </motion.button>
         ) : null}
 
         {isManage ? (
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => window.dispatchEvent(new Event('stayvo:manage-toggle-edit'))}
               className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900"
               title={manageEditActive ? 'Exit edit mode' : 'Edit'}
@@ -94,9 +99,11 @@ export default function DashboardStickyHeader() {
                   />
                 </svg>
               )}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => window.dispatchEvent(new Event('stayvo:manage-add-location'))}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand text-white shadow-md transition hover:opacity-90"
               title="Add location"
@@ -116,23 +123,28 @@ export default function DashboardStickyHeader() {
                 {/* Plus cross badge */}
                 <path d="M18 13.5v6M15 16.5h6" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
               </svg>
-            </button>
-            <Link
-              href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
-              prefetch={false}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:opacity-90"
-              title="Add property"
-              aria-label="Add property"
+            </motion.button>
+            <motion.div
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             >
-              <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" aria-hidden>
-                <path
-                  d="M10 4.5v11M4.5 10h11"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </Link>
+              <Link
+                href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
+                prefetch={false}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:opacity-90"
+                title="Add property"
+                aria-label="Add property"
+              >
+                <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" aria-hidden>
+                  <path
+                    d="M10 4.5v11M4.5 10h11"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </Link>
+            </motion.div>
           </div>
         ) : null}
       </div>

@@ -13,13 +13,14 @@ import {
 import {
   GUEST_PROPERTY_MEDIA_BUCKET,
   GUEST_IMAGE_MAX_BYTES,
+  GUEST_VIDEO_MAX_BYTES,
 } from '@/lib/guest-property-media';
 import { DEDUP_SEGMENT, isSharedDedupStoragePath } from '@/lib/host-media-library';
 
 /** iOS often omits `file.type` for camera-roll picks; infer from filename when needed. */
-function resolvedImageMime(file: File): string | null {
+function resolvedMediaMime(file: File): string | null {
   const t = (file.type || '').trim().toLowerCase();
-  if (t.startsWith('image/') && !t.startsWith('video/')) return t;
+  if (t.startsWith('image/') || t.startsWith('video/')) return t;
   const n = (file.name || '').toLowerCase();
   const extToMime: [string, string][] = [
     ['.heic', 'image/heic'],
@@ -30,6 +31,11 @@ function resolvedImageMime(file: File): string | null {
     ['.jpg', 'image/jpeg'],
     ['.jpeg', 'image/jpeg'],
     ['.bmp', 'image/bmp'],
+    ['.mp4', 'video/mp4'],
+    ['.webm', 'video/webm'],
+    ['.ogg', 'video/ogg'],
+    ['.mov', 'video/quicktime'],
+    ['.m4v', 'video/x-m4v'],
   ];
   for (const [ext, mime] of extToMime) {
     if (n.endsWith(ext)) return mime;
@@ -37,14 +43,42 @@ function resolvedImageMime(file: File): string | null {
   return null;
 }
 
-function extFromImageMime(mime: string): string {
+function extFromMediaMime(mime: string): string {
   if (mime === 'image/png') return 'png';
   if (mime === 'image/webp') return 'webp';
   if (mime === 'image/gif') return 'gif';
   if (mime === 'image/heic') return 'heic';
   if (mime === 'image/heif') return 'heif';
   if (mime === 'image/bmp') return 'bmp';
+  if (mime === 'video/mp4') return 'mp4';
+  if (mime === 'video/webm') return 'webm';
+  if (mime === 'video/ogg') return 'ogg';
+  if (mime === 'video/quicktime') return 'mov';
+  if (mime === 'video/x-m4v') return 'm4v';
   return 'jpg';
+}
+
+function validateMediaFile(file: File): { ok: true; mime: string } | { ok: false; error: string } {
+  const mime = resolvedMediaMime(file);
+  if (!mime) {
+    return {
+      ok: false,
+      error: 'Only image/video files are allowed.',
+    };
+  }
+  if (mime.startsWith('image/')) {
+    if (file.size > GUEST_IMAGE_MAX_BYTES) {
+      return { ok: false, error: 'Image must be 5 MB or smaller.' };
+    }
+    return { ok: true, mime };
+  }
+  if (mime.startsWith('video/')) {
+    if (file.size > GUEST_VIDEO_MAX_BYTES) {
+      return { ok: false, error: 'Video must be 20 MB or smaller.' };
+    }
+    return { ok: true, mime };
+  }
+  return { ok: false, error: 'Only image/video files are allowed.' };
 }
 
 function warnIfR2PublicUrlMissing() {
@@ -140,9 +174,6 @@ async function deleteGuestMediaFolderPrefix(userId: string, propertyId: string):
  */
 export async function uploadGuestImageDeduped(formData: FormData) {
   warnIfR2PublicUrlMissing();
-  // #region agent log
-  fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H4',location:'guest-property-media.ts:uploadGuestImageDeduped',message:'Server action entered uploadGuestImageDeduped',data:{hasFile:formData.get('file') instanceof File},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -157,18 +188,9 @@ export async function uploadGuestImageDeduped(formData: FormData) {
   if (!(file instanceof File)) {
     return { ok: false as const, error: 'No file uploaded.' };
   }
-  // #region agent log
-  fetch('http://127.0.0.1:7263/ingest/ecff1dbe-677d-4e22-b37a-377dc7a9119f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'326deb'},body:JSON.stringify({sessionId:'326deb',runId:'pre-fix',hypothesisId:'H5',location:'guest-property-media.ts:uploadGuestImageDeduped',message:'Server action received file metadata',data:{fileSize:file.size,maxBytes:GUEST_IMAGE_MAX_BYTES},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
-
-  if (file.size > GUEST_IMAGE_MAX_BYTES) {
-    return { ok: false as const, error: 'Image must be 5 MB or smaller.' };
-  }
-
-  const mime = resolvedImageMime(file);
-  if (!mime) {
-    return { ok: false as const, error: 'Only image files are allowed (no video).' };
-  }
+  const validation = validateMediaFile(file);
+  if (!validation.ok) return { ok: false as const, error: validation.error };
+  const mime = validation.mime;
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const hash = sha256Hex(buffer);
@@ -197,7 +219,7 @@ export async function uploadGuestImageDeduped(formData: FormData) {
     }
   }
 
-  const ext = extFromImageMime(mime);
+  const ext = extFromMediaMime(mime);
 
   const assetId = crypto.randomUUID();
   const filename = `${hash}.${ext}`;
@@ -267,7 +289,77 @@ export async function uploadGuestImageDeduped(formData: FormData) {
   return { ok: true as const, path, reused: false as const };
 }
 
-/** Upload a compressed image from the host form. Path is `{userId}/{propertyId}/{slot}-{uuid}.ext`. */
+async function uploadGuestPropertyMediaDeduped(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  file: File
+): Promise<{ ok: true; path: string; reused: boolean } | { ok: false; error: string }> {
+  const validation = validateMediaFile(file);
+  if (!validation.ok) return { ok: false, error: validation.error };
+
+  const mime = validation.mime;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const hash = sha256Hex(buffer);
+
+  const { data: existing } = await supabase
+    .from('host_media_assets')
+    .select('storage_path')
+    .eq('user_id', userId)
+    .eq('content_sha256', hash)
+    .maybeSingle();
+
+  if (existing?.storage_path) {
+    const exists = await guestMediaObjectExists(existing.storage_path);
+    if (exists) {
+      return { ok: true, path: existing.storage_path as string, reused: true };
+    }
+    await supabase
+      .from('host_media_assets')
+      .delete()
+      .eq('user_id', userId)
+      .eq('content_sha256', hash);
+  }
+
+  const ext = extFromMediaMime(mime);
+  const filename = `${hash}.${ext}`;
+  const path = `${userId}/${DEDUP_SEGMENT}/${filename}`;
+  const assetId = crypto.randomUUID();
+
+  const { error: insertError } = await supabase.from('host_media_assets').insert({
+    id: assetId,
+    user_id: userId,
+    storage_path: path,
+    filename,
+    mime_type: mime,
+    byte_size: buffer.length,
+    content_sha256: hash,
+  });
+
+  if (insertError) {
+    if ((insertError as { code?: string }).code === '23505') {
+      const { data: raceRow } = await supabase
+        .from('host_media_assets')
+        .select('storage_path')
+        .eq('user_id', userId)
+        .eq('content_sha256', hash)
+        .maybeSingle();
+      if (raceRow?.storage_path) {
+        return { ok: true, path: raceRow.storage_path as string, reused: true };
+      }
+    }
+    return { ok: false, error: insertError.message };
+  }
+
+  const uploaded = await uploadBufferToGuestMedia(path, buffer, mime);
+  if (!uploaded.ok) {
+    await supabase.from('host_media_assets').delete().eq('id', assetId).eq('user_id', userId);
+    return { ok: false, error: uploaded.error };
+  }
+
+  return { ok: true, path, reused: false };
+}
+
+/** Upload media from the host form with per-user content-hash dedupe. */
 export async function uploadGuestPropertyMedia(
   propertyId: string,
   slot: string,
@@ -304,28 +396,9 @@ export async function uploadGuestPropertyMedia(
     return { ok: false as const, error: 'No file uploaded.' };
   }
 
-  if (file.size > GUEST_IMAGE_MAX_BYTES) {
-    return { ok: false as const, error: 'Image must be 5 MB or smaller.' };
-  }
-
-  const mime = resolvedImageMime(file);
-  if (!mime) {
-    return { ok: false as const, error: 'Only image files are allowed (no video).' };
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const ext = extFromImageMime(mime);
-
-  const safeSlot = slot.replace(/:/g, '-');
-  const filename = `${safeSlot}-${crypto.randomUUID()}.${ext}`;
-  const path = `${user.id}/${propertyId}/${filename}`;
-
-  const upRes = await uploadBufferToGuestMedia(path, buffer, mime);
-  if (!upRes.ok) {
-    return { ok: false as const, error: upRes.error };
-  }
-
-  return { ok: true as const, path };
+  const uploaded = await uploadGuestPropertyMediaDeduped(supabase, user.id, file);
+  if (!uploaded.ok) return { ok: false as const, error: uploaded.error };
+  return { ok: true as const, path: uploaded.path, reused: uploaded.reused };
 }
 
 export async function removeGuestPropertyMedia(propertyId: string, storagePath: string) {

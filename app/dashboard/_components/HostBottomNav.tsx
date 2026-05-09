@@ -67,6 +67,7 @@ export default function HostBottomNav() {
   const [mounted, setMounted] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [addLocationOpen, setAddLocationOpen] = useState(false);
+  const [optimisticHref, setOptimisticHref] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -92,6 +93,11 @@ export default function HostBottomNav() {
     };
   }, []);
 
+  useEffect(() => {
+    // Navigation completed; route is source of truth again.
+    setOptimisticHref(null);
+  }, [path]);
+
   if (!mounted) return null;
 
   return createPortal(
@@ -109,35 +115,37 @@ export default function HostBottomNav() {
           >
             <div className="flex items-center">
               {tabs.map((tab) => {
-                const active = tab.match(path);
+                const active = optimisticHref
+                  ? optimisticHref === tab.href
+                  : tab.match(path);
                 return (
-                  <Link
+                  <motion.div
                     key={tab.href}
-                    href={tab.href}
-                    prefetch={false}
-                    aria-current={active ? 'page' : undefined}
-                    className="relative flex w-[4.5rem] flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold"
+                    whileTap={{ scale: 0.8 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   >
-                    {/* Liquid drop indicator */}
-                    {active && (
-                      <motion.div
-                        layoutId="nav-bubble"
-                        className="absolute inset-0 rounded-full bg-white/15"
-                        transition={{
-                          type: 'spring',
-                          damping: 22,
-                          stiffness: 320,
-                          mass: 0.8,
-                        }}
-                      />
-                    )}
-                    <span className={`relative z-10 transition-colors duration-150 ${active ? 'text-brand' : 'text-white/55'}`}>
-                      {tab.icon}
-                    </span>
-                    <span className={`relative z-10 transition-colors duration-150 ${active ? 'text-brand' : 'text-white/55'}`}>
-                      {tab.label}
-                    </span>
-                  </Link>
+                    <Link
+                      href={tab.href}
+                      prefetch={false}
+                      onClick={() => setOptimisticHref(tab.href)}
+                      aria-current={active ? 'page' : undefined}
+                      className="relative flex w-[4.5rem] flex-col items-center gap-0.5 py-1.5 text-[10px] font-semibold"
+                    >
+                      {active && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute inset-0 rounded-full bg-white/15"
+                          transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                        />
+                      )}
+                      <span className={`relative z-10 transition-colors duration-150 ${active ? 'text-brand' : 'text-white/55'}`}>
+                        {tab.icon}
+                      </span>
+                      <span className={`relative z-10 transition-colors duration-150 ${active ? 'text-brand' : 'text-white/55'}`}>
+                        {tab.label}
+                      </span>
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>

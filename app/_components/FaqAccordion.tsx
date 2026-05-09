@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import PressButton from '@/app/_components/PressButton';
 
 type FaqAccordionProps = {
   items: Array<{ question: string; answer: string }>;
@@ -19,7 +20,7 @@ export default function FaqAccordion({ items, className }: FaqAccordionProps) {
           const isOpen = openIdx === idx;
           return (
             <div key={`${item.question}-${idx}`}>
-              <button
+              <PressButton
                 type="button"
                 onClick={() => setOpenIdx((prev) => (prev === idx ? null : idx))}
                 className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-slate-50"
@@ -34,7 +35,7 @@ export default function FaqAccordion({ items, className }: FaqAccordionProps) {
                     <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
                   </svg>
                 </span>
-              </button>
+              </PressButton>
               {/* CSS grid trick for smooth height animation — no JS layout thrashing */}
               <div
                 style={{

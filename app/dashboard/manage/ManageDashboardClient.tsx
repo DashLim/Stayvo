@@ -30,6 +30,7 @@ import {
   setPropertyLiveStatus,
   setPropertyLocation,
 } from '@/app/actions/locations';
+import PressButton from '@/app/_components/PressButton';
 
 type LocRow = { id: string; name: string };
 type PropRow = {
@@ -56,7 +57,7 @@ function DragHandle({
 }) {
   if (hidden) return null;
   return (
-    <button
+    <PressButton
       type="button"
       {...attributes}
       {...listeners}
@@ -68,7 +69,7 @@ function DragHandle({
         <circle cx="12" cy="12" r="2" />
         <circle cx="12" cy="18" r="2" />
       </svg>
-    </button>
+    </PressButton>
   );
 }
 
@@ -135,7 +136,7 @@ function SortablePropertyRow({
         </div>
         {!editMode ? (
           <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-            <button
+            <PressButton
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-600 backdrop-blur-sm transition hover:text-slate-900 ${trelloPressFx}`}
@@ -145,7 +146,7 @@ function SortablePropertyRow({
               <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
                 <path d="M4.5 10a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 4.5 10Zm5.5 0a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 10 10Zm5.5 0a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 15.5 10Z" />
               </svg>
-            </button>
+            </PressButton>
             {menuOpen ? (
               <div className="absolute bottom-full right-0 z-50 mb-2 w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
                 <Link
@@ -156,7 +157,7 @@ function SortablePropertyRow({
                 >
                   Edit
                 </Link>
-                <button
+                <PressButton
                   type="button"
                   className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
                   onClick={() => {
@@ -165,8 +166,8 @@ function SortablePropertyRow({
                   }}
                 >
                   Clone
-                </button>
-                <button
+                </PressButton>
+                <PressButton
                   type="button"
                   className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
                   onClick={() => {
@@ -175,14 +176,14 @@ function SortablePropertyRow({
                   }}
                 >
                   Delete
-                </button>
+                </PressButton>
               </div>
             ) : null}
           </div>
         ) : (
           <div className="flex shrink-0 items-center gap-2">
             {/* iOS-style toggle switch */}
-            <button
+            <PressButton
               type="button"
               disabled={pending}
               onClick={() => onToggleLive(p.id, !p.is_live)}
@@ -191,11 +192,11 @@ function SortablePropertyRow({
               title={p.is_live ? 'Live — tap to draft' : 'Draft — tap to go live'}
             >
               <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${p.is_live ? 'translate-x-7' : 'translate-x-1'}`} />
-            </button>
+            </PressButton>
             <span className="min-w-[2rem] text-xs font-semibold text-slate-600">
               {p.is_live ? 'Live' : 'Draft'}
             </span>
-            <button
+            <PressButton
               type="button"
               disabled={pending}
               onClick={() => onDeleteProperty(p.id, p.property_name || 'Untitled')}
@@ -212,7 +213,7 @@ function SortablePropertyRow({
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </PressButton>
           </div>
         )}
       </div>
@@ -312,7 +313,7 @@ function SortableLocationCard({
             </Link>
           ) : null}
           {editMode ? (
-            <button
+            <PressButton
               type="button"
               disabled={pending}
               onClick={() => onDeleteLocation(loc.id, loc.name, properties.length)}
@@ -333,7 +334,7 @@ function SortableLocationCard({
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+            </PressButton>
           ) : null}
         </div>
       </div>
@@ -565,7 +566,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       {/* Add new location modal */}
       {addLocOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <button
+          <PressButton
             type="button"
             className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${trelloPressFx}`}
             aria-label="Cancel"
@@ -583,21 +584,21 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
               className="mt-3 w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button
+              <PressButton
                 type="button"
                 onClick={() => setAddLocOpen(false)}
                 className={`rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 ${trelloPressFx}`}
               >
                 Cancel
-              </button>
-              <button
+              </PressButton>
+              <PressButton
                 type="button"
                 disabled={!newLocName.trim()}
                 onClick={() => void submitNewLocation()}
                 className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50 hover:opacity-90 ${trelloPressFx}`}
               >
                 Add
-              </button>
+              </PressButton>
             </div>
           </div>
         </div>

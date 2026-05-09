@@ -1,6 +1,7 @@
 'use client';
 
 import { guestPropertyMediaPublicUrl } from '@/lib/guest-property-media';
+import PressButton from '@/app/_components/PressButton';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -30,7 +31,7 @@ export default function GuestUploadedImage({ path }: { path: string }) {
 
   return (
     <>
-      <button
+      <PressButton
         type="button"
         onClick={() => setLightboxOpen(true)}
         className="group mt-3 w-full overflow-hidden rounded-2xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
@@ -41,7 +42,7 @@ export default function GuestUploadedImage({ path }: { path: string }) {
           alt=""
           className="aspect-[4/3] w-full cursor-zoom-in object-cover transition group-hover:opacity-95"
         />
-      </button>
+      </PressButton>
       {lightboxOpen
         ? createPortal(
             <div

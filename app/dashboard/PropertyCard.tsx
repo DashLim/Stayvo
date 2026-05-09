@@ -4,11 +4,13 @@ import Link from 'next/link';
 import type { ComponentProps } from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   deleteGuestLink,
   extendGuestLink,
   generateGuestLink,
 } from '@/app/actions/guest-links';
+import PressButton from '@/app/_components/PressButton';
 import { guestPortalAbsoluteUrl } from '@/lib/guest-portal-url';
 
 function displayGuestName(name: string | null | undefined) {
@@ -273,14 +275,21 @@ export default function PropertyCard({
   const recentExpiredLinks = links.filter((l) => isRecentlyExpired(l, nowIso));
 
   return (
-    <div className="glass rounded-[20px] p-5">
+    <motion.div
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className="glass rounded-[20px] p-5"
+    >
       <h2 className="min-w-0 text-left text-base font-semibold text-slate-900">
         {displayTitle}
       </h2>
 
       <div className="mt-4 flex flex-wrap items-center justify-start gap-2">
-        <button
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.92 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           onClick={() => setShowActiveLinks((v) => !v)}
           className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80"
         >
@@ -289,9 +298,11 @@ export default function PropertyCard({
             {activeLinks.length}
           </span>
           <span>{showActiveLinks ? '▴' : '▾'}</span>
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.92 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           onClick={() => {
             setShowGenerate((v) => !v);
             setError(null);
@@ -299,7 +310,7 @@ export default function PropertyCard({
           className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
         >
           Generate Link
-        </button>
+        </motion.button>
       </div>
 
       {showGenerate ? (
@@ -373,19 +384,19 @@ export default function PropertyCard({
             </p>
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <button
+            <PressButton
               disabled={submitting}
               className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
             >
               {submitting ? 'Generating...' : 'Create Link'}
-            </button>
-            <button
+            </PressButton>
+            <PressButton
               type="button"
               onClick={() => setShowGenerate(false)}
               className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700"
             >
               Cancel
-            </button>
+            </PressButton>
           </div>
         </form>
       ) : null}
@@ -404,7 +415,7 @@ export default function PropertyCard({
         <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700">
           <div className="break-all">{generatedLink}</div>
           <div className="mt-2">
-            <button
+            <PressButton
               type="button"
               onClick={async () => {
                 const copied = await copyToClipboard(generatedLink);
@@ -428,7 +439,7 @@ export default function PropertyCard({
               className="rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-700"
             >
               {generatedLinkCopied ? 'Copied' : 'Copy'}
-            </button>
+            </PressButton>
           </div>
         </div>
       ) : null}
@@ -457,7 +468,7 @@ export default function PropertyCard({
                       )}
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <button
+                      <PressButton
                         type="button"
                         onClick={async () => {
                           const copied = await copyToClipboard(fullLink);
@@ -470,9 +481,9 @@ export default function PropertyCard({
                         className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
                       >
                         {copiedLinkIds.has(l.id) ? 'Copied ✓' : 'Copy link'}
-                      </button>
+                      </PressButton>
                       {l.is_permanent !== true ? (
-                        <button
+                        <PressButton
                           type="button"
                           onClick={() => {
                             setShowExtendId(l.id);
@@ -482,16 +493,16 @@ export default function PropertyCard({
                           className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
                         >
                           Extend
-                        </button>
+                        </PressButton>
                       ) : null}
-                      <button
+                      <PressButton
                         type="button"
                         onClick={() => onDeleteLink(l.id)}
                         disabled={submitting}
                         className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
                       >
                         Delete
-                      </button>
+                      </PressButton>
                     </div>
 
                     {showExtendId === l.id ? (
@@ -509,19 +520,19 @@ export default function PropertyCard({
                           className="mt-1"
                         />
                         <div className="mt-2 flex items-center gap-2">
-                          <button
+                          <PressButton
                             disabled={submitting}
                             className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
                           >
                             {submitting ? 'Saving...' : 'Save'}
-                          </button>
-                          <button
+                          </PressButton>
+                          <PressButton
                             type="button"
                             onClick={() => setShowExtendId(null)}
                             className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-700"
                           >
                             Cancel
-                          </button>
+                          </PressButton>
                         </div>
                       </form>
                     ) : null}
@@ -565,7 +576,7 @@ export default function PropertyCard({
                           </div>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <button
+                          <PressButton
                             type="button"
                             onClick={() => {
                               setShowExtendId(l.id);
@@ -575,15 +586,15 @@ export default function PropertyCard({
                             className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
                           >
                             Extend
-                          </button>
-                          <button
+                          </PressButton>
+                          <PressButton
                             type="button"
                             onClick={() => onDeleteLink(l.id)}
                             disabled={submitting}
                             className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
                           >
                             Delete
-                          </button>
+                          </PressButton>
                         </div>
 
                         {showExtendId === l.id ? (
@@ -601,19 +612,19 @@ export default function PropertyCard({
                               className="mt-1"
                             />
                             <div className="mt-2 flex items-center gap-2">
-                              <button
+                              <PressButton
                                 disabled={submitting}
                                 className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
                               >
                                 {submitting ? 'Saving...' : 'Save'}
-                              </button>
-                              <button
+                              </PressButton>
+                              <PressButton
                                 type="button"
                                 onClick={() => setShowExtendId(null)}
                                 className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-700"
                               >
                                 Cancel
-                              </button>
+                              </PressButton>
                             </div>
                           </form>
                         ) : null}
@@ -625,7 +636,7 @@ export default function PropertyCard({
             ) : null}
         </div>
       ) : null}
-    </div>
+    </motion.div>
   );
 }
 

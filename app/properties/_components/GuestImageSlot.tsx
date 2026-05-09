@@ -1,10 +1,14 @@
 'use client';
 
 import { removeGuestPropertyMedia, uploadGuestPropertyMedia } from '@/app/actions/guest-property-media';
+import PressButton from '@/app/_components/PressButton';
 import {
   GUEST_IMAGE_MAX_BYTES,
+  GUEST_VIDEO_MAX_BYTES,
   guestPropertyMediaPublicUrl,
+  isVideoStoragePath,
 } from '@/lib/guest-property-media';
+import imageCompression from 'browser-image-compression';
 import { useId, useState } from 'react';
 
 function looksLikeImageFile(file: File): boolean {
@@ -14,15 +18,35 @@ function looksLikeImageFile(file: File): boolean {
   return /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(file.name || '');
 }
 
-async function compressForGuestUpload(file: File): Promise<File> {
-  if (file.size > GUEST_IMAGE_MAX_BYTES) {
-    throw new Error('Image must be 5 MB or smaller.');
-  }
-  if (!looksLikeImageFile(file)) {
-    throw new Error('Only image files are allowed (no video).');
+function looksLikeVideoFile(file: File): boolean {
+  const t = (file.type || '').toLowerCase();
+  if (t.startsWith('video/')) return true;
+  return /\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(file.name || '');
+}
+
+async function prepareMediaForGuestUpload(file: File): Promise<File> {
+  if (looksLikeImageFile(file)) {
+    if (file.size > GUEST_IMAGE_MAX_BYTES) {
+      throw new Error('Image must be 5 MB or smaller.');
+    }
+    // Keep visual quality while shrinking payload for faster uploads.
+    return imageCompression(file, {
+      maxSizeMB: 5,
+      maxWidthOrHeight: 2560,
+      useWebWorker: true,
+      initialQuality: 0.9,
+    });
   }
 
-  return file;
+  if (looksLikeVideoFile(file)) {
+    if (file.size > GUEST_VIDEO_MAX_BYTES) {
+      throw new Error('Video must be 20 MB or smaller.');
+    }
+    // Client-side video transcoding is expensive/unreliable on mobile; keep original.
+    return file;
+  }
+
+  throw new Error('Only image/video files are allowed.');
 }
 
 export default function GuestImageSlot({
@@ -51,12 +75,12 @@ export default function GuestImageSlot({
     setError(null);
     setBusy(true);
     try {
-      const compressed = await compressForGuestUpload(file);
+      const processed = await prepareMediaForGuestUpload(file);
       setPhase('upload');
       const fd = new FormData();
-      fd.set('file', compressed);
+      fd.set('file', processed);
       if (!propertyId) {
-        throw new Error('Please save property first, then upload image.');
+        throw new Error('Please save property first, then upload media.');
       }
       const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
       if (!res.ok) throw new Error(res.error);
@@ -81,7 +105,7 @@ export default function GuestImageSlot({
       if (!res.ok) throw new Error(res.error);
       onChange('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Could not remove image.');
+      setError(err instanceof Error ? err.message : 'Could not remove media.');
     } finally {
       setBusy(false);
     }
@@ -95,18 +119,18 @@ export default function GuestImageSlot({
     <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="min-w-0 text-sm text-slate-800">
-          <span className="font-semibold">Image</span>
-          <span className="font-normal"> (max 5MB)</span>
+          <span className="font-semibold">Media</span>
+          <span className="font-normal"> (image max 5MB, video max 20MB)</span>
         </span>
         <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
           <input
             id={inputId}
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             className="sr-only"
             disabled={!canInteract}
             onChange={onPick}
-            aria-label={hasPath ? 'Replace image' : 'Upload image'}
+            aria-label={hasPath ? 'Replace media' : 'Upload media'}
           />
           {canInteract ? (
             <label htmlFor={inputId} className={`${uploadControlClassName} cursor-pointer`}>
@@ -118,30 +142,44 @@ export default function GuestImageSlot({
             </span>
           )}
           {hasPath ? (
-            <button
+            <PressButton
               type="button"
               disabled={busy}
               onClick={() => void onRemove()}
               className="inline-flex min-h-[2.25rem] items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
             >
               Remove
-            </button>
+            </PressButton>
           ) : null}
         </div>
       </div>
 
       {previewUrl ? (
         <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <img
-            src={previewUrl}
-            alt=""
-            className="max-h-48 min-h-[120px] w-full object-contain"
-            onError={() =>
-              setError(
-                'Preview failed to load. Check NEXT_PUBLIC_GUEST_MEDIA_URL on the server and that the file exists on R2.'
-              )
-            }
-          />
+          {isVideoStoragePath(value) ? (
+            <video
+              src={previewUrl}
+              className="max-h-56 min-h-[140px] w-full bg-black object-contain"
+              controls
+              preload="metadata"
+              onError={() =>
+                setError(
+                  'Preview failed to load. Check NEXT_PUBLIC_GUEST_MEDIA_URL on the server and that the file exists on R2.'
+                )
+              }
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt=""
+              className="max-h-48 min-h-[120px] w-full object-contain"
+              onError={() =>
+                setError(
+                  'Preview failed to load. Check NEXT_PUBLIC_GUEST_MEDIA_URL on the server and that the file exists on R2.'
+                )
+              }
+            />
+          )}
         </div>
       ) : null}
 

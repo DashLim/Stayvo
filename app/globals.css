@@ -12,8 +12,9 @@ body {
 }
 
 body {
-  /* Warm beige-to-light-amber gradient background */
-  background: linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%);
+  /* Warm background + subtle top glow depth */
+  background: radial-gradient(ellipse at 50% 0%, rgba(224, 162, 77, 0.12) 0%, #fdf6ec 60%),
+    linear-gradient(160deg, #fdf6ec 0%, #faf0dc 100%);
   background-attachment: fixed;
   color: #0f172a;
 }
@@ -25,7 +26,8 @@ body {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid rgba(255, 255, 255, 0.45);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+    border-top: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
   }
 
   .glass-dark {
@@ -45,20 +47,26 @@ body {
 
 }
 
-/* Global press scale */
+/* Instant mobile responsiveness for all interactive controls */
 button,
 a[role="button"],
 [type="submit"],
 [type="button"],
-[type="reset"] {
+[type="reset"],
+a,
+[tabindex]:not([tabindex="-1"]) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transform-origin: center;
-  transition: transform 0.12s ease, opacity 0.12s ease;
+  transition: transform 0.08s ease-out, opacity 0.08s ease-out, filter 0.08s ease-out;
+  will-change: transform;
 }
 
 button:active,
 a[role="button"]:active,
 [type="submit"]:active,
 [type="button"]:active,
-[type="reset"]:active {
+[type="reset"]:active,
+a:active {
   transform: scale(0.96);
 }

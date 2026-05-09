@@ -4,6 +4,13 @@ export const GUEST_PROPERTY_MEDIA_BUCKET = 'guest-property-media';
 
 /** Max original file size before client compression (5 MB). */
 export const GUEST_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+/** Max video file size before upload (20 MB). */
+export const GUEST_VIDEO_MAX_BYTES = 20 * 1024 * 1024;
+
+export function isVideoStoragePath(storagePath: string | null | undefined): boolean {
+  const path = (storagePath ?? '').toLowerCase();
+  return /\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(path);
+}
 
 /**
  * Public URL for a stored object key (`userId/dedup/...` or `userId/{propertyId}/...`).

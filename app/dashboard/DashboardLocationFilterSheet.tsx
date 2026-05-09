@@ -2,6 +2,7 @@
 
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import PressButton from '@/app/_components/PressButton';
 
 type LocationOption = { id: string; name: string };
 
@@ -62,13 +63,13 @@ export default function DashboardLocationFilterSheet({
 
             <div className="flex shrink-0 items-center justify-between gap-3">
               <h2 className="text-base font-semibold text-white">Filter locations</h2>
-              <button
+              <PressButton
                 type="button"
                 onClick={closeFilter}
                 className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white/80"
               >
                 Close
-              </button>
+              </PressButton>
             </div>
 
             <input
@@ -80,25 +81,25 @@ export default function DashboardLocationFilterSheet({
             />
 
             <div className="mt-3 flex shrink-0 items-center gap-3">
-              <button
+              <PressButton
                 type="button"
                 disabled={!storageReady}
                 onClick={selectAll}
                 className="text-xs font-semibold text-brand disabled:opacity-50"
               >
                 Select all
-              </button>
+              </PressButton>
               <span className="text-xs text-white/20" aria-hidden>
                 |
               </span>
-              <button
+              <PressButton
                 type="button"
                 disabled={!storageReady}
                 onClick={selectNone}
                 className="text-xs font-semibold text-white/50 disabled:opacity-50"
               >
                 Clear
-              </button>
+              </PressButton>
             </div>
 
             <div className="mt-4 flex-1 space-y-2 overflow-y-auto">

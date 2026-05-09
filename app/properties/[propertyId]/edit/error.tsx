@@ -1,5 +1,7 @@
 'use client';
 
+import PressButton from '@/app/_components/PressButton';
+
 export default function EditPropertyError({
   error,
   reset,
@@ -22,13 +24,13 @@ export default function EditPropertyError({
             Reference: {error.digest}
           </p>
         ) : null}
-        <button
+        <PressButton
           type="button"
           onClick={() => reset()}
           className="mt-4 rounded-xl bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-800"
         >
           Try again
-        </button>
+        </PressButton>
       </div>
     </main>
   );
