@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-const SHORT_TOKEN_LEN = 10;
+const SHORT_TOKEN_LEN = 6;
 const TOKEN_ALPHABET =
   'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
 

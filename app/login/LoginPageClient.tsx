@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PressButton from '@/app/_components/PressButton';
 import { tryCreateSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -24,6 +25,19 @@ export default function LoginPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [agreedToLegal, setAgreedToLegal] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    if (hadDark) {
+      root.classList.remove('dark');
+    }
+    return () => {
+      if (hadDark) {
+        root.classList.add('dark');
+      }
+    };
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -84,7 +98,14 @@ export default function LoginPageClient() {
     <main className="min-h-[70vh] flex items-center justify-center">
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mb-4">
-          <div className="text-xl font-semibold tracking-tight">Stayvo</div>
+          <Image
+            src="/brand/stayvo-logo-lockup.png"
+            alt="Stayvo"
+            width={1024}
+            height={449}
+            priority
+            className="h-14 w-auto sm:h-16"
+          />
           <div className="mt-1 text-sm text-slate-600">Host portal login</div>
         </div>
 
@@ -139,7 +160,7 @@ export default function LoginPageClient() {
               Email
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2"
               type="email"
               name="email"
               required
@@ -153,7 +174,7 @@ export default function LoginPageClient() {
               Password
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2"
               type="password"
               name="password"
               required

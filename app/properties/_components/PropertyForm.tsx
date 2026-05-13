@@ -6,9 +6,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   DndContext,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
-  closestCenter,
+  closestCorners,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -31,7 +31,6 @@ import {
 import type {
   CustomDetailInput,
   HouseRuleInput,
-  GuidebookTipInput,
   FaqInput,
   CheckInStepInput,
   PropertyFormInput,
@@ -43,6 +42,8 @@ import {
 } from '@/app/actions/properties';
 import PressButton from '@/app/_components/PressButton';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
+import type { HostTier } from '@/lib/host-tier';
+import { isProTier, maxCustomBlocksForTier } from '@/lib/host-tier';
 
 export type PropertyFormProps = {
   mode: 'create' | 'edit';
@@ -50,6 +51,10 @@ export type PropertyFormProps = {
   /** Host’s locations (for grouping on dashboard). */
   locations: Array<{ id: string; name: string }>;
   initialValues?: Partial<PropertyFormInput>;
+  /** Subscription tier; defaults to Free when omitted. */
+  hostTier?: HostTier;
+  /** From guestPropertyMediaResolvedPublicBase() — correct preview URLs for R2-hosted media. */
+  guestMediaPublicBase?: string | null;
 };
 
 function ensureString(v: any) {
@@ -71,26 +76,35 @@ const SECTION_LABELS: Record<string, string> = {
   wifi: 'Wi-Fi',
   faq: 'FAQ',
   rules: 'House rules',
-  guidebook: 'Guidebook',
   host: 'Host contact',
 };
 const CHECKIN_STEPS_LIMIT = 10;
-const GUIDEBOOK_TIPS_LIMIT = 10;
-const EXTRA_DETAILS_LIMIT = 10;
+
+/** Mouse + touch only — PointerSensor breaks touch drag on mobile (same pattern as Manage dashboard). */
+function useGuestSectionOrderSensors() {
+  return useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 12 },
+    }),
+    useSensor(MouseSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
+}
 
 function FixedSectionRow({ sectionKey }: { sectionKey: string }) {
   const label = SECTION_LABELS[sectionKey] ?? sectionKey;
   return (
-    <li className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-slate-100/70 px-3 py-2.5 opacity-[0.82] backdrop-blur-sm">
-      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-slate-400/80" aria-hidden>
+    <li className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-slate-100/70 px-3 py-2.5 opacity-[0.82] backdrop-blur-sm dark:border-white/10 dark:bg-white/6">
+      <span className="flex h-4 w-4 shrink-0 items-center justify-center text-slate-400/80 dark:text-slate-600" aria-hidden>
         <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor">
           <circle cx="8" cy="4" r="1.5" />
           <circle cx="8" cy="8" r="1.5" />
           <circle cx="8" cy="12" r="1.5" />
         </svg>
       </span>
-      <span className="text-sm font-medium text-slate-500">{label}</span>
-      <span className="ml-auto shrink-0 rounded-full bg-slate-300/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+      <span className="text-sm font-medium text-slate-500 dark:text-slate-600">{label}</span>
+      <span className="ml-auto shrink-0 rounded-full bg-slate-300/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-white/10 dark:text-slate-600">
         Fixed
       </span>
     </li>
@@ -114,20 +128,16 @@ function SortableSectionRow({ id }: { id: string }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="flex touch-none items-center gap-3 rounded-2xl border border-white/50 bg-white/50 px-3 py-2.5 backdrop-blur-sm"
+      className="flex touch-none cursor-grab select-none active:cursor-grabbing items-center gap-3 rounded-2xl border border-white/50 bg-white/50 px-3 py-2.5 backdrop-blur-sm [-webkit-touch-callout:none] dark:border-white/10 dark:bg-white/8"
     >
-      <PressButton
-        type="button"
-        className="select-none text-slate-400"
-        aria-label="Drag to reorder"
-      >
+      <span className="select-none text-slate-500 dark:text-white" aria-hidden>
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
           <circle cx="12" cy="6" r="2" />
           <circle cx="12" cy="12" r="2" />
           <circle cx="12" cy="18" r="2" />
         </svg>
-      </PressButton>
-      <span className="text-sm font-medium text-slate-800">{label}</span>
+      </span>
+      <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{label}</span>
     </li>
   );
 }
@@ -137,7 +147,11 @@ export default function PropertyForm({
   propertyId,
   locations,
   initialValues,
+  hostTier = 'free',
+  guestMediaPublicBase,
 }: PropertyFormProps) {
+  const customBlocksCap = maxCustomBlocksForTier(hostTier);
+  const mediaAllowVideo = isProTier(hostTier);
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawReturnTo = (searchParams.get('returnTo') ?? '').trim();
@@ -156,7 +170,6 @@ export default function PropertyForm({
       wifiPassword: '',
       checkInInstructions: [],
       houseRules: [],
-      guidebookTips: [],
       faqs: [],
       customDetails: [],
       guestSectionOrder: [...BASE_SECTION_KEYS],
@@ -170,6 +183,7 @@ export default function PropertyForm({
       socialXUrl: '',
       socialTiktokUrl: '',
       socialYoutubeUrl: '',
+      socialDirectBookingUrl: '',
       ...(initialValues ?? {}),
     }),
     [initialValues]
@@ -204,9 +218,6 @@ export default function PropertyForm({
   const [houseRules, setHouseRules] = useState<HouseRuleInput[]>(
     defaults.houseRules?.length ? (defaults.houseRules as any) : []
   );
-  const [guidebookTips, setGuidebookTips] = useState<GuidebookTipInput[]>(
-    defaults.guidebookTips?.length ? (defaults.guidebookTips as any) : []
-  );
   const [faqs, setFaqs] = useState<FaqInput[]>(
     defaults.faqs?.length ? (defaults.faqs as any) : []
   );
@@ -229,6 +240,15 @@ export default function PropertyForm({
     );
   }, [customDetails]);
 
+  useEffect(() => {
+    if (!sectionOrderOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [sectionOrderOpen]);
+
   const sectionOrderStubs = useMemo(
     () => customInputsToOrderStubs(customDetails),
     [customDetails]
@@ -239,10 +259,7 @@ export default function PropertyForm({
     [guestSectionOrder, sectionOrderStubs]
   );
 
-  const sectionOrderSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } })
-  );
+  const sectionOrderSensors = useGuestSectionOrderSensors();
 
   function onSectionDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -284,6 +301,9 @@ export default function PropertyForm({
   const [socialYoutubeUrl, setSocialYoutubeUrl] = useState(
     ensureString(defaults.socialYoutubeUrl)
   );
+  const [socialDirectBookingUrl, setSocialDirectBookingUrl] = useState(
+    ensureString(defaults.socialDirectBookingUrl)
+  );
 
   const [locationId, setLocationId] = useState(
     ensureString(defaults.locationId) ||
@@ -296,6 +316,76 @@ export default function PropertyForm({
   const [success, setSuccess] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
+  const initialFormSnapshotRef = useRef<string | null>(null);
+
+  function getCurrentFormInput(): PropertyFormInput {
+    return {
+      propertyName,
+      internalName,
+      fullAddress,
+      googleMapsUrl,
+      wazeUrl,
+      parkingDetails,
+      wifiNetworkName,
+      wifiPassword,
+      checkInInstructions,
+      houseRules,
+      guidebookTips: [],
+      faqs,
+      customDetails,
+      guestSectionOrder,
+      hostName,
+      hostWhatsappNumber,
+      hostWhatsappChatNumber,
+      isLive,
+      locationId,
+      heroImagePath,
+      socialFacebookUrl,
+      socialInstagramUrl,
+      socialXUrl,
+      socialTiktokUrl,
+      socialYoutubeUrl,
+      socialDirectBookingUrl,
+    };
+  }
+
+  /** Capture baseline after mount so effects (e.g. section order normalize) have applied. */
+  useEffect(() => {
+    if (initialFormSnapshotRef.current !== null) return;
+    const id = window.setTimeout(() => {
+      initialFormSnapshotRef.current = JSON.stringify(getCurrentFormInput());
+    }, 0);
+    return () => window.clearTimeout(id);
+    // Baseline once after mount; intentional empty deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- capture initial snapshot only
+  }, []);
+
+  const isDirty =
+    initialFormSnapshotRef.current !== null &&
+    JSON.stringify(getCurrentFormInput()) !== initialFormSnapshotRef.current;
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
+  function confirmLeaveIfDirty(): boolean {
+    if (!isDirty) return true;
+    return window.confirm(
+      'You have unsaved changes. Leave this page and discard them?\n\nPress OK to discard, or Cancel to stay.'
+    );
+  }
+
+  function navigateBack() {
+    if (!confirmLeaveIfDirty()) return;
+    router.push(returnTo);
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -303,33 +393,8 @@ export default function PropertyForm({
     setSubmitting(true);
 
     try {
-      const input: PropertyFormInput = {
-        propertyName,
-        internalName,
-        fullAddress,
-        googleMapsUrl,
-        wazeUrl,
-        parkingDetails,
-        wifiNetworkName,
-        wifiPassword,
-        checkInInstructions,
-        houseRules,
-        guidebookTips,
-        faqs,
-        customDetails,
-        guestSectionOrder,
-        hostName,
-        hostWhatsappNumber,
-        hostWhatsappChatNumber,
-        isLive,
-        locationId,
-        heroImagePath,
-        socialFacebookUrl,
-        socialInstagramUrl,
-        socialXUrl,
-        socialTiktokUrl,
-        socialYoutubeUrl,
-      };
+      const rawInput = getCurrentFormInput();
+      const input = isProTier(hostTier) ? rawInput : { ...rawInput, faqs: [] };
 
       if (mode === 'create') {
         const res = await createProperty(input);
@@ -356,6 +421,10 @@ export default function PropertyForm({
       'Delete this property? This cannot be undone and removes all guest links.'
     );
     if (!yes) return;
+    const finalYes = window.confirm(
+      'Please confirm again: permanently delete this property and all related guest links/data?'
+    );
+    if (!finalYes) return;
 
     setError(null);
     setDeleting(true);
@@ -378,8 +447,8 @@ export default function PropertyForm({
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <PressButton
               type="button"
-              onClick={() => router.push(returnTo)}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+              onClick={navigateBack}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
               aria-label="Back"
             >
               <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
@@ -390,7 +459,7 @@ export default function PropertyForm({
                 />
               </svg>
             </PressButton>
-            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-slate-900">
+            <h1 className="min-w-0 text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               {mode === 'create' ? 'Add property' : 'Edit'}
             </h1>
           </div>
@@ -399,7 +468,7 @@ export default function PropertyForm({
               <Link
                 href={`/properties/${propertyId}/preview`}
                 prefetch={false}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
                 aria-label="Preview guest view"
                 title="Preview guest view"
               >
@@ -412,7 +481,7 @@ export default function PropertyForm({
               <PressButton
                 type="button"
                 onClick={() => setSectionOrderOpen(true)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/90 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
                 aria-label="Reorder sections"
                 title="Reorder sections"
               >
@@ -450,21 +519,21 @@ export default function PropertyForm({
                 onClick={() => setSectionOrderOpen(false)}
               />
               <div className="glass relative w-[calc(100%-2rem)] max-w-sm rounded-[20px] p-5">
-                <h2 className="text-base font-semibold text-slate-900">Reorder sections</h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Address, Check-in, and Parking stay at the top; Host contact stays at the bottom.
-                  Drag the sections in between to change their order on the guest page.
-                </p>
+                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Reorder sections</h2>
                 <DndContext
                   sensors={sectionOrderSensors}
-                  collisionDetection={closestCenter}
+                  collisionDetection={closestCorners}
                   onDragEnd={onSectionDragEnd}
                 >
                   <ul className="mt-4 space-y-2">
                     {FIXED_TOP_SECTIONS.map((key) => (
                       <FixedSectionRow key={key} sectionKey={key} />
                     ))}
-                    <SortableContext items={middleSectionKeys} strategy={verticalListSortingStrategy}>
+                    <SortableContext
+                      id="guest-section-order"
+                      items={middleSectionKeys}
+                      strategy={verticalListSortingStrategy}
+                    >
                       {middleSectionKeys.map((key) => (
                         <SortableSectionRow key={key} id={key} />
                       ))}
@@ -495,12 +564,12 @@ export default function PropertyForm({
         className="mt-6 space-y-7"
       >
         {error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
             {error}
           </div>
         ) : null}
         {success ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
             {success}
           </div>
         ) : null}
@@ -508,8 +577,8 @@ export default function PropertyForm({
         {/* Hero Image */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-3">
-            <h2 className="text-base font-semibold">Hero image</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Hero image</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Displayed as the full-width background of the guest welcome header.
             </p>
           </div>
@@ -518,24 +587,26 @@ export default function PropertyForm({
             slot="detail:0"
             value={heroImagePath}
             onChange={setHeroImagePath}
+            allowVideo={mediaAllowVideo}
+            guestMediaPublicBase={guestMediaPublicBase}
           />
         </section>
 
         {/* Property Info */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold">Property details</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Property details</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               What guests need before arrival.
             </p>
           </div>
 
-          <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-white/50 bg-white/40 p-3 backdrop-blur-sm">
+          <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-white/50 bg-white/40 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/6">
             <div>
-              <div className="text-sm font-semibold text-slate-800">Status</div>
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">Status</div>
             </div>
             <label className="inline-flex items-center gap-3">
-              <span className="text-sm font-semibold text-slate-700">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 {isLive ? 'Live' : 'Draft'}
               </span>
               <input
@@ -547,14 +618,14 @@ export default function PropertyForm({
             </label>
           </div>
 
-          <div className="mb-4 rounded-2xl border border-white/50 bg-white/40 p-3 backdrop-blur-sm">
+          <div className="mb-4 rounded-2xl border border-white/50 bg-white/40 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/40">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <label className="text-sm font-semibold text-slate-800">Location</label>
+                <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Location</label>
                 <select
                   value={locationId}
                   onChange={(e) => setLocationId(e.target.value)}
-                  className="mt-2 w-full max-w-md rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                  className="mt-2 w-full max-w-md rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-medium text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:[color-scheme:dark]"
                 >
                   {locations.length === 0 ? (
                     <option value="">Create a location from Property management first</option>
@@ -572,80 +643,84 @@ export default function PropertyForm({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Property name
               </label>
-              <p className="mt-1 text-xs text-slate-500">Guest will see this.</p>
-              <input
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Guest will see this. Line breaks are kept on the guest page.
+              </p>
+              <textarea
                 required
+                rows={3}
                 value={propertyName}
                 onChange={(e) => setPropertyName(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                placeholder="Property name"
+                className="mt-1 min-h-[4.5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Internal name
               </label>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 For internal record only.
               </p>
               <input
                 value={internalName}
                 onChange={(e) => setInternalName(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Full address
               </label>
               <textarea
                 rows={3}
                 value={fullAddress}
                 onChange={(e) => setFullAddress(e.target.value)}
-                className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Google Maps URL
               </label>
               <input
                 value={googleMapsUrl}
                 onChange={(e) => setGoogleMapsUrl(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Waze URL
               </label>
               <input
                 value={wazeUrl}
                 onChange={(e) => setWazeUrl(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Parking details
               </label>
               <input
                 value={parkingDetails}
                 onChange={(e) => setParkingDetails(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Wifi network name
               </label>
               <input
@@ -653,18 +728,18 @@ export default function PropertyForm({
                 value={wifiNetworkName}
                 onChange={(e) => setWifiNetworkName(e.target.value)}
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Wifi password
               </label>
               <input
                 name="stayvo_wifi_passphrase"
                 value={wifiPassword}
                 onChange={(e) => setWifiPassword(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                 type="text"
                 inputMode="text"
                 autoComplete="off"
@@ -680,8 +755,8 @@ export default function PropertyForm({
         {/* Check-in steps */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold">Check-in instructions</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Check-in instructions</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Add step-by-step instructions for guests.
             </p>
           </div>
@@ -696,14 +771,14 @@ export default function PropertyForm({
             {checkInInstructions.map((s, idx) => (
               <div
                 key={idx}
-                className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
+                className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold text-slate-500">
                     Step {idx + 1}
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                       <input
                         type="checkbox"
                         checked={Boolean(s.isDisplayed)}
@@ -743,7 +818,7 @@ export default function PropertyForm({
                     );
                   }}
                   placeholder="Step instructions (optional if you only add media)"
-                  className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                  className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                 />
                 <GuestImageSlot
                   propertyId={propertyId}
@@ -756,6 +831,8 @@ export default function PropertyForm({
                       )
                     )
                   }
+                  allowVideo={mediaAllowVideo}
+                  guestMediaPublicBase={guestMediaPublicBase}
                 />
               </div>
             ))}
@@ -775,17 +852,14 @@ export default function PropertyForm({
             >
               + Add step
             </PressButton>
-            <p className="mt-1 text-xs text-slate-500">
-              {checkInInstructions.length}/{CHECKIN_STEPS_LIMIT} steps
-            </p>
           </div>
         </section>
 
         {/* House rules */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold">House rules</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">House rules</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Add rules guests must follow.
             </p>
           </div>
@@ -800,14 +874,14 @@ export default function PropertyForm({
             {houseRules.map((r, idx) => (
               <div
                 key={idx}
-                className="flex flex-col gap-2 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
+                className="flex flex-col gap-2 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold text-slate-500">
                     Rule {idx + 1}
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                       <input
                         type="checkbox"
                         checked={Boolean(r.isDisplayed)}
@@ -845,7 +919,7 @@ export default function PropertyForm({
                       )
                     );
                   }}
-                  className="w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                  className="w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                 />
               </div>
             ))}
@@ -864,296 +938,214 @@ export default function PropertyForm({
           </div>
         </section>
 
-        {/* Guidebook tips */}
-        <section className="glass rounded-[20px] p-4">
-          <div className="mb-4">
-            <h2 className="text-base font-semibold">Guidebook tips</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Short labeled tips with descriptions.
-            </p>
-          </div>
+        {/* FAQ (Pro) */}
+        {isProTier(hostTier) ? (
+          <section className="glass rounded-[20px] p-4">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">FAQ</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Add common guest questions and answers. Leave empty to hide this section.
+              </p>
+            </div>
 
-          <div className="space-y-3">
-            {guidebookTips.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600">
-                No tips yet. Add your first tip below.
-              </div>
-            ) : null}
+            <div className="space-y-3">
+              {faqs.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-400">
+                  No FAQ entries yet.
+                </div>
+              ) : null}
 
-            {guidebookTips.map((t, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
+              {faqs.map((f, idx) => (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      FAQ {idx + 1}
+                    </div>
+                    <PressButton
+                      type="button"
+                      onClick={() => setFaqs((prev) => prev.filter((_, i) => i !== idx))}
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                      Remove
+                    </PressButton>
+                  </div>
+
+                  <div className="mt-3 grid gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        Question
+                      </label>
+                      <input
+                        value={f.question}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFaqs((prev) =>
+                            prev.map((it, i) => (i === idx ? { ...it, question: v } : it))
+                          );
+                        }}
+                        placeholder="e.g. What time is check-in?"
+                        className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        Answer
+                      </label>
+                      <textarea
+                        value={f.answer}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFaqs((prev) =>
+                            prev.map((it, i) => (i === idx ? { ...it, answer: v } : it))
+                          );
+                        }}
+                        placeholder="e.g. Check-in starts at 3 PM. Self check-in instructions are in the Check-in section."
+                        className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3">
+              <PressButton
+                type="button"
+                onClick={() =>
+                  setFaqs((prev) => [...prev, { question: '', answer: '' }])
+                }
+                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition dark:border-white/15 dark:bg-white/10 dark:text-slate-200"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-xs font-semibold text-slate-500">
-                    Tip {idx + 1}
-                  </div>
-                  <PressButton
-                    type="button"
-                    onClick={() =>
-                      setGuidebookTips((prev) =>
-                        prev.filter((_, i) => i !== idx)
-                      )
-                    }
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
-                  >
-                    Remove
-                  </PressButton>
-                </div>
-
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <div className="sm:col-span-1">
-                    <label className="text-xs font-semibold text-slate-600">
-                      Label
-                    </label>
-                    <input
-                      value={t.label}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setGuidebookTips((prev) =>
-                          prev.map((it, i) =>
-                            i === idx ? { ...it, label: v } : it
-                          )
-                        );
-                      }}
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-                    />
-                  </div>
-                  <div className="sm:col-span-1">
-                    <label className="text-xs font-semibold text-slate-600">
-                      Description
-                    </label>
-                    <input
-                      value={t.description}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setGuidebookTips((prev) =>
-                          prev.map((it, i) =>
-                            i === idx
-                              ? { ...it, description: v }
-                              : it
-                          )
-                        );
-                      }}
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-                    />
-                  </div>
-                </div>
-                <GuestImageSlot
-                  propertyId={propertyId}
-                  slot={`tip:${idx}`}
-                  value={t.guestImagePath ?? ''}
-                  onChange={(v) =>
-                    setGuidebookTips((prev) =>
-                      prev.map((it, i) =>
-                        i === idx ? { ...it, guestImagePath: v } : it
-                      )
-                    )
-                  }
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3">
-            <PressButton
-              type="button"
-              disabled={guidebookTips.length >= GUIDEBOOK_TIPS_LIMIT}
-              onClick={() =>
-                setGuidebookTips((prev) => [
-                  ...prev,
-                  { label: '', description: '', guestImagePath: '' },
-                ])
-              }
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition disabled:opacity-50"
-            >
-              + Add tip
-            </PressButton>
-            <p className="mt-1 text-xs text-slate-500">
-              {guidebookTips.length}/{GUIDEBOOK_TIPS_LIMIT} tips
+                + Add FAQ
+              </PressButton>
+            </div>
+          </section>
+        ) : (
+          <section className="glass rounded-[20px] p-4">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">FAQ</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Guest FAQ is included with Stayvo Pro.
             </p>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="glass rounded-[20px] p-4">
-          <div className="mb-4">
-            <h2 className="text-base font-semibold">FAQ</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Add common guest questions and answers. Leave empty to hide this section.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {faqs.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600">
-                No FAQ entries yet.
-              </div>
-            ) : null}
-
-            {faqs.map((f, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-xs font-semibold text-slate-500">
-                    FAQ {idx + 1}
-                  </div>
-                  <PressButton
-                    type="button"
-                    onClick={() => setFaqs((prev) => prev.filter((_, i) => i !== idx))}
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
-                  >
-                    Remove
-                  </PressButton>
-                </div>
-
-                <div className="mt-3 grid gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600">
-                      Question
-                    </label>
-                    <input
-                      value={f.question}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setFaqs((prev) =>
-                          prev.map((it, i) => (i === idx ? { ...it, question: v } : it))
-                        );
-                      }}
-                      placeholder="e.g. What time is check-in?"
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-600">
-                      Answer
-                    </label>
-                    <textarea
-                      value={f.answer}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setFaqs((prev) =>
-                          prev.map((it, i) => (i === idx ? { ...it, answer: v } : it))
-                        );
-                      }}
-                      placeholder="e.g. Check-in starts at 3 PM. Self check-in instructions are in the Check-in section."
-                      className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3">
-            <PressButton
-              type="button"
-              onClick={() =>
-                setFaqs((prev) => [...prev, { question: '', answer: '' }])
-              }
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
-            >
-              + Add FAQ
-            </PressButton>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Social links (guest page footer) */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold">Social links</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Social links</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Optional. Shown as icons at the bottom of the guest page. Leave blank to hide a
               platform.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Direct booking website
+              </label>
+              <input
+                value={socialDirectBookingUrl}
+                onChange={(e) => setSocialDirectBookingUrl(e.target.value)}
+                placeholder="https://your-site.com/book"
+                inputMode="url"
+                autoComplete="off"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
+              />
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
+                Shown as a &quot;Booking Website&quot; button in the Your host block (hidden when blank).
+              </p>
+            </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600">Instagram</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Instagram</label>
               <input
                 value={socialInstagramUrl}
                 onChange={(e) => setSocialInstagramUrl(e.target.value)}
                 placeholder="https://instagram.com/yourhandle"
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600">Facebook</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Facebook</label>
               <input
                 value={socialFacebookUrl}
                 onChange={(e) => setSocialFacebookUrl(e.target.value)}
                 placeholder="https://facebook.com/..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600">TikTok</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">TikTok</label>
               <input
                 value={socialTiktokUrl}
                 onChange={(e) => setSocialTiktokUrl(e.target.value)}
                 placeholder="https://tiktok.com/@..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600">YouTube</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">YouTube</label>
               <input
                 value={socialYoutubeUrl}
                 onChange={(e) => setSocialYoutubeUrl(e.target.value)}
                 placeholder="https://youtube.com/@..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-600">X</label>
+              <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">X</label>
               <input
                 value={socialXUrl}
                 onChange={(e) => setSocialXUrl(e.target.value)}
                 placeholder="https://x.com/..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
         </section>
 
-        {/* Custom details */}
+        {/* Custom blocks */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold">Extra details</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Add custom info boxes shown in guest preview.
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Custom block</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Add custom sections shown on the guest page.
+              {hostTier === 'free' ? (
+                <span className="block pt-1 text-xs text-slate-500 dark:text-slate-500">
+                  Free includes up to {customBlocksCap} blocks; Stayvo Pro allows more.
+                </span>
+              ) : null}
             </p>
           </div>
 
           <div className="space-y-3">
             {customDetails.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600">
-                No extra detail boxes yet.
+                No custom blocks yet.
               </div>
             ) : null}
 
             {customDetails.map((d, idx) => (
-              <div key={idx} className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm">
+              <div key={idx} className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold text-slate-500">
-                    Detail box {idx + 1}
+                    Block {idx + 1}
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                       <input
                         type="checkbox"
                         checked={Boolean(d.isDisplayed)}
@@ -1182,7 +1174,7 @@ export default function PropertyForm({
 
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs font-semibold text-slate-600">
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                       Title
                     </label>
                     <input
@@ -1193,11 +1185,11 @@ export default function PropertyForm({
                           prev.map((it, i) => (i === idx ? { ...it, title: v } : it))
                         );
                       }}
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-slate-600">
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                       Message
                     </label>
                     <input
@@ -1210,7 +1202,7 @@ export default function PropertyForm({
                           )
                         );
                       }}
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -1225,6 +1217,8 @@ export default function PropertyForm({
                       )
                     )
                   }
+                  allowVideo={mediaAllowVideo}
+                  guestMediaPublicBase={guestMediaPublicBase}
                 />
               </div>
             ))}
@@ -1233,7 +1227,7 @@ export default function PropertyForm({
           <div className="mt-3">
             <PressButton
               type="button"
-              disabled={customDetails.length >= EXTRA_DETAILS_LIMIT}
+              disabled={customDetails.length >= customBlocksCap}
               onClick={() =>
                 setCustomDetails((prev) => [
                   ...prev,
@@ -1242,47 +1236,44 @@ export default function PropertyForm({
               }
               className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition"
             >
-              + Add details
+              + Add block
             </PressButton>
-            <p className="mt-1 text-xs text-slate-500">
-              {customDetails.length}/{EXTRA_DETAILS_LIMIT} details
-            </p>
           </div>
         </section>
 
         {/* Host Info */}
         <section className="glass rounded-[20px] p-4">
           <div className="mb-4">
-            <h2 className="text-base font-semibold">Host contact</h2>
-            <p className="mt-1 text-sm text-slate-600">How guests reach you.</p>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Host contact</h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">How guests reach you.</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Host name
               </label>
               <input
                 value={hostName}
                 onChange={(e) => setHostName(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700">Call</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Call</label>
               <input
                 value={hostWhatsappNumber}
                 onChange={(e) => setHostWhatsappNumber(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                 placeholder="+1 555 123 4567"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="text-sm font-medium text-slate-700">WhatsApp</label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">WhatsApp</label>
               <input
                 value={hostWhatsappChatNumber}
                 onChange={(e) => setHostWhatsappChatNumber(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                 placeholder="+1 555 987 6543"
               />
             </div>
@@ -1290,16 +1281,16 @@ export default function PropertyForm({
         </section>
 
         {mode === 'edit' && propertyId ? (
-          <section className="rounded-[20px] border border-rose-200 bg-rose-50/40 p-4 backdrop-blur-sm">
-            <h2 className="text-base font-semibold text-rose-900">Danger zone</h2>
-            <p className="mt-1 text-sm text-rose-800/90">
+          <section className="rounded-[20px] border border-rose-200 bg-rose-50/40 p-4 backdrop-blur-sm dark:border-rose-500/25 dark:bg-rose-950/50 dark:ring-1 dark:ring-inset dark:ring-rose-400/10">
+            <h2 className="text-base font-semibold text-rose-900 dark:text-rose-200">Danger zone</h2>
+            <p className="mt-1 text-sm text-rose-800/90 dark:text-rose-300">
               Permanently delete this property and all guest links created for it.
             </p>
             <PressButton
               type="button"
               onClick={onDeleteProperty}
               disabled={submitting || deleting}
-              className="mt-3 inline-flex items-center justify-center rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+              className="mt-3 inline-flex items-center justify-center rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-500/35 dark:bg-rose-900/70 dark:text-rose-100 dark:hover:bg-rose-800/80"
             >
               {deleting ? 'Deleting…' : 'Delete property'}
             </PressButton>

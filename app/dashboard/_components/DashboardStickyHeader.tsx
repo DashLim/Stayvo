@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import ThemeToggle from '@/app/_components/ThemeToggle';
+import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
+import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (path) => path === '/dashboard', title: 'Dashboard' },
@@ -19,6 +22,9 @@ export default function DashboardStickyHeader() {
   const title = active?.title ?? 'Dashboard';
   const isDashboard = normalizedPath === '/dashboard';
   const isManage = normalizedPath.startsWith('/dashboard/manage');
+  const { tier, propertyCount } = useHostDashboardLimits();
+  const atPropertyLimit = tier === 'free' && propertyCount >= FREE_TIER_MAX_PROPERTIES;
+  const canAddLocations = tier === 'pro';
 
   const [manageEditActive, setManageEditActive] = useState(false);
 
@@ -38,15 +44,17 @@ export default function DashboardStickyHeader() {
   return (
     <header className="glass-header sticky top-0 z-30 -mx-4 px-4 pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 py-3">
-        <h1 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">{title}</h1>
 
         {isDashboard ? (
+          <div className="flex items-center gap-2">
+          <ThemeToggle />
           <motion.button
             type="button"
             whileTap={{ scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             onClick={() => window.dispatchEvent(new Event('stayvo:dashboard-open-filter'))}
-            className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900"
+            className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition hover:text-slate-900 dark:hover:text-slate-100"
             aria-label="Open filter"
             title="Filter"
           >
@@ -59,16 +67,18 @@ export default function DashboardStickyHeader() {
               />
             </svg>
           </motion.button>
+          </div>
         ) : null}
 
         {isManage ? (
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <motion.button
               type="button"
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => window.dispatchEvent(new Event('stayvo:manage-toggle-edit'))}
-              className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900"
+              className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:text-slate-900 dark:text-slate-200 dark:hover:text-slate-50"
               title={manageEditActive ? 'Exit edit mode' : 'Edit'}
               aria-label={manageEditActive ? 'Exit edit mode' : 'Edit'}
             >
@@ -104,9 +114,17 @@ export default function DashboardStickyHeader() {
               type="button"
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              onClick={() => window.dispatchEvent(new Event('stayvo:manage-add-location'))}
+              onClick={() => {
+                if (!canAddLocations) {
+                  window.alert(
+                    'Additional locations are available on Stayvo Pro.'
+                  );
+                  return;
+                }
+                window.dispatchEvent(new Event('stayvo:manage-add-location'));
+              }}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand text-white shadow-md transition hover:opacity-90"
-              title="Add location"
+              title={canAddLocations ? 'Add location' : 'Additional locations (Pro)'}
               aria-label="Add location"
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
@@ -128,25 +146,50 @@ export default function DashboardStickyHeader() {
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             >
-              <Link
-                href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
-                prefetch={false}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:opacity-90"
-                title="Add property"
-                aria-label="Add property"
-              >
-                <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" aria-hidden>
-                  <path
-                    d="M10 4.5v11M4.5 10h11"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </Link>
+              {atPropertyLimit ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.alert(
+                      `Free accounts can have up to ${FREE_TIER_MAX_PROPERTIES} properties. Stayvo Pro includes unlimited properties.`
+                    )
+                  }
+                  className="inline-flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-full bg-brand/45 text-base font-bold text-white shadow-md"
+                  title="Property limit reached"
+                  aria-label="Add property unavailable"
+                >
+                  <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" aria-hidden>
+                    <path
+                      d="M10 4.5v11M4.5 10h11"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <Link
+                  href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
+                  prefetch={false}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:opacity-90"
+                  title="Add property"
+                  aria-label="Add property"
+                >
+                  <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" aria-hidden>
+                    <path
+                      d="M10 4.5v11M4.5 10h11"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </Link>
+              )}
             </motion.div>
           </div>
         ) : null}
+
+        {!isDashboard && !isManage ? <ThemeToggle /> : null}
       </div>
     </header>
   );

@@ -2,7 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   // LAN phones hit http://<your-ip>:3000; add your Mac's Wi‑Fi IP when it changes or login → dashboard will fail in dev.
+  // Next.js blocks /_next/* when Origin hostname is not allowlisted. Default includes "localhost" but NOT "127.0.0.1",
+  // so opening http://127.0.0.1:3000 yields 403 on JS chunks and a blank page.
   allowedDevOrigins: [
+    '127.0.0.1',
+    '::1',
     '192.168.100.101',
     '192.168.100.109',
     '192.168.100.120',

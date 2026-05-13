@@ -5,8 +5,17 @@ import PressButton from '@/app/_components/PressButton';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function GuestUploadedImage({ path }: { path: string }) {
-  const url = guestPropertyMediaPublicUrl(path);
+export default function GuestUploadedImage({
+  path,
+  guestMediaPublicBase,
+}: {
+  path: string;
+  guestMediaPublicBase?: string | null;
+}) {
+  const url = guestPropertyMediaPublicUrl(
+    path,
+    guestMediaPublicBase !== undefined ? { resolvedPublicBase: guestMediaPublicBase } : undefined
+  );
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useEffect(() => {

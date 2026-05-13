@@ -15,6 +15,7 @@ type GuestLinkItem = {
 };
 
 type Section = {
+  locationId: string;
   locationName: string;
   properties: Array<{
     id: string;
@@ -74,12 +75,12 @@ function GuestCard({
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition"
+      className="relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition dark:border-white/8 dark:bg-white/5"
       style={{ borderLeftWidth: '4px', borderLeftColor: undefined }}
     >
       {/* Left accent strip */}
       <div
-        className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${opened ? 'bg-emerald-400' : 'bg-slate-200'}`}
+        className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${opened ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-white/15'}`}
       />
 
       <div className="pl-4 pr-3 py-3">
@@ -107,20 +108,20 @@ function GuestCard({
         </div>
 
         {/* Guest name */}
-        <p className="mt-1 text-[15px] font-semibold leading-tight text-slate-900">
+        <p className="mt-1 text-[15px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
           {displayGuestName(link.guest_name)}
         </p>
 
         {/* Bottom metadata row */}
         <div className="mt-2 flex items-center gap-3 flex-wrap">
-          <span className="flex items-center gap-1 text-[11px] text-slate-500">
+          <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
             <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-slate-400" fill="currentColor" aria-hidden>
               <path d="M5 2.5a.5.5 0 0 0-1 0V4H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 14h10a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13 4h-1V2.5a.5.5 0 0 0-1 0V4H5V2.5ZM2.5 7.5h11v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" />
             </svg>
             {link.is_permanent === true ? 'Permanent' : formatDate(link.checkout_date)}
           </span>
           {last ? (
-            <span className="flex items-center gap-1 text-[11px] text-slate-500">
+            <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
               <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-slate-400" fill="currentColor" aria-hidden>
                 <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-3.25a.75.75 0 0 1 .75.75v2.69l1.53 1.53a.75.75 0 1 1-1.06 1.06l-1.75-1.75A.75.75 0 0 1 7.25 8.5V5.5A.75.75 0 0 1 8 4.75Z" />
               </svg>
@@ -172,13 +173,13 @@ export default function TrackGuestLinksClient({
     <div className="mt-6 space-y-8">
       {sections.map((section) =>
         section.properties.length === 0 ? null : (
-          <section key={section.locationName}>
+          <section key={section.locationId}>
             {/* Location header */}
             <div className="mb-4 flex items-center gap-2">
-              <span className="rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-brand">
+              <span className="rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-brand dark:bg-brand/15">
                 {section.locationName}
               </span>
-              <div className="h-px flex-1 bg-amber-200/60" />
+              <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
             </div>
 
             {/* Property groups */}
@@ -194,9 +195,9 @@ export default function TrackGuestLinksClient({
                   <div key={property.id}>
                     {/* Property column header */}
                     <div className="mb-2 flex items-center justify-between gap-2 px-0.5">
-                      <h3 className="text-sm font-semibold text-slate-800">{title}</h3>
+                      <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{title}</h3>
                       {links.length > 0 && (
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
                           {openedCount}/{links.length} opened
                         </span>
                       )}
@@ -204,7 +205,7 @@ export default function TrackGuestLinksClient({
 
                     {/* Cards */}
                     {links.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-slate-200 bg-white/50 px-4 py-3 text-xs text-slate-400">
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-white/50 px-4 py-3 text-xs text-slate-600 dark:border-white/10 dark:bg-white/4 dark:text-white">
                         No guest links yet.
                       </div>
                     ) : (

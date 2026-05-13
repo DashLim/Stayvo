@@ -50,6 +50,7 @@ export default async function DashboardTrackPage() {
   }
 
   const sections = locList.map((loc) => ({
+    locationId: loc.id as string,
     locationName: (loc.name as string) ?? 'Location',
     properties: (byLocation.get(loc.id as string) ?? []).map((p) => ({
       id: p.id as string,
@@ -76,7 +77,7 @@ export default async function DashboardTrackPage() {
 
   return (
     <main className="py-10">
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         See whether guest links were opened and approx. how many devices loaded the portal.
       </p>
 

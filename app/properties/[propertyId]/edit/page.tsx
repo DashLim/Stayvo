@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import PropertyFormClient from '@/app/properties/_components/PropertyFormClient';
+import { getHostTier } from '@/lib/host-plan';
 import { parseGuestSectionOrderFromDb } from '@/lib/guest-layout';
+import { guestPropertyMediaResolvedPublicBase } from '@/lib/guest-property-media';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function EditPropertyPage({
@@ -45,7 +47,6 @@ export default async function EditPropertyPage({
   const [
     { data: steps, error: stepsError },
     { data: rules, error: rulesError },
-    { data: tips, error: tipsError },
     { data: faqs, error: faqsError },
     { data: customDetails, error: customDetailsError },
   ] = await Promise.all([
@@ -60,11 +61,6 @@ export default async function EditPropertyPage({
       .eq('property_id', propertyId)
       .order('rule_order', { ascending: true }),
     supabase
-      .from('property_guidebook_tips')
-      .select('label, description, tip_order, guest_image_path, drive_media_url')
-      .eq('property_id', propertyId)
-      .order('tip_order', { ascending: true }),
-    supabase
       .from('property_faqs')
       .select('question, answer, faq_order')
       .eq('property_id', propertyId)
@@ -76,13 +72,18 @@ export default async function EditPropertyPage({
       .order('detail_order', { ascending: true }),
   ]);
 
-  if (stepsError || rulesError || tipsError || faqsError || customDetailsError) redirect('/dashboard');
+  if (stepsError || rulesError || faqsError || customDetailsError) redirect('/dashboard');
+
+  const hostTier = await getHostTier(supabase, user.id);
+  const guestMediaPublicBase = guestPropertyMediaResolvedPublicBase();
 
   return (
     <PropertyFormClient
       mode="edit"
       propertyId={propertyId}
       locations={locations ?? []}
+      hostTier={hostTier}
+      guestMediaPublicBase={guestMediaPublicBase}
       initialValues={{
         isLive: Boolean(property.is_live),
         locationId: property.location_id ?? '',
@@ -106,11 +107,6 @@ export default async function EditPropertyPage({
           ruleText: r.rule_text ?? '',
           isDisplayed: r.is_displayed ?? true,
         })),
-        guidebookTips: (tips ?? []).map((t) => ({
-          label: t.label ?? '',
-          description: t.description ?? '',
-          guestImagePath: t.guest_image_path ?? '',
-        })),
         faqs: (faqs ?? []).map((f) => ({
           question: f.question ?? '',
           answer: f.answer ?? '',
@@ -130,6 +126,9 @@ export default async function EditPropertyPage({
         socialXUrl: property.social_x_url ?? '',
         socialTiktokUrl: property.social_tiktok_url ?? '',
         socialYoutubeUrl: property.social_youtube_url ?? '',
+        socialDirectBookingUrl:
+          (property as { social_direct_booking_url?: string | null })
+            .social_direct_booking_url ?? '',
       }}
     />
   );

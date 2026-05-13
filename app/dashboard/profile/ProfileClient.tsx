@@ -12,13 +12,16 @@ import {
 } from '@/app/actions/host-account';
 import PressButton from '@/app/_components/PressButton';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
+import type { HostTier } from '@/lib/host-tier';
 
 export default function ProfileClient({
   email,
   initialHostName,
+  hostTier,
 }: {
   email: string;
   initialHostName: string;
+  hostTier: HostTier;
 }) {
   const router = useRouter();
   const [hostName, setHostName] = useState(() =>
@@ -32,7 +35,7 @@ export default function ProfileClient({
   const [info, setInfo] = useState<string | null>(null);
 
   const exampleGuestLink = useMemo(
-    () => guestPortalAbsoluteUrl(hostName, 'zCqWY5WeiP'),
+    () => guestPortalAbsoluteUrl(hostName, 'a3Kf9x'),
     [hostName]
   );
 
@@ -139,33 +142,57 @@ export default function ProfileClient({
   return (
     <div className="mt-8 max-w-md space-y-4">
       {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3 text-sm text-rose-800 backdrop-blur-sm" role="alert">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3 text-sm text-rose-800 backdrop-blur-sm dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400" role="alert">
           {error}
         </div>
       ) : null}
       {info ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400">
           {info}
         </div>
       ) : null}
 
-      <section className="glass rounded-[20px] p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Current email</h2>
-        <p className="mt-1 text-sm text-slate-600">{email || '—'}</p>
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Current email</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{email || '—'}</p>
       </section>
 
-      <form onSubmit={onSaveHostName} className="glass rounded-[20px] p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Host display name</h2>
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Plan</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          You are on the{' '}
+          <span className="font-semibold text-slate-800 dark:text-slate-200">
+            {hostTier === 'pro' ? 'Pro' : 'Free'}
+          </span>{' '}
+          plan.
+        </p>
+        {hostTier === 'free' ? (
+          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+            Upgrade to Pro for unlimited properties, multiple locations, video uploads, FAQ, and
+            more custom blocks. Contact{' '}
+            <a className="font-medium text-brand underline-offset-2 hover:underline" href="mailto:legal@stayvo.app">
+              legal@stayvo.app
+            </a>{' '}
+            to learn more.
+          </p>
+        ) : null}
+      </section>
+
+      <form
+        onSubmit={onSaveHostName}
+        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12"
+      >
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Host display name</h2>
         <input
           value={hostName}
           onChange={(e) => setHostName(sanitizeHostDisplayNameInput(e.target.value))}
           placeholder="Your name"
           autoComplete="nickname"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
         />
-        <p className="mt-2 break-all text-xs text-slate-500">
-          <span className="font-semibold text-slate-600">Guest link example:</span>{' '}
-          <span className="font-mono text-slate-700">{exampleGuestLink}</span>
+        <p className="mt-2 break-all text-xs text-slate-500 dark:text-slate-500">
+          <span className="font-semibold text-slate-600 dark:text-slate-400">Guest link example:</span>{' '}
+          <span className="font-mono text-slate-700 dark:text-slate-300">{exampleGuestLink}</span>
         </p>
         <PressButton
           type="submit"
@@ -176,8 +203,11 @@ export default function ProfileClient({
         </PressButton>
       </form>
 
-      <form onSubmit={onChangeEmail} className="glass rounded-[20px] p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Change email</h2>
+      <form
+        onSubmit={onChangeEmail}
+        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12"
+      >
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Change email</h2>
         <input
           type="email"
           required
@@ -185,19 +215,22 @@ export default function ProfileClient({
           onChange={(e) => setNewEmail(e.target.value)}
           placeholder="New email address"
           autoComplete="email"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
         />
         <PressButton
           type="submit"
           disabled={busy}
-          className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+          className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60 dark:bg-brand"
         >
           Update email
         </PressButton>
       </form>
 
-      <form onSubmit={onChangePassword} className="glass rounded-[20px] p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Change password</h2>
+      <form
+        onSubmit={onChangePassword}
+        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12"
+      >
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Change password</h2>
         <input
           type="password"
           required
@@ -205,7 +238,7 @@ export default function ProfileClient({
           onChange={(e) => setPassword(e.target.value)}
           placeholder="New password (min 8 characters)"
           autoComplete="new-password"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
         />
         <input
           type="password"
@@ -214,23 +247,23 @@ export default function ProfileClient({
           onChange={(e) => setPassword2(e.target.value)}
           placeholder="Confirm new password"
           autoComplete="new-password"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
         />
         <PressButton
           type="submit"
           disabled={busy}
-          className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+          className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60 dark:bg-brand"
         >
           Update password
         </PressButton>
       </form>
 
-      <div className="glass flex flex-col gap-3 rounded-[20px] p-4">
+      <div className="glass flex flex-col gap-3 rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
         <PressButton
           type="button"
           disabled={busy}
           onClick={() => void onSignOut()}
-          className="rounded-full border border-slate-300 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60"
+          className="rounded-full border border-slate-300 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
         >
           Log out
         </PressButton>
@@ -238,27 +271,27 @@ export default function ProfileClient({
           type="button"
           disabled={busy}
           onClick={() => void onDeleteAccount()}
-          className="rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-800 disabled:opacity-60"
+          className="rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-800 disabled:opacity-60 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-400"
         >
           Delete account
         </PressButton>
       </div>
 
-      <section className="glass rounded-[20px] p-4">
-        <h2 className="text-sm font-semibold text-slate-900">Legal</h2>
-        <p className="mt-1 text-xs text-slate-500">
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Legal</h2>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
           Review the latest Privacy Policy and Terms of Service.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href="/privacy"
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
           >
             Privacy Policy
           </Link>
           <Link
             href="/terms"
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white"
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
           >
             Terms of Service
           </Link>

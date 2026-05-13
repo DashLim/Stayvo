@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import ProfileClient from '@/app/dashboard/profile/ProfileClient';
+import { getHostTier } from '@/lib/host-plan';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function DashboardProfilePage() {
@@ -12,12 +13,14 @@ export default async function DashboardProfilePage() {
   if (userError || !user) redirect('/login?redirect=/dashboard/profile');
 
   const meta = user.user_metadata as { host_display_name?: string } | null;
+  const hostTier = await getHostTier(supabase, user.id);
 
   return (
     <main className="py-10">
       <ProfileClient
         email={user.email ?? ''}
         initialHostName={(meta?.host_display_name as string | undefined) ?? ''}
+        hostTier={hostTier}
       />
     </main>
   );

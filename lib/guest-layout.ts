@@ -1,5 +1,5 @@
 export const FIXED_TOP_SECTIONS = ['address', 'checkin', 'parking'] as const;
-export const MIDDLE_BASE_SECTIONS = ['wifi', 'faq', 'rules', 'guidebook'] as const;
+export const MIDDLE_BASE_SECTIONS = ['wifi', 'faq', 'rules'] as const;
 export const FIXED_BOTTOM_SECTIONS = ['host'] as const;
 
 /** Default guest section order (no custom blocks). Top/bottom are fixed; middle is reorderable. */
@@ -34,7 +34,7 @@ export function buildAllowedSectionKeys(customDetails: CustomDetail[]) {
 
 /**
  * Full section order: Address → Check-in → Parking (fixed), then middle blocks
- * (Wi‑Fi, FAQ, rules, guidebook, custom boxes in host-chosen order), then Host (fixed last).
+ * (Wi‑Fi, FAQ, rules, custom boxes in host-chosen order), then Host (fixed last).
  */
 export function normalizeSectionOrder(
   order: string[] | null | undefined,

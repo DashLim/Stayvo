@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import PreviewClient from '@/app/properties/[propertyId]/preview/PreviewClient';
 import { parseGuestSectionOrderFromDb } from '@/lib/guest-layout';
+import { guestPropertyMediaResolvedPublicBase } from '@/lib/guest-property-media';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function PropertyPreviewPage({
@@ -39,7 +40,6 @@ export default async function PropertyPreviewPage({
   const [
     { data: steps, error: stepsError },
     { data: rules, error: rulesError },
-    { data: tips, error: tipsError },
     { data: faqs, error: faqsError },
     { data: customDetails, error: customDetailsError },
   ] = await Promise.all([
@@ -54,11 +54,6 @@ export default async function PropertyPreviewPage({
       .eq('property_id', propertyId)
       .order('rule_order', { ascending: true }),
     supabase
-      .from('property_guidebook_tips')
-      .select('label, description, tip_order, drive_media_url')
-      .eq('property_id', propertyId)
-      .order('tip_order', { ascending: true }),
-    supabase
       .from('property_faqs')
       .select('question, answer, faq_order')
       .eq('property_id', propertyId)
@@ -70,11 +65,13 @@ export default async function PropertyPreviewPage({
       .order('detail_order', { ascending: true }),
   ]);
 
-  if (stepsError || rulesError || tipsError || faqsError || customDetailsError) {
+  if (stepsError || rulesError || faqsError || customDetailsError) {
     redirect('/dashboard');
   }
 
   type MediaRow = { guest_image_path?: string | null; drive_media_url?: string | null };
+
+  const guestMediaPublicBase = guestPropertyMediaResolvedPublicBase();
 
   return (
     <PreviewClient
@@ -106,16 +103,6 @@ export default async function PropertyPreviewPage({
         rule_order: r.rule_order ?? 0,
         is_displayed: r.is_displayed ?? true,
       }))}
-      guidebookTips={(tips ?? []).map((t) => {
-        const row = t as typeof t & MediaRow;
-        return {
-          label: row.label ?? '',
-          description: row.description ?? '',
-          tip_order: row.tip_order ?? 0,
-          guest_image_path: row.guest_image_path ?? null,
-          drive_media_url: row.drive_media_url ?? null,
-        };
-      })}
       faqs={(faqs ?? []).map((f) => ({
         question: f.question ?? '',
         answer: f.answer ?? '',
@@ -142,6 +129,11 @@ export default async function PropertyPreviewPage({
       socialTiktokUrl={property.social_tiktok_url ?? null}
       socialYoutubeUrl={property.social_youtube_url ?? null}
       socialAirbnbUrl={property.social_airbnb_url ?? null}
+      socialDirectBookingUrl={
+        (property as { social_direct_booking_url?: string | null })
+          .social_direct_booking_url ?? null
+      }
+      guestMediaPublicBase={guestMediaPublicBase}
     />
   );
 }

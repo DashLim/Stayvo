@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 /** Dashboard uses a fixed chrome + portal nav; fading this subtree fights the shell and feels jumpy. */
 function isDashboardShellPath(pathname: string) {
@@ -11,7 +12,14 @@ function isDashboardShellPath(pathname: string) {
 
 export default function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/';
-  const reducedMotion = useReducedMotion();
+  const [mounted, setMounted] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  /** Ignore prefers-reduced-motion until mount so SSR + first client paint match (avoids hydration mismatch). */
+  const reducedMotion = mounted && Boolean(prefersReducedMotion);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (reducedMotion || isDashboardShellPath(pathname)) return <>{children}</>;
 

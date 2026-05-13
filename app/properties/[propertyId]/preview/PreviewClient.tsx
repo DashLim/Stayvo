@@ -33,13 +33,6 @@ type PreviewClientProps = {
     drive_media_url?: string | null;
   }>;
   houseRules: Array<{ rule_text: string; rule_order: number; is_displayed: boolean }>;
-  guidebookTips: Array<{
-    label: string;
-    description: string;
-    tip_order: number;
-    guest_image_path?: string | null;
-    drive_media_url?: string | null;
-  }>;
   faqs: Array<{
     question: string;
     answer: string;
@@ -54,6 +47,8 @@ type PreviewClientProps = {
   socialTiktokUrl?: string | null;
   socialYoutubeUrl?: string | null;
   socialAirbnbUrl?: string | null;
+  socialDirectBookingUrl?: string | null;
+  guestMediaPublicBase?: string | null;
 };
 
 function hasText(value: string | null | undefined) {
@@ -130,20 +125,11 @@ export default function PreviewClient(props: PreviewClientProps) {
       ],
       ['rules', props.houseRules.some((r) => r.is_displayed)],
       [
-        'guidebook',
-        props.guidebookTips.some(
-          (t) =>
-            hasText(t.label) ||
-            hasText(t.description) ||
-            hasText(t.guest_image_path) ||
-            hasText(t.drive_media_url)
-        ),
-      ],
-      [
         'host',
         hasText(props.hostName) ||
           hasText(props.hostWhatsappNumber) ||
-          hasText(props.hostWhatsappChatNumber),
+          hasText(props.hostWhatsappChatNumber) ||
+          hasText(props.socialDirectBookingUrl),
       ],
     ]);
 
@@ -156,7 +142,9 @@ export default function PreviewClient(props: PreviewClientProps) {
     );
   }, [customDetails, props]);
 
-  const heroImageUrl = guestPropertyMediaPublicUrl(props.heroImagePath);
+  const heroImageUrl = guestPropertyMediaPublicUrl(props.heroImagePath, {
+    resolvedPublicBase: props.guestMediaPublicBase,
+  });
   const hasCheckinSection = orderedSections.includes('checkin');
   const hasParkingSection = orderedSections.includes('parking');
   const hasWifiSection = orderedSections.includes('wifi');
@@ -175,6 +163,31 @@ export default function PreviewClient(props: PreviewClientProps) {
   if (hasRulesSection) quickNavItems.push({ key: 'rules', targetId: 'rules-section' });
   if (callHref) quickNavItems.push({ key: 'call', targetId: 'host-section' });
   if (whatsappHref) quickNavItems.push({ key: 'whatsapp', targetId: 'host-section' });
+
+  const heroPreviewIntro = (
+    <div>
+      <h1
+        className="whitespace-pre-line text-2xl font-bold leading-tight tracking-tight text-white"
+        style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}
+      >
+        {props.propertyName}
+      </h1>
+      <p
+        className="mt-1.5 text-sm font-medium text-white/90"
+        style={{ textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}
+      >
+        This is how your guest page looks.
+      </p>
+    </div>
+  );
+
+  const previewHeroBadge = (
+    <div className="absolute left-4 top-4 z-20">
+      <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+        Stayvo
+      </span>
+    </div>
+  );
 
   return (
     <main
@@ -197,39 +210,33 @@ export default function PreviewClient(props: PreviewClientProps) {
       </header>
 
       <section
-        className={`relative left-1/2 right-1/2 min-h-[68vh] w-screen -translate-x-1/2 overflow-hidden ${heroImageUrl ? '' : 'bg-brand'}`}
+        className={`relative left-1/2 right-1/2 w-screen -translate-x-1/2 overflow-hidden ${
+          heroImageUrl ? 'min-h-[68vh]' : 'bg-brand'
+        }`}
       >
         {heroImageUrl ? (
           <>
             <img src={heroImageUrl} alt="" aria-hidden className="absolute inset-0 h-full w-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70" />
+            {previewHeroBadge}
+            <div className="relative flex min-h-[68vh] items-end px-5 pb-14">{heroPreviewIntro}</div>
           </>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-brand to-amber-600" />
-        )}
-
-        <div className="absolute left-4 top-4 z-10">
-          <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-            Stayvo
-          </span>
-        </div>
-
-        <div className="relative flex min-h-[68vh] items-end px-5 pb-14">
-          <div>
-            <h1
-              className="text-2xl font-bold leading-tight tracking-tight text-white"
-              style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}
-            >
-              {props.propertyName}
-            </h1>
-            <p
-              className="mt-1.5 text-sm font-medium text-white/90"
-              style={{ textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}
-            >
-              This is how your guest page looks.
-            </p>
+          <div className="relative mx-auto w-full max-w-full">
+            {previewHeroBadge}
+            <img
+              src="/brand/stayvo-guest-hero-fallback.png"
+              alt=""
+              aria-hidden
+              className="mx-auto block h-auto w-full max-w-full"
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70"
+              aria-hidden
+            />
+            <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-14 pt-12 sm:pt-16">{heroPreviewIntro}</div>
           </div>
-        </div>
+        )}
       </section>
       <GuestSectionQuickNav items={quickNavItems} callHref={callHref} whatsappHref={whatsappHref} />
 
@@ -346,6 +353,7 @@ export default function PreviewClient(props: PreviewClientProps) {
                               <GuestSectionMedia
                                 guestImagePath={s.guest_image_path}
                                 driveMediaUrl={s.drive_media_url}
+                                guestMediaPublicBase={props.guestMediaPublicBase}
                               />
                             </div>
                           ) : null}
@@ -439,46 +447,6 @@ export default function PreviewClient(props: PreviewClientProps) {
               );
             }
 
-            if (sectionKey === 'guidebook') {
-              return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
-                  <SectionHeading
-                    label="Guidebook"
-                    icon={
-                      <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-                        <path d="M4.75 3A2.75 2.75 0 0 0 2 5.75v8.5A2.75 2.75 0 0 0 4.75 17h10.5A2.75 2.75 0 0 0 18 14.25v-8.5A2.75 2.75 0 0 0 15.25 3H4.75ZM5.5 6.5a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5A.75.75 0 0 1 5.5 6.5Zm0 3a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1-.75-.75Zm0 3a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z" />
-                      </svg>
-                    }
-                  />
-                  <div className="mt-3 space-y-3">
-                    {props.guidebookTips
-                      .filter(
-                        (tip) =>
-                          hasText(tip.label) ||
-                          hasText(tip.description) ||
-                          hasText(tip.guest_image_path) ||
-                          hasText(tip.drive_media_url)
-                      )
-                      .map((tip, idx) => (
-                        <div key={`${tip.tip_order}-${idx}`}>
-                          {idx > 0 ? <div className="mb-3 border-t border-slate-100" /> : null}
-                          {hasText(tip.label) ? (
-                            <h3 className="text-sm font-semibold text-slate-800">{tip.label}</h3>
-                          ) : null}
-                          {hasText(tip.description) ? (
-                            <p className="mt-1 text-sm leading-relaxed text-slate-600">{tip.description}</p>
-                          ) : null}
-                          <GuestSectionMedia
-                            guestImagePath={tip.guest_image_path}
-                            driveMediaUrl={tip.drive_media_url}
-                          />
-                        </div>
-                      ))}
-                  </div>
-                </section>
-              );
-            }
-
             if (sectionKey === 'host') {
               return (
                 <section id="host-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
@@ -494,10 +462,34 @@ export default function PreviewClient(props: PreviewClientProps) {
                     <p className="mt-2 text-sm font-medium text-slate-800">{props.hostName}</p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {hasText(props.socialDirectBookingUrl) ? (
+                      <a
+                        href={(props.socialDirectBookingUrl ?? '').trim()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm active:opacity-80"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-4 w-4 shrink-0"
+                          fill="none"
+                          aria-hidden
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9"
+                          />
+                        </svg>
+                        Booking Website
+                      </a>
+                    ) : null}
                     {hostCallHref ? (
                       <Link
                         href={hostCallHref}
-                        className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm active:opacity-80"
+                        className="inline-flex items-center gap-2 rounded-full border-2 border-brand bg-white px-5 py-2.5 text-sm font-semibold text-brand shadow-sm active:opacity-80"
                       >
                         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
                           <path
@@ -551,6 +543,7 @@ export default function PreviewClient(props: PreviewClientProps) {
                   <GuestSectionMedia
                     guestImagePath={detail.guest_image_path}
                     driveMediaUrl={detail.drive_media_url}
+                    guestMediaPublicBase={props.guestMediaPublicBase}
                   />
                 </section>
               );

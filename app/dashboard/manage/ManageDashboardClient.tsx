@@ -6,9 +6,9 @@ import { useEffect, useState, useTransition } from 'react';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
-  closestCenter,
+  closestCorners,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -31,6 +31,8 @@ import {
   setPropertyLocation,
 } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
+import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
+import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
 
 type LocRow = { id: string; name: string };
 type PropRow = {
@@ -46,6 +48,26 @@ type Group = { location: LocRow; properties: PropRow[] };
 const trelloPressFx =
   'transition duration-150 active:scale-[0.97] active:translate-y-[1px] active:brightness-95';
 
+/**
+ * PointerSensor listens to unified pointer events and often wins over TouchSensor on mobile,
+ * so touch drags never activate. Use mouse-only + touch-only sensors instead (dnd-kit guidance).
+ */
+function useManageDragSensors() {
+  return useSensors(
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 12,
+      },
+    }),
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+}
+
 function DragHandle({
   listeners,
   attributes,
@@ -56,12 +78,13 @@ function DragHandle({
   hidden?: boolean;
 }) {
   if (hidden) return null;
+  /* Native button — avoids Framer Motion + global :active transform fighting @dnd-kit */
   return (
-    <PressButton
+    <button
       type="button"
       {...attributes}
       {...listeners}
-      className={`touch-none select-none rounded-full glass p-2 text-slate-400 transition hover:text-brand ${trelloPressFx}`}
+      className={`touch-none select-none rounded-full glass p-2 text-slate-500 transition hover:text-brand [-webkit-touch-callout:none] dark:text-slate-300 dark:hover:text-brand ${trelloPressFx}`}
       aria-label="Drag to reorder"
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
@@ -69,7 +92,7 @@ function DragHandle({
         <circle cx="12" cy="12" r="2" />
         <circle cx="12" cy="18" r="2" />
       </svg>
-    </PressButton>
+    </button>
   );
 }
 
@@ -78,6 +101,8 @@ function SortablePropertyRow({
   flatLocations,
   pending,
   editMode,
+  openMenuPropertyId,
+  setOpenMenuPropertyId,
   onMoveProperty,
   onToggleLive,
   onDeleteProperty,
@@ -87,6 +112,8 @@ function SortablePropertyRow({
   flatLocations: LocRow[];
   pending: boolean;
   editMode: boolean;
+  openMenuPropertyId: string | null;
+  setOpenMenuPropertyId: React.Dispatch<React.SetStateAction<string | null>>;
   onMoveProperty: (id: string, locId: string) => void;
   onToggleLive: (id: string, live: boolean) => void;
   onDeleteProperty: (id: string, name: string) => void;
@@ -102,33 +129,33 @@ function SortablePropertyRow({
     zIndex: isDragging ? 10 : undefined,
   };
 
-  const [menuOpen, setMenuOpen] = useState(false);
+  const menuOpen = openMenuPropertyId === p.id;
 
   useEffect(() => {
     if (!menuOpen) return;
     function handleOutsideClick() {
-      setMenuOpen(false);
+      setOpenMenuPropertyId((current) => (current === p.id ? null : current));
     }
     window.addEventListener('click', handleOutsideClick);
     return () => window.removeEventListener('click', handleOutsideClick);
-  }, [menuOpen]);
+  }, [menuOpen, p.id, setOpenMenuPropertyId]);
 
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className="rounded-xl bg-white/40 py-3 first:pt-2"
+      className="relative border-b border-white/15 px-4 py-3 first:pt-3 last:border-b-0 dark:border-white/10"
     >
       {/* Top row: drag handle + names + Edit link (hidden in edit mode) / delete (in edit mode) */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <DragHandle listeners={listeners} attributes={attributes} hidden={!editMode} />
           <div className="min-w-0">
-            <p className="font-semibold text-slate-900">
+            <p className="font-semibold text-slate-900 dark:text-slate-200">
               {(p.internal_name ?? '').trim() || p.property_name || 'Untitled'}
             </p>
             {!editMode ? (
-              <p className="truncate text-xs text-slate-500">
+              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                 {p.property_name || 'Untitled'}
               </p>
             ) : null}
@@ -138,8 +165,10 @@ function SortablePropertyRow({
           <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
             <PressButton
               type="button"
-              onClick={() => setMenuOpen((v) => !v)}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-600 backdrop-blur-sm transition hover:text-slate-900 ${trelloPressFx}`}
+              onClick={() =>
+                setOpenMenuPropertyId((current) => (current === p.id ? null : p.id))
+              }
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-700 backdrop-blur-sm transition hover:bg-slate-300/90 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/14 dark:hover:text-slate-950 ${trelloPressFx}`}
               title="Property actions"
               aria-label="Property actions"
             >
@@ -148,35 +177,35 @@ function SortablePropertyRow({
               </svg>
             </PressButton>
             {menuOpen ? (
-              <div className="absolute bottom-full right-0 z-50 mb-2 w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+              <div className="absolute bottom-full right-0 z-50 mb-2 w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-white/10 dark:bg-neutral-900">
                 <Link
                   href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
                   prefetch={false}
-                  className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                  onClick={() => setMenuOpen(false)}
+                  className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-300 dark:text-slate-200 dark:hover:bg-slate-700/95 dark:hover:text-white"
+                  onClick={() => setOpenMenuPropertyId(null)}
                 >
                   Edit
                 </Link>
-                <PressButton
+                <button
                   type="button"
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-300 dark:text-slate-200 dark:hover:bg-slate-700/95 dark:hover:text-white"
                   onClick={() => {
-                    setMenuOpen(false);
+                    setOpenMenuPropertyId(null);
                     onCloneProperty(p.id, p.property_name || 'Untitled');
                   }}
                 >
                   Clone
-                </PressButton>
-                <PressButton
+                </button>
+                <button
                   type="button"
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-950/55"
                   onClick={() => {
-                    setMenuOpen(false);
+                    setOpenMenuPropertyId(null);
                     onDeleteProperty(p.id, p.property_name || 'Untitled');
                   }}
                 >
                   Delete
-                </PressButton>
+                </button>
               </div>
             ) : null}
           </div>
@@ -187,13 +216,13 @@ function SortablePropertyRow({
               type="button"
               disabled={pending}
               onClick={() => onToggleLive(p.id, !p.is_live)}
-              className={`relative inline-flex h-7 w-[3.25rem] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${p.is_live ? 'bg-brand' : 'bg-slate-300'} ${trelloPressFx}`}
+              className={`relative inline-flex h-7 w-[3.25rem] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${p.is_live ? 'bg-brand' : 'bg-slate-300 dark:bg-slate-600'} ${trelloPressFx}`}
               aria-label={p.is_live ? 'Set to draft' : 'Set to live'}
               title={p.is_live ? 'Live — tap to draft' : 'Draft — tap to go live'}
             >
               <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${p.is_live ? 'translate-x-7' : 'translate-x-1'}`} />
             </PressButton>
-            <span className="min-w-[2rem] text-xs font-semibold text-slate-600">
+            <span className="min-w-[2rem] text-xs font-semibold text-slate-600 dark:text-slate-300">
               {p.is_live ? 'Live' : 'Draft'}
             </span>
             <PressButton
@@ -224,7 +253,7 @@ function SortablePropertyRow({
             value={p.location_id}
             disabled={pending}
             onChange={(e) => onMoveProperty(p.id, e.target.value)}
-            className="w-full rounded-full border border-white/50 bg-white/60 px-4 py-1.5 text-xs text-slate-700 backdrop-blur-sm outline-none focus:border-brand/40 focus:ring-2 focus:ring-brand/20 disabled:opacity-50"
+            className="w-full rounded-full border border-white/50 bg-white/60 px-4 py-1.5 text-xs font-medium text-slate-800 backdrop-blur-sm outline-none focus:border-brand/40 focus:ring-2 focus:ring-brand/20 disabled:opacity-50 dark:border-white/12 dark:bg-neutral-950/60 dark:text-slate-100 dark:[color-scheme:dark]"
           >
             {flatLocations.map((l) => (
               <option key={l.id} value={l.id}>
@@ -243,6 +272,9 @@ function SortableLocationCard({
   flatLocations,
   pending,
   editMode,
+  canAddProperty,
+  openMenuPropertyId,
+  setOpenMenuPropertyId,
   onMoveProperty,
   onToggleLive,
   onDeleteLocation,
@@ -254,6 +286,9 @@ function SortableLocationCard({
   flatLocations: LocRow[];
   pending: boolean;
   editMode: boolean;
+  canAddProperty: boolean;
+  openMenuPropertyId: string | null;
+  setOpenMenuPropertyId: React.Dispatch<React.SetStateAction<string | null>>;
   onMoveProperty: (id: string, locId: string) => void;
   onToggleLive: (id: string, live: boolean) => void;
   onDeleteLocation: (id: string, name: string, count: number) => void;
@@ -265,6 +300,8 @@ function SortableLocationCard({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: loc.id, disabled: !editMode || pending });
 
+  const propertySensors = useManageDragSensors();
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -272,45 +309,63 @@ function SortableLocationCard({
     zIndex: isDragging ? 20 : undefined,
   };
 
-  const propertySensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } })
-  );
-
   return (
     <section
       ref={setNodeRef}
       style={style}
-      className="glass rounded-[20px] p-4"
+      className="glass rounded-[20px] border border-slate-200/80 bg-slate-50/65 p-4 dark:border-white/12 dark:bg-neutral-900/60"
     >
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/50 pb-3">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/50 dark:border-white/10 pb-3">
         <div className="flex items-center gap-2">
           <DragHandle listeners={listeners} attributes={attributes} hidden={!editMode} />
           <div>
             <h2 className="text-lg font-semibold text-brand">{loc.name}</h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {properties.length} propert{properties.length === 1 ? 'y' : 'ies'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           {!editMode ? (
-            <Link
-              href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
-              prefetch={false}
-              className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 ${trelloPressFx}`}
-              aria-label={`Add property under ${loc.name}`}
-              title={`Add property under ${loc.name}`}
-            >
-              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
-                <path
-                  d="M10 5v10M5 10h10"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </Link>
+            canAddProperty ? (
+              <Link
+                href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
+                prefetch={false}
+                className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 ${trelloPressFx}`}
+                aria-label={`Add property under ${loc.name}`}
+                title={`Add property under ${loc.name}`}
+              >
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+                  <path
+                    d="M10 5v10M5 10h10"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  window.alert(
+                    `Free accounts can have up to ${FREE_TIER_MAX_PROPERTIES} properties. Stayvo Pro includes unlimited properties.`
+                  )
+                }
+                className={`inline-flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-full bg-brand/45 text-sm font-bold text-white shadow-sm ${trelloPressFx}`}
+                aria-label="Property limit reached"
+                title="Property limit reached"
+              >
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+                  <path
+                    d="M10 5v10M5 10h10"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            )
           ) : null}
           {editMode ? (
             <PressButton
@@ -340,18 +395,22 @@ function SortableLocationCard({
       </div>
 
       {properties.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">No properties in this location yet.</p>
+        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">No properties in this location yet.</p>
       ) : (
         <DndContext
           sensors={propertySensors}
-          collisionDetection={closestCenter}
+          collisionDetection={closestCorners}
           onDragEnd={(event) => {
             if (!editMode) return;
-            onPropertyDragEnd(loc.id, event);
+            void onPropertyDragEnd(loc.id, event);
           }}
         >
-          <SortableContext items={properties.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-            <ul className="mt-3 divide-y divide-white/40">
+          <SortableContext
+            id={`stayvo-props-${loc.id}`}
+            items={properties.map((p) => p.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <ul className="mt-3 overflow-visible rounded-2xl border border-slate-200 bg-white/85 divide-y divide-slate-300/45 dark:border-white/10 dark:bg-white/[0.04] dark:divide-white/10">
               {properties.map((p) => (
                 <SortablePropertyRow
                   key={p.id}
@@ -359,6 +418,8 @@ function SortableLocationCard({
                   flatLocations={flatLocations}
                   pending={pending}
                   editMode={editMode}
+                  openMenuPropertyId={openMenuPropertyId}
+                  setOpenMenuPropertyId={setOpenMenuPropertyId}
                   onMoveProperty={onMoveProperty}
                   onToggleLive={onToggleLive}
                   onDeleteProperty={onDeleteProperty}
@@ -375,11 +436,15 @@ function SortableLocationCard({
 
 export default function ManageDashboardClient({ locationGroups }: { locationGroups: Group[] }) {
   const router = useRouter();
+  const limits = useHostDashboardLimits();
+  const canAddProperty =
+    limits.tier === 'pro' || limits.propertyCount < FREE_TIER_MAX_PROPERTIES;
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState(locationGroups);
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [openMenuPropertyId, setOpenMenuPropertyId] = useState<string | null>(null);
 
   useEffect(() => {
     window.dispatchEvent(
@@ -392,14 +457,24 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
 
   useEffect(() => {
     setGroups(locationGroups);
+    setOpenMenuPropertyId(null);
   }, [locationGroups]);
+
+  useEffect(() => {
+    if (editMode) setOpenMenuPropertyId(null);
+  }, [editMode]);
 
   useEffect(() => {
     function onToggleEdit() {
       setEditMode((v) => !v);
     }
     function onAddLocation() {
-      void onCreateLocation();
+      if (limits.tier !== 'pro') {
+        setError('Additional locations are available on Stayvo Pro.');
+        return;
+      }
+      setNewLocName('');
+      setAddLocOpen(true);
     }
     window.addEventListener('stayvo:manage-toggle-edit', onToggleEdit);
     window.addEventListener('stayvo:manage-add-location', onAddLocation);
@@ -407,7 +482,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       window.removeEventListener('stayvo:manage-toggle-edit', onToggleEdit);
       window.removeEventListener('stayvo:manage-add-location', onAddLocation);
     };
-  }, []);
+  }, [limits.tier]);
 
   useEffect(() => {
     window.dispatchEvent(new Event(addLocOpen ? 'stayvo:add-location-open' : 'stayvo:add-location-close'));
@@ -422,14 +497,14 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     startTransition(() => router.refresh());
   }
 
-  const locationSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } })
-  );
+  const locationSensors = useManageDragSensors();
 
   function onLocationDragStart(event: DragStartEvent) {
     if (!editMode) return;
-    setActiveLocationId(event.active.id as string);
+    const id = String(event.active.id);
+    if (groups.some((g) => g.location.id === id)) {
+      setActiveLocationId(id);
+    }
   }
 
   async function onLocationDragEnd(event: DragEndEvent) {
@@ -437,8 +512,10 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     if (!editMode) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIdx = groups.findIndex((g) => g.location.id === active.id);
-    const newIdx = groups.findIndex((g) => g.location.id === over.id);
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const oldIdx = groups.findIndex((g) => g.location.id === activeId);
+    const newIdx = groups.findIndex((g) => g.location.id === overId);
     if (oldIdx < 0 || newIdx < 0) return;
     const nextGroups = arrayMove(groups, oldIdx, newIdx);
     setGroups(nextGroups);
@@ -455,10 +532,12 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     if (!editMode) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
     const group = groups.find((g) => g.location.id === locationId);
     if (!group) return;
-    const oldIdx = group.properties.findIndex((p) => p.id === active.id);
-    const newIdx = group.properties.findIndex((p) => p.id === over.id);
+    const oldIdx = group.properties.findIndex((p) => p.id === activeId);
+    const newIdx = group.properties.findIndex((p) => p.id === overId);
     if (oldIdx < 0 || newIdx < 0) return;
     const nextProps = arrayMove(group.properties, oldIdx, newIdx);
     setGroups((prev) => prev.map((g) => (g.location.id === locationId ? { ...g, properties: nextProps } : g)));
@@ -469,11 +548,6 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       return;
     }
     refresh();
-  }
-
-  function onCreateLocation() {
-    setNewLocName('');
-    setAddLocOpen(true);
   }
 
   async function submitNewLocation() {
@@ -512,6 +586,10 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
   async function onDeleteProperty(propertyId: string, propertyName: string) {
     const ok = window.confirm(`Delete property "${propertyName}"? This cannot be undone.`);
     if (!ok) return;
+    const finalOk = window.confirm(
+      `Please confirm again: permanently delete "${propertyName}" and all related guest links/data?`
+    );
+    if (!finalOk) return;
     setError(null);
     const res = await deleteProperty(propertyId);
     if (!res.ok) {
@@ -541,6 +619,11 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         ? `Delete location "${label}"?\n\nThis will permanently delete ALL ${count} propert${count === 1 ? 'y' : 'ies'} (guest links, images, all data). This cannot be undone.\n\nClick OK to delete.`
         : `Delete empty location "${label}"?\n\nThis cannot be undone.`;
     if (!window.confirm(message)) return;
+    const finalMessage =
+      count > 0
+        ? `Please confirm again: permanently delete location "${label}" and all ${count} linked propert${count === 1 ? 'y' : 'ies'}?`
+        : `Please confirm again: permanently delete empty location "${label}"?`;
+    if (!window.confirm(finalMessage)) return;
     const res = await deleteLocation(locationId);
     if (!res.ok) {
       setError(res.error);
@@ -555,7 +638,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     <div className="mt-6 space-y-6">
       {/* Edit mode banner */}
       {editMode ? (
-        <div className="flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/70 px-4 py-2 text-xs font-semibold text-amber-800 backdrop-blur-sm">
+        <div className="flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/70 px-4 py-2 text-xs font-semibold text-amber-800 backdrop-blur-sm dark:border-amber-700/40 dark:bg-amber-950/50 dark:text-amber-400">
           <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
             <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-.793.793-2.828-2.828.793-.793ZM11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828Z" />
           </svg>
@@ -573,7 +656,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
             onClick={() => setAddLocOpen(false)}
           />
           <div className="glass relative w-[calc(100%-2rem)] max-w-sm rounded-[20px] p-5">
-            <h2 className="text-base font-semibold text-slate-900">Add new location</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Add new location</h2>
             <input
               autoFocus
               type="text"
@@ -581,13 +664,13 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
               onChange={(e) => setNewLocName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') void submitNewLocation(); }}
               placeholder="Location name"
-              className="mt-3 w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+              className="mt-3 w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
             />
             <div className="mt-4 flex justify-end gap-2">
               <PressButton
                 type="button"
                 onClick={() => setAddLocOpen(false)}
-                className={`rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 ${trelloPressFx}`}
+                className={`rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950 ${trelloPressFx}`}
               >
                 Cancel
               </PressButton>
@@ -595,7 +678,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 type="button"
                 disabled={!newLocName.trim()}
                 onClick={() => void submitNewLocation()}
-                className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50 hover:opacity-90 ${trelloPressFx}`}
+                className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50 hover:opacity-90 dark:bg-brand dark:text-white ${trelloPressFx}`}
               >
                 Add
               </PressButton>
@@ -605,18 +688,22 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       ) : null}
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400">
           {error}
         </p>
       ) : null}
 
       <DndContext
         sensors={locationSensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
         onDragStart={onLocationDragStart}
         onDragEnd={(e) => void onLocationDragEnd(e)}
       >
-        <SortableContext items={groups.map((g) => g.location.id)} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          id="stayvo-locations"
+          items={groups.map((g) => g.location.id)}
+          strategy={verticalListSortingStrategy}
+        >
           <div className="space-y-6">
             {groups.map((group) => (
               <SortableLocationCard
@@ -625,6 +712,9 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 flatLocations={flatLocations}
                 pending={pending}
                 editMode={editMode}
+                canAddProperty={canAddProperty}
+                openMenuPropertyId={openMenuPropertyId}
+                setOpenMenuPropertyId={setOpenMenuPropertyId}
                 onMoveProperty={onMoveProperty}
                 onToggleLive={onToggleLive}
                 onDeleteLocation={onDeleteLocation}
@@ -639,8 +729,8 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         <DragOverlay>
           {activeGroup && editMode ? (
             <div className="glass rounded-[20px] p-4 shadow-2xl ring-1 ring-brand/30">
-              <p className="font-semibold text-slate-900">{activeGroup.location.name}</p>
-              <p className="text-xs text-slate-500">
+              <p className="font-semibold text-slate-900 dark:text-slate-100">{activeGroup.location.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {activeGroup.properties.length} propert
                 {activeGroup.properties.length === 1 ? 'y' : 'ies'}
               </p>

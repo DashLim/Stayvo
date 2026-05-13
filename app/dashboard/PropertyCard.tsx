@@ -39,6 +39,8 @@ type PropertyCardProps = {
   links: GuestLinkItem[];
   nowIso: string;
   hostDisplayName: string | null;
+  /** Origin for copied guest links (from server; e.g. https://stayvo.io). */
+  guestLinkBaseUrl: string;
   /** When set with `onLinksPanelChange`, expansion is controlled by the parent (e.g. one open tab across the dashboard). */
   linksPanel?: 'active' | 'generate' | null;
   onLinksPanelChange?: (panel: 'active' | 'generate' | null) => void;
@@ -52,15 +54,17 @@ function DateField({
   const disabled = props.disabled;
   return (
     <div
-      className={`w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-brand/30 ${
-        disabled ? 'cursor-not-allowed bg-slate-100' : 'bg-white'
+      className={`w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-brand/30 dark:border-white/20 ${
+        disabled
+          ? 'cursor-not-allowed bg-slate-100 dark:bg-white/25'
+          : 'bg-white dark:bg-white/88'
       } ${className}`}
     >
       <input
         type="date"
         {...props}
-        className={`block w-full min-w-0 max-w-full bg-transparent py-0.5 text-sm text-slate-900 outline-none [color-scheme:light] ${
-          disabled ? 'cursor-not-allowed text-slate-400' : ''
+        className={`block w-full min-w-0 max-w-full bg-transparent py-0.5 text-sm text-slate-900 outline-none [color-scheme:light] dark:text-slate-950 dark:[color-scheme:dark] ${
+          disabled ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' : ''
         }`}
       />
     </div>
@@ -124,6 +128,7 @@ export default function PropertyCard({
   links,
   nowIso,
   hostDisplayName,
+  guestLinkBaseUrl,
   linksPanel: linksPanelProp,
   onLinksPanelChange,
 }: PropertyCardProps) {
@@ -170,7 +175,7 @@ export default function PropertyCard({
 
   function absoluteGuestPortalUrl(token: string) {
     return guestPortalAbsoluteUrl(hostDisplayName, token, {
-      baseUrl: process.env.NEXT_PUBLIC_APP_URL,
+      baseUrl: guestLinkBaseUrl || undefined,
     });
   }
 
@@ -305,9 +310,9 @@ export default function PropertyCard({
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="glass rounded-[20px] p-5"
+      className="glass rounded-[20px] p-5 dark:bg-[#1a1b1f] dark:border-white/12"
     >
-      <h2 className="min-w-0 text-left text-base font-semibold text-slate-900">
+      <h2 className="min-w-0 text-left text-base font-semibold text-slate-900 dark:text-slate-100">
         {displayTitle}
       </h2>
 
@@ -319,10 +324,10 @@ export default function PropertyCard({
           onClick={() =>
             setLinksPanel(linksPanel === 'active' ? null : 'active')
           }
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80"
+          className="group inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
         >
           <span>Active links</span>
-          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 group-hover:text-slate-900 dark:bg-white/30 dark:text-slate-900 dark:group-hover:bg-white/45 dark:group-hover:text-slate-950">
             {activeLinks.length}
           </span>
           <span>{linksPanel === 'active' ? '▴' : '▾'}</span>
@@ -350,12 +355,12 @@ export default function PropertyCard({
           >
             <form
               onSubmit={onGenerate}
-              className="mt-4 overflow-x-hidden rounded-2xl border border-white/50 bg-white/50 p-4 backdrop-blur-sm"
+              className="mt-4 overflow-x-hidden rounded-2xl border border-slate-200 bg-white/75 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
             >
-              <div className="text-sm font-semibold text-slate-800">
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 Generate guest link
               </div>
-              <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 dark:border-white/15 dark:bg-white/18">
                 <input
                   id={`perm-${property.id}`}
                   type="checkbox"
@@ -364,28 +369,28 @@ export default function PropertyCard({
                     setIsPermanent(e.target.checked);
                     if (e.target.checked) setCheckoutDate('');
                   }}
-                  className="h-4 w-4 rounded border-slate-300"
+                  className="h-4 w-4 rounded border-slate-300 dark:border-slate-500"
                 />
                 <label
                   htmlFor={`perm-${property.id}`}
-                  className="text-xs font-semibold text-slate-700"
+                  className="text-xs font-semibold text-slate-900 dark:text-slate-950"
                 >
                   Permanent Link
                 </label>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="min-w-0 max-w-full">
-                  <label className="text-xs font-semibold text-slate-600">
-                    Guest name <span className="font-normal text-slate-400">(optional)</span>
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                    Guest name <span className="font-normal text-slate-400 dark:text-slate-500">(optional)</span>
                   </label>
                   <input
                     value={guestName}
                     onChange={(e) => setGuestName(e.target.value)}
-                    className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                    className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
                   />
                 </div>
                 <div className="min-w-0 max-w-full">
-                  <label className="text-xs font-semibold text-slate-600">
+                  <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                     Checkout date
                   </label>
                   <DateField
@@ -403,16 +408,16 @@ export default function PropertyCard({
                 </div>
               </div>
               <div className="mt-3">
-                <label className="text-xs font-semibold text-slate-600">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                   Custom link (optional)
                 </label>
                 <input
                   value={customSlug}
                   onChange={(e) => setCustomSlug(e.target.value)}
                   placeholder="Leave blank for random link"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-brand/30 focus:ring-2"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
                 />
-                <p className="mt-1 text-[11px] text-slate-500">
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
                   Lowercase letters, numbers, hyphens only. 4–24 characters. Must be
                   unique.
                 </p>
@@ -420,14 +425,14 @@ export default function PropertyCard({
               <div className="mt-3 flex items-center gap-2">
                 <PressButton
                   disabled={submitting}
-                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60 dark:bg-brand dark:text-white"
                 >
                   {submitting ? 'Generating...' : 'Create Link'}
                 </PressButton>
                 <PressButton
                   type="button"
                   onClick={() => setLinksPanel(null)}
-                  className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700"
+                  className="rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-xs font-semibold text-slate-700 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
                 >
                   Cancel
                 </PressButton>
@@ -438,42 +443,42 @@ export default function PropertyCard({
       </AnimatePresence>
 
       {error ? (
-        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700">
+        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400">
           {error}
         </div>
       ) : null}
       {linkMessage ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700">
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400">
           {linkMessage}
         </div>
       ) : null}
       {generatedLink ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700">
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400">
           <div className="break-all">{generatedLink}</div>
-          <div className="mt-2">
-            <PressButton
-              type="button"
-              onClick={async () => {
-                const copied = await copyToClipboard(generatedLink);
-                if (copied) {
-                  setGeneratedLinkCopied(true);
-                } else {
-                  // Mobile browsers may block clipboard on insecure origins; use share as fallback.
-                  if (typeof navigator !== 'undefined' && navigator.share) {
-                    try {
-                      await navigator.share({ url: generatedLink });
+              <div className="mt-2">
+                <PressButton
+                  type="button"
+                  onClick={async () => {
+                    const copied = await copyToClipboard(generatedLink);
+                    if (copied) {
                       setGeneratedLinkCopied(true);
-                      setLinkMessage('Link shared');
-                      return;
-                    } catch {
-                      // user dismissed share sheet; keep manual fallback message below
+                    } else {
+                      // Mobile browsers may block clipboard on insecure origins; use share as fallback.
+                      if (typeof navigator !== 'undefined' && navigator.share) {
+                        try {
+                          await navigator.share({ url: generatedLink });
+                          setGeneratedLinkCopied(true);
+                          setLinkMessage('Link shared');
+                          return;
+                        } catch {
+                          // user dismissed share sheet; keep manual fallback message below
+                        }
+                      }
+                      setLinkMessage('Copy blocked here. Long press the link above to copy.');
                     }
-                  }
-                  setLinkMessage('Copy blocked here. Long press the link above to copy.');
-                }
-              }}
-              className="rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-700"
-            >
+                  }}
+                  className="rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-400"
+                >
               {generatedLinkCopied ? 'Copied' : 'Copy'}
             </PressButton>
           </div>
@@ -487,7 +492,7 @@ export default function PropertyCard({
             className="overflow-hidden"
             {...linksPanelMotionProps}
           >
-            <div className="mt-4">
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-white/75 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5">
           {activeLinks.length === 0 ? (
             <p className="text-sm text-slate-500">No active links yet.</p>
           ) : (
@@ -497,14 +502,16 @@ export default function PropertyCard({
                 return (
                   <div
                     key={l.id}
-                    className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
+                    className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
                   >
-                    <div className="text-sm font-semibold text-slate-800">
+                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                       {displayGuestName(l.guest_name)}
                     </div>
-                    <div className="mt-1 text-xs text-slate-600">
+                    <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                       {l.is_permanent === true ? (
-                        <span>Permanent guest link</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-100">
+                          Permanent guest link
+                        </span>
                       ) : (
                         <span>Checkout: {formatDate(l.checkout_date)}</span>
                       )}
@@ -520,7 +527,7 @@ export default function PropertyCard({
                             setLinkMessage(`Copy blocked. Use this link: ${fullLink}`);
                           }
                         }}
-                        className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                        className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-white/25 dark:bg-white/90 dark:text-slate-950"
                       >
                         {copiedLinkIds.has(l.id) ? 'Copied ✓' : 'Copy link'}
                       </PressButton>
@@ -532,7 +539,7 @@ export default function PropertyCard({
                             setExtendDate(l.checkout_date ?? '');
                             setError(null);
                           }}
-                          className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                          className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-white/25 dark:bg-white/90 dark:text-slate-950"
                         >
                           Extend
                         </PressButton>
@@ -541,7 +548,7 @@ export default function PropertyCard({
                         type="button"
                         onClick={() => onDeleteLink(l.id)}
                         disabled={submitting}
-                        className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                        className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-400"
                       >
                         Delete
                       </PressButton>
@@ -550,9 +557,9 @@ export default function PropertyCard({
                     {showExtendId === l.id ? (
                       <form
                         onSubmit={onExtend}
-                        className="mt-3 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
+                        className="mt-3 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
                       >
-                        <label className="text-xs font-semibold text-slate-600">
+                        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                           New checkout date
                         </label>
                         <DateField
@@ -564,14 +571,14 @@ export default function PropertyCard({
                         <div className="mt-2 flex items-center gap-2">
                           <PressButton
                             disabled={submitting}
-                            className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                            className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60 dark:bg-brand"
                           >
                             {submitting ? 'Saving...' : 'Save'}
                           </PressButton>
                           <PressButton
                             type="button"
                             onClick={() => setShowExtendId(null)}
-                            className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-700"
+                            className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-800 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
                           >
                             Cancel
                           </PressButton>
@@ -584,32 +591,32 @@ export default function PropertyCard({
               </div>
             )}
             {recentExpiredLinks.length > 0 ? (
-              <details className="mt-3 rounded-2xl border border-white/40 bg-white/30 backdrop-blur-sm">
-                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-600 [&::-webkit-details-marker]:hidden">
+              <details className="mt-3 rounded-2xl border border-white/40 bg-white/30 backdrop-blur-sm dark:border-white/8 dark:bg-white/4">
+                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
                     Show expired links
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-white/15 dark:text-slate-300">
                       {recentExpiredLinks.length}
                     </span>
                   </span>
-                  <span className="mt-1 block font-normal text-[11px] text-slate-500">
+                  <span className="mt-1 block font-normal text-[11px] text-slate-500 dark:text-slate-500">
                     Links appear here for 14 days after they expire, then are hidden.
                   </span>
                 </summary>
-                <div className="space-y-2 border-t border-slate-200 p-3 pt-2">
+                <div className="space-y-2 border-t border-slate-200 dark:border-white/10 p-3 pt-2">
                   {recentExpiredLinks.map((l) => {
                     const fullLink = absoluteGuestPortalUrl(l.token);
                     return (
                       <div
                         key={l.id}
-                        className="rounded-2xl border border-white/40 bg-white/40 p-3 backdrop-blur-sm"
+                        className="rounded-2xl border border-white/40 bg-white/40 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/4"
                       >
                         <div className="opacity-50">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="text-sm font-semibold text-slate-600">
+                            <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                               {displayGuestName(l.guest_name)}
                             </div>
-                            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
+                            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:ring-rose-800/60">
                               Expired
                             </span>
                           </div>
@@ -625,7 +632,7 @@ export default function PropertyCard({
                               setExtendDate(l.checkout_date ?? '');
                               setError(null);
                             }}
-                            className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                            className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-white/25 dark:bg-white/90 dark:text-slate-950"
                           >
                             Extend
                           </PressButton>
@@ -633,7 +640,7 @@ export default function PropertyCard({
                             type="button"
                             onClick={() => onDeleteLink(l.id)}
                             disabled={submitting}
-                            className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
+                            className="rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-400"
                           >
                             Delete
                           </PressButton>
@@ -642,9 +649,9 @@ export default function PropertyCard({
                         {showExtendId === l.id ? (
                           <form
                             onSubmit={onExtend}
-                            className="mt-3 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm"
+                            className="mt-3 rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
                           >
-                            <label className="text-xs font-semibold text-slate-600">
+                            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                               New checkout date
                             </label>
                             <DateField
@@ -656,14 +663,14 @@ export default function PropertyCard({
                             <div className="mt-2 flex items-center gap-2">
                               <PressButton
                                 disabled={submitting}
-                                className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+                                className="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-60 dark:bg-brand"
                               >
                                 {submitting ? 'Saving...' : 'Save'}
                               </PressButton>
                               <PressButton
                                 type="button"
                                 onClick={() => setShowExtendId(null)}
-                                className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-700"
+                                className="rounded-full border border-slate-200 bg-white/70 px-4 py-1.5 text-xs font-semibold text-slate-800 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
                               >
                                 Cancel
                               </PressButton>

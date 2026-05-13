@@ -49,6 +49,7 @@ export default function DashboardClient({
   guestLinksError,
   hasAnyProperty,
   hostDisplayName,
+  guestLinkBaseUrl,
 }: {
   userId: string;
   nowIso: string;
@@ -60,6 +61,8 @@ export default function DashboardClient({
   hasAnyProperty: boolean;
   /** Profile host display name — first segment of generated guest portal URLs. */
   hostDisplayName: string | null;
+  /** Public origin for shared guest links (e.g. https://stayvo.io). Passed from server so it matches Vercel env at runtime. */
+  guestLinkBaseUrl: string;
 }) {
   const hasLiveByLocation = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -88,7 +91,7 @@ export default function DashboardClient({
   const optionIdsKey = optionIds.join('|');
 
   useEffect(() => {
-    const validOptionIds = new Set(selectableOptionIds);
+    const knownLocationIds = new Set(optionIds);
     if (optionIds.length === 0) {
       setSelectedIds([]);
       return;
@@ -99,7 +102,7 @@ export default function DashboardClient({
       if (raw) {
         const parsed = JSON.parse(raw) as unknown;
         if (Array.isArray(parsed) && parsed.every((x) => typeof x === 'string')) {
-          const valid = (parsed as string[]).filter((id) => validOptionIds.has(id));
+          const valid = (parsed as string[]).filter((id) => knownLocationIds.has(id));
           setSelectedIds(valid);
           return;
         }
@@ -108,8 +111,9 @@ export default function DashboardClient({
       /* ignore */
     }
 
-    setSelectedIds(selectableOptionIds);
-  }, [userId, optionIdsKey, selectableOptionIds]);
+    // New / no saved preference: all locations on (not only those with live properties).
+    setSelectedIds([...optionIds]);
+  }, [userId, optionIdsKey, optionIds]);
 
   useEffect(() => {
     if (selectedIds === null) return;
@@ -146,7 +150,7 @@ export default function DashboardClient({
   }
 
   function selectAll() {
-    setSelectedIds([...selectableOptionIds]);
+    setSelectedIds([...optionIds]);
   }
 
   function selectNone() {
@@ -209,8 +213,8 @@ export default function DashboardClient({
         selectedIds.length === 0 &&
         locationOptions.length > 0 ? (
           <div className="glass rounded-[20px] p-6 text-center">
-            <h2 className="text-base font-semibold">No locations selected</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <h2 className="text-base font-semibold dark:text-slate-100">No locations selected</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Choose one or more locations above to see properties here.
             </p>
           </div>
@@ -219,11 +223,11 @@ export default function DashboardClient({
             {sectionsWithCards.map((section) => (
               <div key={section.locationId}>
                 <div className="mb-3 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-amber-200/60" />
-                  <h2 className="shrink-0 text-xs font-semibold uppercase tracking-widest text-amber-800/70">
+                  <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
+                  <h2 className="shrink-0 text-xs font-semibold uppercase tracking-widest text-amber-800/70 dark:text-amber-500/70">
                     {section.locationName}
                   </h2>
-                  <div className="h-px flex-1 bg-amber-200/60" />
+                  <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {section.properties.map((p) => {
@@ -237,6 +241,7 @@ export default function DashboardClient({
                         links={linksForProperty}
                         nowIso={nowIso}
                         hostDisplayName={hostDisplayName}
+                        guestLinkBaseUrl={guestLinkBaseUrl}
                         linksPanel={
                           openLinksPanel?.propertyId === p.id
                             ? openLinksPanel.panel
@@ -260,8 +265,8 @@ export default function DashboardClient({
           </div>
         ) : hasAnyProperty ? (
           <div className="glass rounded-[20px] p-6 text-center">
-            <h2 className="text-base font-semibold">No live properties</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <h2 className="text-base font-semibold dark:text-slate-100">No live properties</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               None of the selected locations have published properties. Try selecting other
               locations, or publish a draft from{' '}
               <Link
@@ -275,8 +280,8 @@ export default function DashboardClient({
           </div>
         ) : (
           <div className="glass rounded-[20px] p-6 text-center">
-            <h2 className="text-base font-semibold">No properties yet</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <h2 className="text-base font-semibold dark:text-slate-100">No properties yet</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Create your first property profile to generate a guest portal link.
             </p>
             <Link
@@ -288,7 +293,7 @@ export default function DashboardClient({
           </div>
         )}
         {guestLinksError ? (
-          <p className="mt-3 text-xs text-amber-700">
+          <p className="mt-3 text-xs text-amber-700 dark:text-amber-500">
             Guest links are temporarily unavailable. Run Phase 2 migration (`supabase db
             push`) to enable link generation.
           </p>

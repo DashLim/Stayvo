@@ -2,6 +2,7 @@
 
 import { createHash } from 'node:crypto';
 
+import { getHostTier } from '@/lib/host-plan';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   r2DeleteGuestMedia,
@@ -74,7 +75,7 @@ function validateMediaFile(file: File): { ok: true; mime: string } | { ok: false
   }
   if (mime.startsWith('video/')) {
     if (file.size > GUEST_VIDEO_MAX_BYTES) {
-      return { ok: false, error: 'Video must be 20 MB or smaller.' };
+      return { ok: false, error: 'Video must be 30 MB or smaller.' };
     }
     return { ok: true, mime };
   }
@@ -85,12 +86,12 @@ function warnIfR2PublicUrlMissing() {
   if (
     process.env.NODE_ENV === 'development' &&
     isGuestMediaR2Enabled() &&
-    !process.env.NEXT_PUBLIC_GUEST_MEDIA_URL?.trim()
+    !process.env.NEXT_PUBLIC_GUEST_MEDIA_URL?.trim() &&
+    !process.env.GUEST_MEDIA_PUBLIC_URL?.trim()
   ) {
     console.warn(
-      '[Stayvo] R2 is configured but NEXT_PUBLIC_GUEST_MEDIA_URL is not set. ' +
-        'The app will still build Supabase public URLs in the browser while files are stored on R2, so images will 404. ' +
-        'Set NEXT_PUBLIC_GUEST_MEDIA_URL to your R2 public base URL (from the bucket, no trailing slash) and restart `npm run dev`.'
+      '[Stayvo] R2 is configured but neither NEXT_PUBLIC_GUEST_MEDIA_URL nor GUEST_MEDIA_PUBLIC_URL is set. ' +
+        'Set NEXT_PUBLIC_GUEST_MEDIA_URL (or server-only GUEST_MEDIA_PUBLIC_URL) to your R2 public base URL (no trailing slash) and restart `npm run dev`.'
     );
   }
 }
@@ -184,6 +185,9 @@ export async function uploadGuestImageDeduped(formData: FormData) {
     return { ok: false as const, error: 'Unauthorized' };
   }
 
+  const tier = await getHostTier(supabase, user.id);
+  const allowVideo = tier === 'pro';
+
   const file = formData.get('file');
   if (!(file instanceof File)) {
     return { ok: false as const, error: 'No file uploaded.' };
@@ -191,6 +195,9 @@ export async function uploadGuestImageDeduped(formData: FormData) {
   const validation = validateMediaFile(file);
   if (!validation.ok) return { ok: false as const, error: validation.error };
   const mime = validation.mime;
+  if (!allowVideo && mime.startsWith('video/')) {
+    return { ok: false as const, error: 'Video uploads are available on Stayvo Pro.' };
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const hash = sha256Hex(buffer);
@@ -292,12 +299,17 @@ export async function uploadGuestImageDeduped(formData: FormData) {
 async function uploadGuestPropertyMediaDeduped(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
-  file: File
+  file: File,
+  options?: { allowVideo?: boolean }
 ): Promise<{ ok: true; path: string; reused: boolean } | { ok: false; error: string }> {
   const validation = validateMediaFile(file);
   if (!validation.ok) return { ok: false, error: validation.error };
 
   const mime = validation.mime;
+  const allowVideo = Boolean(options?.allowVideo);
+  if (!allowVideo && mime.startsWith('video/')) {
+    return { ok: false, error: 'Video uploads are available on Stayvo Pro.' };
+  }
   const buffer = Buffer.from(await file.arrayBuffer());
   const hash = sha256Hex(buffer);
 
@@ -391,12 +403,17 @@ export async function uploadGuestPropertyMedia(
     return { ok: false as const, error: 'Property not found.' };
   }
 
+  const tier = await getHostTier(supabase, user.id);
+  const allowVideo = tier === 'pro';
+
   const file = formData.get('file');
   if (!(file instanceof File)) {
     return { ok: false as const, error: 'No file uploaded.' };
   }
 
-  const uploaded = await uploadGuestPropertyMediaDeduped(supabase, user.id, file);
+  const uploaded = await uploadGuestPropertyMediaDeduped(supabase, user.id, file, {
+    allowVideo,
+  });
   if (!uploaded.ok) return { ok: false as const, error: uploaded.error };
   return { ok: true as const, path: uploaded.path, reused: uploaded.reused };
 }

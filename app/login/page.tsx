@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 function LoginSkeleton() {
   return (
     <main className="flex min-h-[70vh] items-center justify-center">
-      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900/80">
         <Skeleton className="h-7 w-32" />
         <Skeleton className="mt-2 h-4 w-56" />
         <div className="mt-6 space-y-4">

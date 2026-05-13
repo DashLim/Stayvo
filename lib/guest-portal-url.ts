@@ -76,14 +76,23 @@ export function guestPortalRelativePathForToken(
   return `/${slug}/${token}`;
 }
 
+/** Prefer NEXT_PUBLIC_GUEST_LINK_BASE_URL for shared links (e.g. stayvo.io); fall back to NEXT_PUBLIC_APP_URL. */
+export function guestLinkPublicBaseUrl(options?: { baseUrl?: string }): string {
+  const raw =
+    options?.baseUrl ??
+    process.env.NEXT_PUBLIC_GUEST_LINK_BASE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    '';
+  return raw.replace(/\/$/, '');
+}
+
 export function guestPortalAbsoluteUrl(
   hostDisplayName: string | null | undefined,
   token: string,
   options?: { baseUrl?: string; origin?: string }
 ): string {
   const path = guestPortalRelativePathForToken(hostDisplayName, token);
-  const base =
-    (options?.baseUrl ?? process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '') || '';
+  const base = guestLinkPublicBaseUrl(options) || '';
   if (base) return `${base}${path}`;
   if (options?.origin) return `${options.origin.replace(/\/$/, '')}${path}`;
   if (typeof window !== 'undefined') return `${window.location.origin}${path}`;

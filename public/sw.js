@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stayvo-v2';
+const CACHE_NAME = 'stayvo-v4';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ['/', '/dashboard', '/offline.html'];
@@ -41,6 +41,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // App Router (RSC / flight): do not intercept — caching or wrapping fetch breaks client-side
+  // navigations ("Failed to fetch RSC payload", esp. on LAN hostnames like 192.168.x.x).
+  // See Next headers: `app-router-headers.js` (NEXT_RSC_UNION_QUERY = '_rsc', RSC_HEADER = 'rsc', …).
+  if (url.searchParams.has('_rsc')) return;
+  const hdr = request.headers;
+  if (
+    hdr.get('rsc') ||
+    hdr.get('next-router-state-tree') ||
+    hdr.get('next-router-prefetch') ||
+    hdr.get('next-router-segment-prefetch') ||
+    hdr.get('next-hmr-refresh')
+  ) {
+    return;
+  }
+  if (url.pathname.startsWith('/_next/') && !url.pathname.startsWith('/_next/static/')) {
+    return;
+  }
+
   // Next.js chunks under /_next/static must be network-first: cache-first serves stale JS after
   // rebuilds (dev HMR, redeploy) and causes ChunkLoadError when loading route bundles.
   if (url.pathname.startsWith('/_next/static/')) {
@@ -55,6 +73,11 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => caches.match(request))
     );
+    return;
+  }
+
+  // Brand logos (public/brand/*) are replaced often; cache-first here shows stale images after export.
+  if (url.pathname.startsWith('/brand/')) {
     return;
   }
 

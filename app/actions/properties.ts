@@ -3,6 +3,13 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { deleteGuestMediaFolderForProperty } from '@/app/actions/guest-property-media';
 import { GUEST_PROPERTY_MEDIA_BUCKET } from '@/lib/guest-property-media';
+import { getHostTier } from '@/lib/host-plan';
+import {
+  FREE_TIER_MAX_CUSTOM_BLOCKS,
+  FREE_TIER_MAX_PROPERTIES,
+  maxCustomBlocksForTier,
+  type HostTier,
+} from '@/lib/host-tier';
 import {
   normalizeSectionOrder as normalizeGuestSectionOrder,
   type CustomDetail as GuestCustomDetailStub,
@@ -72,6 +79,8 @@ export type PropertyFormInput = {
   socialXUrl?: string;
   socialTiktokUrl?: string;
   socialYoutubeUrl?: string;
+  /** Own booking site (direct reservations). */
+  socialDirectBookingUrl?: string;
 };
 
 function normalizeString(value: string | null | undefined) {
@@ -118,6 +127,11 @@ function parseSocialUrlsFromForm(input: PropertyFormInput) {
   if (!tt.ok) return tt;
   const yt = parseHttpUrlForStorage(input.socialYoutubeUrl, 'YouTube');
   if (!yt.ok) return yt;
+  const booking = parseHttpUrlForStorage(
+    input.socialDirectBookingUrl,
+    'Direct booking website'
+  );
+  if (!booking.ok) return booking;
   return {
     ok: true as const,
     urls: {
@@ -127,6 +141,7 @@ function parseSocialUrlsFromForm(input: PropertyFormInput) {
       social_tiktok_url: tt.value,
       social_youtube_url: yt.value,
       social_airbnb_url: null,
+      social_direct_booking_url: booking.value,
     },
   };
 }
@@ -161,6 +176,62 @@ function normalizeCustomDetails(input: CustomDetailInput[] | null | undefined) {
     );
 }
 
+type TierPropertyFormMode = 'create' | 'update';
+
+async function enforceTierForPropertyInput(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  tier: HostTier,
+  input: PropertyFormInput,
+  mode: TierPropertyFormMode
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const customDetails = normalizeCustomDetails(input.customDetails);
+  const cap = maxCustomBlocksForTier(tier);
+  if (customDetails.length > cap) {
+    return {
+      ok: false,
+      error:
+        tier === 'free'
+          ? `Free accounts can use up to ${FREE_TIER_MAX_CUSTOM_BLOCKS} custom blocks per property. Stayvo Pro allows more.`
+          : `You can have at most ${cap} custom blocks per property.`,
+    };
+  }
+
+  const faqRows = input.faqs
+    .map((f) => ({
+      question: normalizeString(f.question),
+      answer: normalizeString(f.answer),
+    }))
+    .filter((f) => f.question.length > 0 || f.answer.length > 0);
+
+  if (tier !== 'pro' && faqRows.length > 0) {
+    return {
+      ok: false,
+      error: 'FAQ is available on Stayvo Pro.',
+    };
+  }
+
+  if (mode === 'create' && tier === 'free') {
+    const { count, error } = await supabase
+      .from('properties')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if ((count ?? 0) >= FREE_TIER_MAX_PROPERTIES) {
+      return {
+        ok: false,
+        error:
+          'Free accounts can have up to 3 properties. Stayvo Pro includes unlimited properties.',
+      };
+    }
+  }
+
+  return { ok: true };
+}
+
 export async function createProperty(input: PropertyFormInput) {
   const supabase = await createSupabaseServerClient();
 
@@ -171,6 +242,12 @@ export async function createProperty(input: PropertyFormInput) {
 
   if (userError || !user) {
     return { ok: false as const, error: 'Unauthorized' };
+  }
+
+  const tier = await getHostTier(supabase, user.id);
+  const tierGate = await enforceTierForPropertyInput(supabase, user.id, tier, input, 'create');
+  if (!tierGate.ok) {
+    return { ok: false as const, error: tierGate.error };
   }
 
   const customDetails = normalizeCustomDetails(input.customDetails);
@@ -388,6 +465,12 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
 
   if (userError || !user) {
     return { ok: false as const, error: 'Unauthorized' };
+  }
+
+  const tier = await getHostTier(supabase, user.id);
+  const tierGate = await enforceTierForPropertyInput(supabase, user.id, tier, input, 'update');
+  if (!tierGate.ok) {
+    return { ok: false as const, error: tierGate.error };
   }
 
   const {
@@ -744,6 +827,24 @@ export async function cloneProperty(propertyId: string) {
     return { ok: false as const, error: 'Unauthorized' };
   }
 
+  const tier = await getHostTier(supabase, user.id);
+  if (tier === 'free') {
+    const { count, error: countError } = await supabase
+      .from('properties')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+    if (countError) {
+      return { ok: false as const, error: countError.message };
+    }
+    if ((count ?? 0) >= FREE_TIER_MAX_PROPERTIES) {
+      return {
+        ok: false as const,
+        error:
+          'Free accounts can have up to 3 properties. Stayvo Pro includes unlimited properties.',
+      };
+    }
+  }
+
   const { data: source, error: sourceError } = await supabase
     .from('properties')
     .select('*')
@@ -753,6 +854,52 @@ export async function cloneProperty(propertyId: string) {
 
   if (sourceError || !source) {
     return { ok: false as const, error: sourceError?.message ?? 'Property not found.' };
+  }
+
+  const [
+    { data: steps, error: stepsError },
+    { data: rules, error: rulesError },
+    { data: tips, error: tipsError },
+    { data: faqs, error: faqsError },
+    { data: customDetails, error: customError },
+  ] = await Promise.all([
+    supabase
+      .from('property_check_in_steps')
+      .select('step_order, instruction, is_displayed, guest_image_path, drive_media_url')
+      .eq('property_id', propertyId)
+      .order('step_order', { ascending: true }),
+    supabase
+      .from('property_house_rules')
+      .select('rule_order, rule_text, is_displayed')
+      .eq('property_id', propertyId)
+      .order('rule_order', { ascending: true }),
+    supabase
+      .from('property_guidebook_tips')
+      .select('tip_order, label, description, guest_image_path, drive_media_url')
+      .eq('property_id', propertyId)
+      .order('tip_order', { ascending: true }),
+    supabase
+      .from('property_faqs')
+      .select('faq_order, question, answer')
+      .eq('property_id', propertyId)
+      .order('faq_order', { ascending: true }),
+    supabase
+      .from('property_custom_details')
+      .select('detail_order, title, message, is_displayed, guest_image_path, drive_media_url')
+      .eq('property_id', propertyId)
+      .order('detail_order', { ascending: true }),
+  ]);
+
+  if (stepsError || rulesError || tipsError || faqsError || customError) {
+    return { ok: false as const, error: 'Unable to load property sections to clone.' };
+  }
+
+  if (tier === 'free' && (customDetails ?? []).length > FREE_TIER_MAX_CUSTOM_BLOCKS) {
+    return {
+      ok: false as const,
+      error:
+        'This property has more custom blocks than the Free plan allows, so it cannot be cloned.',
+    };
   }
 
   const locationId = source.location_id as string;
@@ -804,45 +951,6 @@ export async function cloneProperty(propertyId: string) {
 
   const newPropertyId = inserted.id as string;
 
-  const [
-    { data: steps, error: stepsError },
-    { data: rules, error: rulesError },
-    { data: tips, error: tipsError },
-    { data: faqs, error: faqsError },
-    { data: customDetails, error: customError },
-  ] = await Promise.all([
-    supabase
-      .from('property_check_in_steps')
-      .select('step_order, instruction, is_displayed, guest_image_path, drive_media_url')
-      .eq('property_id', propertyId)
-      .order('step_order', { ascending: true }),
-    supabase
-      .from('property_house_rules')
-      .select('rule_order, rule_text, is_displayed')
-      .eq('property_id', propertyId)
-      .order('rule_order', { ascending: true }),
-    supabase
-      .from('property_guidebook_tips')
-      .select('tip_order, label, description, guest_image_path, drive_media_url')
-      .eq('property_id', propertyId)
-      .order('tip_order', { ascending: true }),
-    supabase
-      .from('property_faqs')
-      .select('faq_order, question, answer')
-      .eq('property_id', propertyId)
-      .order('faq_order', { ascending: true }),
-    supabase
-      .from('property_custom_details')
-      .select('detail_order, title, message, is_displayed, guest_image_path, drive_media_url')
-      .eq('property_id', propertyId)
-      .order('detail_order', { ascending: true }),
-  ]);
-
-  if (stepsError || rulesError || tipsError || faqsError || customError) {
-    await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
-    return { ok: false as const, error: 'Unable to copy all property sections.' };
-  }
-
   if ((steps ?? []).length > 0) {
     const rows = (steps ?? []).map((row) => ({
       property_id: newPropertyId,
@@ -853,7 +961,10 @@ export async function cloneProperty(propertyId: string) {
       drive_media_url: row.drive_media_url,
     }));
     const { error } = await supabase.from('property_check_in_steps').insert(rows);
-    if (error) return { ok: false as const, error: error.message };
+    if (error) {
+      await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
+      return { ok: false as const, error: error.message };
+    }
   }
 
   if ((rules ?? []).length > 0) {
@@ -864,7 +975,10 @@ export async function cloneProperty(propertyId: string) {
       is_displayed: row.is_displayed,
     }));
     const { error } = await supabase.from('property_house_rules').insert(rows);
-    if (error) return { ok: false as const, error: error.message };
+    if (error) {
+      await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
+      return { ok: false as const, error: error.message };
+    }
   }
 
   if ((tips ?? []).length > 0) {
@@ -877,10 +991,13 @@ export async function cloneProperty(propertyId: string) {
       drive_media_url: row.drive_media_url,
     }));
     const { error } = await supabase.from('property_guidebook_tips').insert(rows);
-    if (error) return { ok: false as const, error: error.message };
+    if (error) {
+      await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
+      return { ok: false as const, error: error.message };
+    }
   }
 
-  if ((faqs ?? []).length > 0) {
+  if (tier === 'pro' && (faqs ?? []).length > 0) {
     const rows = (faqs ?? []).map((row) => ({
       property_id: newPropertyId,
       faq_order: row.faq_order,
@@ -888,7 +1005,10 @@ export async function cloneProperty(propertyId: string) {
       answer: row.answer,
     }));
     const { error } = await supabase.from('property_faqs').insert(rows);
-    if (error) return { ok: false as const, error: error.message };
+    if (error) {
+      await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
+      return { ok: false as const, error: error.message };
+    }
   }
 
   if ((customDetails ?? []).length > 0) {
@@ -902,7 +1022,10 @@ export async function cloneProperty(propertyId: string) {
       drive_media_url: row.drive_media_url,
     }));
     const { error } = await supabase.from('property_custom_details').insert(rows);
-    if (error) return { ok: false as const, error: error.message };
+    if (error) {
+      await supabase.from('properties').delete().eq('id', newPropertyId).eq('user_id', user.id);
+      return { ok: false as const, error: error.message };
+    }
   }
 
   return { ok: true as const, propertyId: newPropertyId };

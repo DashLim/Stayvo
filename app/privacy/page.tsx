@@ -4,17 +4,17 @@ const LAST_UPDATED = 'May 9, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="py-10">
+    <main className="pb-10 pt-0">
       <LegalBackButton />
       <section className="glass mx-auto max-w-3xl rounded-[24px] p-6 sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           Privacy Policy
         </h1>
-        <p className="mt-2 text-sm text-slate-500">Last updated: {LAST_UPDATED}</p>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Last updated: {LAST_UPDATED}</p>
 
-        <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700">
+        <div className="mt-6 space-y-6 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
           <section>
-            <h2 className="text-base font-semibold text-slate-900">1. Scope</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">1. Scope</h2>
             <p className="mt-2">
               This Privacy Policy explains how Stayvo collects, uses, stores, and shares
               information when hosts use the Stayvo dashboard and when guests open Stayvo guest
@@ -23,31 +23,31 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               2. Information we collect
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>
-                <span className="font-medium text-slate-900">Host account data:</span> email,
+                <span className="font-medium text-slate-900 dark:text-slate-100">Host account data:</span> email,
                 authentication metadata, profile values such as host display name.
               </li>
               <li>
-                <span className="font-medium text-slate-900">Property and content data:</span>{' '}
+                <span className="font-medium text-slate-900 dark:text-slate-100">Property and content data:</span>{' '}
                 property details, guest portal text, links, uploaded media files.
               </li>
               <li>
-                <span className="font-medium text-slate-900">Guest link data:</span> guest name
+                <span className="font-medium text-slate-900 dark:text-slate-100">Guest link data:</span> guest name
                 (if entered by host), tokenized link usage, and open/visit events.
               </li>
               <li>
-                <span className="font-medium text-slate-900">Technical data:</span> IP address,
+                <span className="font-medium text-slate-900 dark:text-slate-100">Technical data:</span> IP address,
                 browser/device information, timestamps, and basic diagnostics logs.
               </li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               3. How we use information
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
@@ -60,7 +60,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               4. Legal basis (where applicable)
             </h2>
             <p className="mt-2">
@@ -70,7 +70,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               5. Sharing and processors
             </h2>
             <p className="mt-2">
@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">6. Data retention</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">6. Data retention</h2>
             <p className="mt-2">
               We retain account and property data while an account is active, and for a reasonable
               period afterward for backup, security, and legal purposes. Hosts can request account
@@ -91,7 +91,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               7. Host responsibilities for guest data
             </h2>
             <p className="mt-2">
@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               8. Security and international transfers
             </h2>
             <p className="mt-2">
@@ -111,7 +111,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">9. Your rights</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">9. Your rights</h2>
             <p className="mt-2">
               Depending on your jurisdiction, you may have rights to access, correct, delete, or
               restrict your personal data, and to object to certain processing.
@@ -119,7 +119,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">10. Changes</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">10. Changes</h2>
             <p className="mt-2">
               We may update this policy from time to time. When we do, we will update the “Last
               updated” date on this page.
@@ -127,7 +127,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900">11. Contact</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">11. Contact</h2>
             <p className="mt-2">
               For privacy questions, contact: <span className="font-medium">privacy@stayvo.app</span>
             </p>

@@ -4,19 +4,67 @@
 
 :root {
   --brand: #E0A24D;
+  --bg-base:   #fdf6ec;
+  --bg-base-2: #faf0dc;
+  --bg-glow:   rgba(224, 162, 77, 0.12);
+  --text-base: #0f172a;
 }
 
-html,
+.dark {
+  --bg-base:   #111014;
+  --bg-base-2: #1a1812;
+  --bg-glow:   rgba(224, 162, 77, 0.07);
+  --text-base: #f1efe9;
+}
+
+html {
+  height: 100%;
+  /* Reduce horizontal overscroll / Chrome-style swipe navigation tied to history */
+  overscroll-behavior-x: none;
+  /* Match app surface (light + dark); avoids white band behind body / under safe area */
+  background-color: var(--bg-base);
+}
+
+/* Inline startup splash — full viewport white, centered logo (PWA / first paint) */
+.stayvo-app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+  background: #ffffff;
+  opacity: 1;
+}
+
+.stayvo-app-splash__logo {
+  width: min(26vw, 120px);
+  height: auto;
+  max-height: min(14vh, 108px);
+  object-fit: contain;
+}
+
+.stayvo-app-splash--out {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+
 body {
   height: 100%;
-}
-
-body {
-  /* Warm background + subtle top glow depth */
-  background: radial-gradient(ellipse at 50% 0%, rgba(224, 162, 77, 0.12) 0%, #fdf6ec 60%),
-    linear-gradient(160deg, #fdf6ec 0%, #faf0dc 100%);
+  overscroll-behavior-x: none;
+  overflow-x: hidden;
+  /* Prefer vertical pan so horizontal edge swipes don’t drive navigation */
+  touch-action: pan-y;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--bg-glow) 0%, var(--bg-base) 60%),
+    linear-gradient(160deg, var(--bg-base) 0%, var(--bg-base-2) 100%);
   background-attachment: fixed;
-  color: #0f172a;
+  color: var(--text-base);
 }
 
 /* Glassmorphism card utility */
@@ -30,6 +78,13 @@ body {
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
   }
 
+  .dark .glass {
+    background: rgba(30, 27, 22, 0.70);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.13);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.25);
+  }
+
   .glass-dark {
     background: rgba(28, 28, 30, 0.78);
     backdrop-filter: blur(20px);
@@ -39,7 +94,7 @@ body {
   }
 
   /**
-   * Floating host bottom nav — transparent “crystal / water-drop” glass:
+   * Floating host bottom nav — transparent "crystal / water-drop" glass:
    * strong blur + saturate, bright rim, inner highlights, soft lift shadow.
    */
   .glass-nav-crystal {
@@ -62,6 +117,23 @@ body {
       0 4px 12px rgba(0, 0, 0, 0.04);
   }
 
+  .dark .glass-nav-crystal {
+    background:
+      linear-gradient(
+        165deg,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.04) 40%,
+        rgba(0, 0, 0, 0.06) 100%
+      ),
+      rgba(28, 25, 20, 0.68);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+      0 12px 40px rgba(0, 0, 0, 0.45),
+      0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
   .glass-header {
     background: rgba(253, 246, 236, 0.82);
     backdrop-filter: blur(20px);
@@ -69,28 +141,39 @@ body {
     border-bottom: 1px solid rgba(224, 162, 77, 0.15);
   }
 
+  .dark .glass-header {
+    background: rgba(17, 16, 20, 0.88);
+    border-bottom: 1px solid rgba(224, 162, 77, 0.12);
+  }
 }
 
-/* Instant mobile responsiveness for all interactive controls */
+/* Instant tap feedback — avoid transform on buttons (conflicts with @dnd-kit drag transforms). */
 button,
 a[role="button"],
 [type="submit"],
 [type="button"],
-[type="reset"],
+[type="reset"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.08s ease-out, filter 0.08s ease-out;
+}
+
+button:active,
+[type="submit"]:active,
+[type="button"]:active,
+[type="reset"]:active {
+  opacity: 0.88;
+}
+
 a,
 [tabindex]:not([tabindex="-1"]) {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transform-origin: center;
   transition: transform 0.08s ease-out, opacity 0.08s ease-out, filter 0.08s ease-out;
-  will-change: transform;
 }
 
-button:active,
-a[role="button"]:active,
-[type="submit"]:active,
-[type="button"]:active,
-[type="reset"]:active,
-a:active {
+a:active,
+a[role="button"]:active {
   transform: scale(0.96);
 }

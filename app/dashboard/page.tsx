@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import DashboardClient from '@/app/dashboard/DashboardClient';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { guestLinkPublicBaseUrl } from '@/lib/guest-portal-url';
 
 export default async function DashboardPage() {
   const nowIso = new Date().toISOString();
@@ -89,6 +90,8 @@ export default async function DashboardPage() {
 
   const meta = user.user_metadata as { host_display_name?: string } | null;
   const hostDisplayName = meta?.host_display_name ?? null;
+  /** Resolved on the server so guest links use stayvo.io even if the client bundle inlined the wrong NEXT_PUBLIC_* at build. */
+  const guestLinkBaseUrl = guestLinkPublicBaseUrl();
 
   return (
     <main className="py-10">
@@ -101,6 +104,7 @@ export default async function DashboardPage() {
         guestLinksError={Boolean(guestLinksError)}
         hasAnyProperty={(totalPropertyCount ?? 0) > 0}
         hostDisplayName={hostDisplayName}
+        guestLinkBaseUrl={guestLinkBaseUrl}
       />
     </main>
   );

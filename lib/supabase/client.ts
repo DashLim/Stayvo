@@ -1,10 +1,23 @@
 import { createBrowserClient } from '@supabase/ssr';
 import { getSupabasePublicEnv } from '@/lib/supabase/env';
 
+type BrowserSupabaseClient = ReturnType<typeof createBrowserClient>;
+let browserClient: BrowserSupabaseClient | null | undefined;
+
+/**
+ * Single browser Supabase client per tab so auth recovery and login share one instance
+ * (avoids duplicate refresh attempts).
+ */
 export function tryCreateSupabaseBrowserClient() {
+  if (typeof window === 'undefined') return null;
+  if (browserClient !== undefined) return browserClient;
   const env = getSupabasePublicEnv();
-  if (!env) return null;
-  return createBrowserClient(env.url, env.anonKey);
+  if (!env) {
+    browserClient = null;
+    return null;
+  }
+  browserClient = createBrowserClient(env.url, env.anonKey);
+  return browserClient;
 }
 
 export function createSupabaseBrowserClient() {

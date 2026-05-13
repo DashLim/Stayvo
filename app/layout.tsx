@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Inter } from 'next/font/google';
+import AppSplash from '@/app/_components/AppSplash';
+import ThemeHydration from '@/app/_components/ThemeHydration';
 import PageTransition from '@/app/_components/PageTransition';
 import ServiceWorkerRegister from '@/app/_components/ServiceWorkerRegister';
+import SupabaseSessionRecovery from '@/app/_components/SupabaseSessionRecovery';
 import './globals.css';
 
 const inter = Inter({
@@ -17,14 +19,19 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    // default: solid bar on white; avoids dark band when launching PWA
+    statusBarStyle: 'default',
     title: 'Stayvo',
   },
   formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: '#FDF6EC',
+  themeColor: [
+    // Light: white first paint when opening from home screen (matches startup splash)
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#111014' },
+  ],
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -38,21 +45,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        {/* Startup splash: critical CSS before globals.css so first paint is white + layout (not black WebView) */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `.stayvo-app-splash{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:#fff}.stayvo-app-splash__logo{width:min(26vw,120px);height:auto;max-height:min(14vh,108px);object-fit:contain}`,
+          }}
+        />
+        <link rel="preload" href="/brand/stayvo-splash-logo.png" as="image" type="image/png" />
+      </head>
       <body className="min-h-screen font-sans">
-        {process.env.NODE_ENV !== 'production' ? (
-          <Script
-            id="dev-clear-service-workers"
-            strategy="beforeInteractive"
-            dangerouslySetInnerHTML={{
-              __html:
-                "if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});}if('caches' in window){caches.keys().then(keys=>keys.forEach(k=>caches.delete(k))).catch(()=>{});}",
-            }}
-          />
-        ) : null}
-        <div className="mx-auto w-full max-w-2xl px-4">
+        <ThemeHydration />
+        <AppSplash />
+        <SupabaseSessionRecovery>
           <PageTransition>{children}</PageTransition>
-        </div>
+        </SupabaseSessionRecovery>
         <ServiceWorkerRegister />
       </body>
     </html>

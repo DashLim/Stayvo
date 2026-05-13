@@ -116,7 +116,7 @@ export default function DriveMediaEmbed({
   if (kind === 'loading') {
     return (
       <div
-        className="mt-3 aspect-video animate-pulse rounded-xl border border-slate-200 bg-slate-200"
+        className="mt-3 aspect-video animate-pulse rounded-xl border border-slate-200 bg-slate-200 dark:border-white/10 dark:bg-neutral-800"
         aria-hidden
       />
     );

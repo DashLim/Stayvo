@@ -148,13 +148,15 @@ export default function HostBottomNav() {
                         onClick={() => setOptimisticHref(tab.href)}
                         aria-current={active ? 'page' : undefined}
                         className={`relative flex w-[4.5rem] flex-col items-center gap-0.5 rounded-full py-1.5 text-[10px] font-semibold transition-colors duration-150 ${
-                          active ? 'text-amber-950' : 'text-slate-700/90'
+                          active
+                            ? 'text-amber-950 dark:text-amber-200'
+                            : 'text-slate-700/90 dark:text-slate-300/80'
                         }`}
                       >
                         {active ? (
                           <motion.div
                             layoutId="hostNavActiveBubble"
-                            className="absolute inset-0 z-0 rounded-full bg-gradient-to-b from-[rgba(238,210,165,0.55)] to-[rgba(218,175,115,0.52)] shadow-[0_2px_12px_rgba(224,162,77,0.22),inset_0_1px_0_rgba(255,255,255,0.38),inset_0_-2px_6px_rgba(160,110,45,0.12)]"
+                            className="absolute inset-0 z-0 rounded-full bg-gradient-to-b from-[rgba(238,210,165,0.55)] to-[rgba(218,175,115,0.52)] shadow-[0_2px_12px_rgba(224,162,77,0.22),inset_0_1px_0_rgba(255,255,255,0.38),inset_0_-2px_6px_rgba(160,110,45,0.12)] dark:from-[rgba(210,158,70,0.38)] dark:to-[rgba(170,118,40,0.36)] dark:shadow-[0_2px_12px_rgba(224,162,77,0.18),inset_0_1px_0_rgba(255,255,255,0.18)]"
                             transition={ACTIVE_BUBBLE_SPRING}
                           />
                         ) : null}

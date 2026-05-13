@@ -2,6 +2,7 @@
 
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import PressButton from '@/app/_components/PressButton';
 
 type LocationOption = { id: string; name: string };
@@ -31,6 +32,13 @@ export default function DashboardLocationFilterSheet({
   setLocationQuery: (q: string) => void;
   hasLiveByLocation: Map<string, boolean>;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || typeof document === 'undefined') return null;
+
   return createPortal(
     <AnimatePresence>
       {filtersOpen && (
