@@ -1,4 +1,5 @@
 import LegalBackButton from '@/app/_components/LegalBackButton';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 const LAST_UPDATED = 'May 9, 2026';
 
@@ -131,7 +132,13 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Contact</h2>
             <p className="mt-2">
-              For Terms questions, contact: <span className="font-medium">legal@stayvo.app</span>
+              For Terms questions, contact:{' '}
+              <a
+                href={SUPPORT_MAILTO}
+                className="font-medium text-brand underline-offset-2 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
             </p>
           </section>
         </div>

@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerAppOrigin } from '@/lib/app-origin-server';
 import { resolveStripeCustomerId } from '@/lib/stripe-customer';
 import { getStripe } from '@/lib/stripe-server';
+import { SUPPORT_EMAIL } from '@/lib/support-email';
 
 export async function POST() {
   const stripe = getStripe();
@@ -43,7 +44,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          'No Stripe billing profile found for this account. If you were upgraded manually, contact support.',
+          `No Stripe billing profile found for this account. If you were upgraded manually, email ${SUPPORT_EMAIL}.`,
       },
       { status: 400 }
     );

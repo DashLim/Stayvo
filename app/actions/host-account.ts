@@ -1,5 +1,7 @@
 'use server';
 
+import { SUPPORT_EMAIL } from '@/lib/support-email';
+
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -97,7 +99,7 @@ export async function deleteHostAccount() {
     return {
       ok: false as const,
       error:
-        'Self-service deletion is not configured. Add SUPABASE_SERVICE_ROLE_KEY on the server or contact support.',
+        `Self-service deletion is not configured. Add SUPABASE_SERVICE_ROLE_KEY on the server or email ${SUPPORT_EMAIL}.`,
     };
   }
 

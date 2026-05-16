@@ -14,6 +14,7 @@ import PressButton from '@/app/_components/PressButton';
 import ThemeToggle from '@/app/_components/ThemeToggle';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
 import type { HostTier } from '@/lib/host-tier';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 export default function ProfileClient({
   email,
@@ -281,9 +282,9 @@ export default function ProfileClient({
             Billing was set up outside Stripe checkout. Contact{' '}
             <a
               className="font-medium text-brand underline-offset-2 hover:underline"
-              href="mailto:legal@stayvo.app"
+              href={SUPPORT_MAILTO}
             >
-              legal@stayvo.app
+              {SUPPORT_EMAIL}
             </a>{' '}
             to change your plan.
           </p>
