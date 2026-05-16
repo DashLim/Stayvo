@@ -1,14 +1,44 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerAppOrigin } from '@/lib/app-origin-server';
-import { getStripe, stripePriceId } from '@/lib/stripe-server';
+import {
+  getStripe,
+  stripePriceIdForInterval,
+  type BillingInterval,
+} from '@/lib/stripe-server';
 
-export async function POST() {
+function parseBillingInterval(body: unknown): BillingInterval {
+  if (body == null || typeof body !== 'object') return 'monthly';
+  const interval = (body as { interval?: unknown }).interval;
+  if (interval === 'annual' || interval === 'yearly') return 'annual';
+  return 'monthly';
+}
+
+export async function POST(request: Request) {
   const stripe = getStripe();
-  const priceId = stripePriceId();
-  if (!stripe || !priceId) {
+  if (!stripe) {
     return NextResponse.json(
       { error: 'Stripe billing is not configured on this deployment.' },
+      { status: 503 }
+    );
+  }
+
+  let interval: BillingInterval = 'monthly';
+  try {
+    const body = await request.json();
+    interval = parseBillingInterval(body);
+  } catch {
+    // Empty body or non-JSON → default to monthly (backward compatible).
+  }
+
+  const priceId = stripePriceIdForInterval(interval);
+  if (!priceId) {
+    const missing =
+      interval === 'annual'
+        ? 'STRIPE_PRICE_ID_ANNUAL'
+        : 'STRIPE_PRICE_ID_MONTHLY (or STRIPE_PRICE_ID)';
+    return NextResponse.json(
+      { error: `Stripe billing is missing ${missing} on this deployment.` },
       { status: 503 }
     );
   }
@@ -46,10 +76,12 @@ export async function POST() {
       client_reference_id: user.id,
       metadata: {
         supabase_user_id: user.id,
+        billing_interval: interval,
       },
       subscription_data: {
         metadata: {
           supabase_user_id: user.id,
+          billing_interval: interval,
         },
       },
       ...(stripeCustomerId

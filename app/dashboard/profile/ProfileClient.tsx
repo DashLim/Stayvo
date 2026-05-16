@@ -44,6 +44,28 @@ export default function ProfileClient({
     [hostName]
   );
 
+  async function startProCheckout(interval: 'monthly' | 'annual') {
+    setError(null);
+    setInfo(null);
+    setBusy(true);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interval }),
+      });
+      const data = (await res.json()) as { error?: string; url?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Could not start checkout.');
+      const url = data.url;
+      if (!url) throw new Error('No checkout URL returned.');
+      window.location.assign(url);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Checkout failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onSaveHostName(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -197,35 +219,24 @@ export default function ProfileClient({
           </p>
         ) : null}
         {hostTier === 'free' ? (
-          <PressButton
-            type="button"
-            disabled={busy}
-            onClick={() =>
-              void (async () => {
-                setError(null);
-                setInfo(null);
-                setBusy(true);
-                try {
-                  const res = await fetch('/api/stripe/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                  });
-                  const data = (await res.json()) as { error?: string; url?: string };
-                  if (!res.ok) throw new Error(data.error ?? 'Could not start checkout.');
-                  const url = data.url;
-                  if (!url) throw new Error('No checkout URL returned.');
-                  window.location.assign(url);
-                } catch (e: unknown) {
-                  setError(e instanceof Error ? e.message : 'Checkout failed.');
-                } finally {
-                  setBusy(false);
-                }
-              })()
-            }
-            className="mt-4 w-full rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60 md:w-auto md:min-w-[200px]"
-          >
-            Upgrade to Pro — $9/month
-          </PressButton>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <PressButton
+              type="button"
+              disabled={busy}
+              onClick={() => void startProCheckout('monthly')}
+              className="w-full rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60 sm:w-auto sm:min-w-[200px]"
+            >
+              Pro — $9/month
+            </PressButton>
+            <PressButton
+              type="button"
+              disabled={busy}
+              onClick={() => void startProCheckout('annual')}
+              className="w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 disabled:opacity-60 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 sm:w-auto sm:min-w-[200px]"
+            >
+              Pro — $90/year
+            </PressButton>
+          </div>
         ) : null}
         {canManageSubscription ? (
           <>

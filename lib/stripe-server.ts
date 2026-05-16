@@ -10,9 +10,22 @@ export function getStripe(): Stripe | null {
   });
 }
 
+export type BillingInterval = 'monthly' | 'annual';
+
+/** @deprecated Prefer {@link stripePriceIdForInterval} with STRIPE_PRICE_ID_MONTHLY. */
 export function stripePriceId(): string | null {
-  const id = process.env.STRIPE_PRICE_ID?.trim();
-  return id || null;
+  return stripePriceIdForInterval('monthly');
+}
+
+export function stripePriceIdForInterval(interval: BillingInterval): string | null {
+  if (interval === 'annual') {
+    return process.env.STRIPE_PRICE_ID_ANNUAL?.trim() || null;
+  }
+  return (
+    process.env.STRIPE_PRICE_ID_MONTHLY?.trim() ||
+    process.env.STRIPE_PRICE_ID?.trim() ||
+    null
+  );
 }
 
 export function webhookSecret(): string | null {
