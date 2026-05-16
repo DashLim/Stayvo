@@ -20,11 +20,13 @@ export default function ProfileClient({
   initialHostName,
   hostTier,
   checkoutBanner,
+  canManageSubscription = false,
 }: {
   email: string;
   initialHostName: string;
   hostTier: HostTier;
   checkoutBanner?: null | 'success' | 'canceled';
+  canManageSubscription?: boolean;
 }) {
   const router = useRouter();
   const [hostName, setHostName] = useState(() =>
@@ -224,6 +226,56 @@ export default function ProfileClient({
           >
             Upgrade to Pro — $9/month
           </PressButton>
+        ) : null}
+        {canManageSubscription ? (
+          <>
+            <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+              Update your card, view invoices, or cancel your subscription in Stripe&apos;s secure
+              billing portal.
+            </p>
+            <PressButton
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                void (async () => {
+                  setError(null);
+                  setInfo(null);
+                  setBusy(true);
+                  try {
+                    const res = await fetch('/api/stripe/portal', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                    });
+                    const data = (await res.json()) as { error?: string; url?: string };
+                    if (!res.ok) throw new Error(data.error ?? 'Could not open billing portal.');
+                    const url = data.url;
+                    if (!url) throw new Error('No portal URL returned.');
+                    window.location.assign(url);
+                  } catch (e: unknown) {
+                    setError(
+                      e instanceof Error ? e.message : 'Could not open billing portal.'
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                })()
+              }
+              className="mt-4 w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 md:w-auto md:min-w-[200px]"
+            >
+              Manage subscription
+            </PressButton>
+          </>
+        ) : hostTier === 'pro' ? (
+          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+            Billing was set up outside Stripe checkout. Contact{' '}
+            <a
+              className="font-medium text-brand underline-offset-2 hover:underline"
+              href="mailto:legal@stayvo.app"
+            >
+              legal@stayvo.app
+            </a>{' '}
+            to change your plan.
+          </p>
         ) : null}
       </section>
 

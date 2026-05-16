@@ -21,6 +21,16 @@ export default async function DashboardProfilePage({
   const meta = user.user_metadata as { host_display_name?: string } | null;
   const hostTier = await getHostTier(supabase, user.id);
 
+  const { data: planRow } = await supabase
+    .from('host_plan')
+    .select('stripe_customer_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const canManageSubscription = Boolean(
+    (planRow as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim()
+  );
+
   const sp = await (searchParams ?? Promise.resolve({} as { checkout?: string }));
   const checkoutParam = sp.checkout;
 
@@ -35,6 +45,7 @@ export default async function DashboardProfilePage({
         initialHostName={(meta?.host_display_name as string | undefined) ?? ''}
         hostTier={hostTier}
         checkoutBanner={checkoutBanner}
+        canManageSubscription={canManageSubscription}
       />
     </main>
   );
