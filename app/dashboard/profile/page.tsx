@@ -23,14 +23,18 @@ export default async function DashboardProfilePage({
 
   const { data: planRow } = await supabase
     .from('host_plan')
-    .select('stripe_customer_id')
+    .select('stripe_customer_id, subscription_status')
     .eq('user_id', user.id)
     .maybeSingle();
 
-  const hasStripeCustomer = Boolean(
-    (planRow as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim()
-  );
+  const plan = planRow as {
+    stripe_customer_id?: string | null;
+    subscription_status?: string | null;
+  } | null;
+
+  const hasStripeCustomer = Boolean(plan?.stripe_customer_id?.trim());
   const canManageSubscription = hostTier === 'pro' && hasStripeCustomer;
+  const paymentPastDue = plan?.subscription_status === 'past_due';
 
   const sp = await (searchParams ?? Promise.resolve({} as { checkout?: string }));
   const checkoutParam = sp.checkout;
@@ -47,6 +51,7 @@ export default async function DashboardProfilePage({
         hostTier={hostTier}
         checkoutBanner={checkoutBanner}
         canManageSubscription={canManageSubscription}
+        paymentPastDue={paymentPastDue}
       />
     </main>
   );

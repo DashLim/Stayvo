@@ -22,12 +22,14 @@ export default function ProfileClient({
   hostTier,
   checkoutBanner,
   canManageSubscription = false,
+  paymentPastDue = false,
 }: {
   email: string;
   initialHostName: string;
   hostTier: HostTier;
   checkoutBanner?: null | 'success' | 'canceled';
   canManageSubscription?: boolean;
+  paymentPastDue?: boolean;
 }) {
   const router = useRouter();
   const [hostName, setHostName] = useState(() =>
@@ -44,6 +46,27 @@ export default function ProfileClient({
     () => guestPortalAbsoluteUrl(hostName, 'a3Kf9x'),
     [hostName]
   );
+
+  async function openBillingPortal() {
+    setError(null);
+    setInfo(null);
+    setBusy(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = (await res.json()) as { error?: string; url?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Could not open billing portal.');
+      const url = data.url;
+      if (!url) throw new Error('No portal URL returned.');
+      window.location.assign(url);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Could not open billing portal.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function startProCheckout(interval: 'monthly' | 'annual') {
     setError(null);
@@ -196,6 +219,25 @@ export default function ProfileClient({
           Checkout was canceled. Nothing was charged.
         </div>
       ) : null}
+      {paymentPastDue ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 backdrop-blur-sm dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100"
+          role="alert"
+        >
+          <p className="font-semibold">Payment failed</p>
+          <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-100/90">
+            We couldn&apos;t charge your card for Pro. Stripe will retry automatically — update your
+            payment method now to avoid losing Pro access when retries stop.
+          </p>
+          <PressButton
+            type="button"
+            disabled={busy}
+            onClick={() => void openBillingPortal()}
+            className="mt-3 w-full rounded-full bg-amber-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-900 disabled:opacity-60 dark:bg-amber-600 dark:hover:bg-amber-500 sm:w-auto"
+          >
+            Update payment method
+          </PressButton>
+        </div>
+      ) : null}
 
       <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
@@ -248,30 +290,7 @@ export default function ProfileClient({
             <PressButton
               type="button"
               disabled={busy}
-              onClick={() =>
-                void (async () => {
-                  setError(null);
-                  setInfo(null);
-                  setBusy(true);
-                  try {
-                    const res = await fetch('/api/stripe/portal', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                    });
-                    const data = (await res.json()) as { error?: string; url?: string };
-                    if (!res.ok) throw new Error(data.error ?? 'Could not open billing portal.');
-                    const url = data.url;
-                    if (!url) throw new Error('No portal URL returned.');
-                    window.location.assign(url);
-                  } catch (e: unknown) {
-                    setError(
-                      e instanceof Error ? e.message : 'Could not open billing portal.'
-                    );
-                  } finally {
-                    setBusy(false);
-                  }
-                })()
-              }
+              onClick={() => void openBillingPortal()}
               className="mt-4 w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 md:w-auto md:min-w-[200px]"
             >
               Manage subscription
