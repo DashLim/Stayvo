@@ -77,16 +77,18 @@ export default async function DashboardTrackPage() {
 
   return (
     <main className="py-10">
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        See whether guest links were opened and approx. how many devices loaded the portal.
-      </p>
+      <div className="w-full md:mx-auto md:max-w-[1200px]">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 md:text-base">
+          See whether guest links were opened and approx. how many devices loaded the portal.
+        </p>
 
-      <TrackGuestLinksClient
-        sections={sections}
-        guestLinks={guestLinks ?? []}
-        guestLinksError={Boolean(guestLinksError)}
-        openStatsByLinkId={openStatsByLinkId}
-      />
+        <TrackGuestLinksClient
+          sections={sections}
+          guestLinks={guestLinks ?? []}
+          guestLinksError={Boolean(guestLinksError)}
+          openStatsByLinkId={openStatsByLinkId}
+        />
+      </div>
     </main>
   );
 }

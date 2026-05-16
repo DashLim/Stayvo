@@ -3,7 +3,13 @@ import ProfileClient from '@/app/dashboard/profile/ProfileClient';
 import { getHostTier } from '@/lib/host-plan';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-export default async function DashboardProfilePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardProfilePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ checkout?: string }>;
+}) {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -15,12 +21,20 @@ export default async function DashboardProfilePage() {
   const meta = user.user_metadata as { host_display_name?: string } | null;
   const hostTier = await getHostTier(supabase, user.id);
 
+  const sp = await (searchParams ?? Promise.resolve({} as { checkout?: string }));
+  const checkoutParam = sp.checkout;
+
+  let checkoutBanner: null | 'success' | 'canceled' = null;
+  if (checkoutParam === 'success') checkoutBanner = 'success';
+  else if (checkoutParam === 'canceled') checkoutBanner = 'canceled';
+
   return (
     <main className="py-10">
       <ProfileClient
         email={user.email ?? ''}
         initialHostName={(meta?.host_display_name as string | undefined) ?? ''}
         hostTier={hostTier}
+        checkoutBanner={checkoutBanner}
       />
     </main>
   );

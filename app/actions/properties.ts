@@ -923,6 +923,7 @@ export async function cloneProperty(propertyId: string) {
     property_name: clonedPropertyName,
     internal_name: clonedInternalName,
     sort_order: sortOrder,
+    is_live: true,
   };
 
   let { data: inserted, error: insertError } = await supabase

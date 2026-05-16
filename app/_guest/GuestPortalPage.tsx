@@ -110,10 +110,87 @@ function toWhatsappHref(phone: string | null | undefined) {
 
 function SectionHeading({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <h2 className="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-slate-900">
+    <h2 className="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-slate-900 md:text-base md:font-semibold">
       <span className="text-brand">{icon}</span>
       {label}
     </h2>
+  );
+}
+
+/** Desktop (md+) sticky hero column — one panel so the left rail reads as a single concierge card. */
+function DesktopGuestLeftColumn({
+  coverSrc,
+  propertyName,
+  introDesktop,
+  expiryLine,
+  showHostSidebar,
+  hostName,
+  whatsappHref,
+  hostCallHref,
+}: {
+  coverSrc: string;
+  propertyName: string;
+  introDesktop: ReactNode;
+  expiryLine: ReactNode;
+  showHostSidebar: boolean;
+  hostName: string;
+  whatsappHref: string | null;
+  hostCallHref: string | null;
+}) {
+  return (
+    <div className="max-md:hidden flex w-full min-h-0 flex-col gap-6 md:rounded-2xl md:border md:border-slate-200/70 md:bg-white/85 md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] md:ring-1 md:ring-white/60 md:backdrop-blur-sm">
+      <div className="relative h-[280px] w-full shrink-0 overflow-hidden rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] ring-1 ring-slate-900/10">
+        <img src={coverSrc} alt={propertyName} className="h-full w-full object-cover" />
+      </div>
+      <div className="shrink-0 space-y-1">
+        {introDesktop}
+        {expiryLine}
+      </div>
+      <div className="mt-auto flex min-h-0 flex-col gap-4 border-t border-slate-200/60 pt-5">
+        {showHostSidebar ? (
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Your host</p>
+            {hasText(hostName) ? <p className="mt-1 text-lg font-semibold text-slate-900">{hostName}</p> : null}
+            {whatsappHref ? (
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe57]"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="currentColor" aria-hidden>
+                  <path d="M20.52 3.48A11.88 11.88 0 0 0 12.06 0C5.52 0 .29 5.23.29 11.66c0 2.06.54 4.07 1.57 5.86L0 24l6.63-1.74a11.7 11.7 0 0 0 5.43 1.38h.01c6.54 0 11.77-5.23 11.77-11.66 0-3.12-1.22-6.05-3.32-8.5ZM12.06 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.8 1 1.02-3.7-.22-.36a9.43 9.43 0 0 1-1.44-5.01c0-5.2 4.24-9.43 9.47-9.43 2.53 0 4.9.99 6.68 2.77a9.36 9.36 0 0 1 2.77 6.66c0 5.2-4.24 9.44-9.47 9.44Zm5.48-7.49c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.8-1.49-1.79-1.66-2.09-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.68-1.64-.93-2.25-.25-.58-.5-.5-.68-.51l-.58-.01c-.2 0-.52.07-.79.37-.28.3-1.05 1.02-1.05 2.5 0 1.47 1.08 2.9 1.23 3.1.15.2 2.12 3.23 5.14 4.52.72.31 1.28.5 1.72.64.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.18-1.42-.08-.12-.28-.2-.58-.35Z" />
+                </svg>
+                Message on WhatsApp
+              </a>
+            ) : hostCallHref ? (
+              <Link
+                href={hostCallHref}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-brand bg-white px-4 py-2.5 text-sm font-semibold text-brand shadow-sm transition hover:bg-slate-50"
+              >
+                Call host
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+        <Link
+          href="https://stayvo.io"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block max-w-[160px] rounded-md opacity-85 outline-none ring-brand/40 transition-opacity hover:opacity-100 focus-visible:ring-2"
+          aria-label="Stayvo — opens in a new tab"
+        >
+          <Image
+            src="/brand/stayvo-guest-logo-lockup.png"
+            alt=""
+            width={1024}
+            height={365}
+            unoptimized
+            className="h-5 w-auto max-w-full"
+          />
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -286,65 +363,127 @@ export default async function GuestPortalPage({ token }: { token: string }) {
     </div>
   );
 
+  const heroGuestIntroDesktop = (
+    <div className="px-1 md:px-0">
+      <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-900 md:text-3xl">
+        {portal.property_name}
+      </h1>
+      {guestFirstName ? (
+        <p className="mt-2 text-base font-medium text-slate-600">Welcome, {guestFirstName} 👋</p>
+      ) : null}
+      {portal.checkout_date ? (
+        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#E0A24D]/35 bg-[#E0A24D]/12 px-3 py-1.5 text-xs font-semibold text-slate-800">
+          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-brand" fill="currentColor" aria-hidden>
+            <path d="M5 2.5a.5.5 0 0 0-1 0V4H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 14h10a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13 4h-1V2.5a.5.5 0 0 0-1 0V4H5V2.5ZM2.5 7.5h11v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" />
+          </svg>
+          Check-out: {formatDate(portal.checkout_date)}
+        </p>
+      ) : null}
+    </div>
+  );
+
+  const showDesktopHostSidebar =
+    visibleSectionFlags.get('host') === true &&
+    (hasText(portal.host_name) || Boolean(whatsappHref) || Boolean(hostCallHref));
+
+  const visibleGuidebookTips = (portal.guidebook_tips ?? []).filter(
+    (t) =>
+      hasText(t.label) ||
+      hasText(t.description) ||
+      hasText(t.guest_image_path) ||
+      hasText(t.drive_media_url)
+  );
+
+  const desktopExpiryLine =
+    portal.expires_at && portal.is_permanent !== true ? (
+      <p className="mt-3 text-xs text-slate-500">
+        Guest access expires {formatDate(portal.expires_at)}.
+      </p>
+    ) : null;
+
   return (
     <main
-      className="relative left-1/2 right-1/2 min-h-screen w-screen -translate-x-1/2 overflow-x-hidden"
+      className="relative min-h-screen overflow-x-hidden max-md:left-1/2 max-md:right-1/2 max-md:w-screen max-md:-translate-x-1/2 md:mx-auto md:w-full md:max-w-[1100px] md:translate-x-0 md:overflow-x-visible md:px-8 md:py-10"
       style={{ background: 'linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%)' }}
     >
       <StayOpenTracker token={token} />
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section
-        className={`relative left-1/2 right-1/2 w-screen -translate-x-1/2 overflow-hidden ${
-          heroImageUrl ? 'min-h-[68vh]' : 'bg-brand'
-        }`}
-      >
-        {heroImageUrl ? (
-          <>
-            <img
-              src={heroImageUrl}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70" />
-            <div className="relative flex min-h-[68vh] items-end px-5 pb-14">{heroGuestIntro}</div>
-          </>
-        ) : (
-          <>
-            <div className="relative mx-auto w-full max-w-full">
-              <img
-                src="/brand/stayvo-guest-hero-fallback.png"
-                alt=""
-                aria-hidden
-                className="mx-auto block h-auto w-full max-w-full"
-              />
-              <div
-                className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70"
-                aria-hidden
-              />
-              <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-14 pt-12 sm:pt-16">
-                {heroGuestIntro}
+      <div className="flex flex-col md:flex-row md:items-start md:gap-x-10 lg:gap-x-12">
+        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        <section
+          className={`relative overflow-hidden max-md:left-1/2 max-md:right-1/2 max-md:w-screen max-md:-translate-x-1/2 ${
+            heroImageUrl ? 'min-h-[68vh]' : 'bg-brand md:bg-transparent'
+          } md:sticky md:top-10 md:w-[40%] md:min-w-0 md:max-w-[440px] md:flex-shrink-0 md:translate-x-0 md:self-start md:overflow-visible md:!min-h-0`}
+        >
+          {heroImageUrl ? (
+            <>
+              <div className="md:hidden">
+                <img
+                  src={heroImageUrl}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70" />
+                <div className="relative flex min-h-[68vh] items-end px-5 pb-14">{heroGuestIntro}</div>
               </div>
-            </div>
-          </>
-        )}
-      </section>
 
-      <GuestSectionQuickNav
-        items={quickNavItems}
-        callHref={callHref}
-        whatsappHref={whatsappHref}
-      />
+              <DesktopGuestLeftColumn
+                coverSrc={heroImageUrl}
+                propertyName={portal.property_name}
+                introDesktop={heroGuestIntroDesktop}
+                expiryLine={desktopExpiryLine}
+                showHostSidebar={showDesktopHostSidebar}
+                hostName={portal.host_name}
+                whatsappHref={whatsappHref}
+                hostCallHref={hostCallHref}
+              />
+            </>
+          ) : (
+            <>
+              <div className="md:hidden">
+                <div className="relative mx-auto w-full max-w-full">
+                  <img
+                    src="/brand/stayvo-guest-hero-fallback.png"
+                    alt=""
+                    aria-hidden
+                    className="mx-auto block h-auto w-full max-w-full"
+                  />
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-black/30 to-black/70"
+                    aria-hidden
+                  />
+                  <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-14 pt-12 sm:pt-16">{heroGuestIntro}</div>
+                </div>
+              </div>
 
-      {/* ── Content card slides over hero ────────────────────────────── */}
-      <div
-        className="relative left-1/2 right-1/2 z-10 -mt-10 w-screen -translate-x-1/2 rounded-t-[32px]"
-        style={{ background: 'linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%)' }}
-      >
-        <div className="space-y-6 pt-4 pb-12 sm:space-y-8 sm:pt-5">
+              <DesktopGuestLeftColumn
+                coverSrc="/brand/stayvo-guest-hero-fallback.png"
+                propertyName={portal.property_name}
+                introDesktop={heroGuestIntroDesktop}
+                expiryLine={desktopExpiryLine}
+                showHostSidebar={showDesktopHostSidebar}
+                hostName={portal.host_name}
+                whatsappHref={whatsappHref}
+                hostCallHref={hostCallHref}
+              />
+            </>
+          )}
+        </section>
+
+        <GuestSectionQuickNav
+          items={quickNavItems}
+          callHref={callHref}
+          whatsappHref={whatsappHref}
+        />
+
+        {/* ── Content card slides over hero ────────────────────────────── */}
+        <div
+          className="relative z-10 max-md:left-1/2 max-md:right-1/2 max-md:-mt-10 max-md:w-screen max-md:-translate-x-1/2 max-md:rounded-t-[32px] max-md:bg-gradient-to-br max-md:from-[#FDF6EC] max-md:to-[#FAF0DC] md:z-auto md:mt-0 md:flex-1 md:min-w-0 md:max-w-none md:translate-x-0 md:rounded-none md:bg-transparent"
+        >
+          <div className="space-y-6 pt-4 pb-12 sm:space-y-8 sm:pt-5 md:space-y-8 md:pt-1 md:pb-14 lg:space-y-10">
           {/* Lockup below hero, above first content section (usually Address) */}
-          <div className="flex justify-center px-4 py-0.5">
+          <div className="flex justify-center px-4 py-0.5 md:hidden">
             <Link
               href="https://stayvo.io"
               target="_blank"
@@ -369,8 +508,11 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             /* ── Address ──────────────────────────────────────────── */
             if (sectionKey === 'address') {
               return (
-                <section key={sectionKey} className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                  <div className="px-4 pt-4 pb-3">
+                <section
+                  key={sectionKey}
+                  className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
+                  <div className="px-4 pt-4 pb-3 md:px-6 md:pt-6 md:pb-4">
                     <SectionHeading
                       label="Address"
                       icon={
@@ -380,7 +522,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       }
                     />
                     {hasText(portal.full_address) ? (
-                      <p className="mt-2 text-[13px] leading-relaxed text-slate-600">{portal.full_address}</p>
+                      <p className="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-slate-600">{portal.full_address}</p>
                     ) : null}
                     {(hasText(portal.city) || hasText(portal.state)) && (
                       <p className="mt-0.5 text-[13px] text-slate-400">
@@ -389,12 +531,12 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                     )}
                   </div>
                   {(portal.google_maps_url || portal.waze_url) && (
-                    <div className="grid grid-cols-2 gap-px border-t border-slate-100 bg-slate-100">
+                    <div className="grid grid-cols-2 gap-px border-t border-slate-100 bg-slate-100 md:flex md:flex-row md:gap-3 md:border-0 md:bg-transparent md:px-6 md:pb-6 md:pt-0">
                       {portal.google_maps_url ? (
                         <Link
                           href={portal.google_maps_url}
                           target="_blank"
-                          className="flex items-center justify-center gap-2 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
+                          className="flex items-center justify-center gap-2 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 md:flex-1 md:rounded-full md:border-2 md:border-[#E0A24D] md:bg-white md:py-2.5 md:shadow-sm"
                         >
                           <svg viewBox="0 0 20 20" className="h-4 w-4 text-brand" fill="currentColor" aria-hidden>
                             <path d="M10 1.75A5.75 5.75 0 0 0 4.25 7.5c0 4.13 4.37 9.4 5.03 10.18a.94.94 0 0 0 1.44 0c.66-.78 5.03-6.05 5.03-10.18A5.75 5.75 0 0 0 10 1.75Zm0 8a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5Z" />
@@ -406,7 +548,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                         <Link
                           href={portal.waze_url}
                           target="_blank"
-                          className="flex items-center justify-center gap-2 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100"
+                          className="flex items-center justify-center gap-2 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 md:flex-1 md:rounded-full md:border-2 md:border-[#E0A24D] md:bg-white md:py-2.5 md:shadow-sm"
                         >
                           <svg viewBox="0 0 20 20" className="h-4 w-4 text-brand" fill="currentColor" aria-hidden>
                             <path d="M10 2a6 6 0 0 1 4.33 10.1l-2.93 3.74a.75.75 0 0 1-1.2 0L7.27 12.1a6 6 0 0 1-1.02-1.35A6 6 0 0 1 10 2Zm0 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
@@ -423,7 +565,11 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             /* ── Parking ──────────────────────────────────────────── */
             if (sectionKey === 'parking') {
               return (
-                <section id="parking-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section
+                  id="parking-section"
+                  key={sectionKey}
+                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
                   <SectionHeading
                     label="Parking"
                     icon={
@@ -432,7 +578,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </svg>
                     }
                   />
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">{portal.parking_details}</p>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{portal.parking_details}</p>
                 </section>
               );
             }
@@ -447,8 +593,12 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                     hasText(s.drive_media_url))
               );
               return (
-                <section id="checkin-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white shadow-sm">
-                  <div className="px-4 pt-4 pb-3">
+                <section
+                  id="checkin-section"
+                  key={sectionKey}
+                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white shadow-sm md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
+                  <div className="px-4 pt-4 pb-3 md:px-6 md:pt-6 md:pb-4">
                     <SectionHeading
                       label="Check-in guide"
                       icon={
@@ -458,23 +608,23 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       }
                     />
                   </div>
-                  <ol className="pb-4">
+                  <ol className="pb-4 md:pb-6">
                     {visibleSteps.map((s, idx) => {
                       const hasPhoto = hasText(s.guest_image_path) || hasText(s.drive_media_url);
                       return (
-                        <li key={`${s.step_order}-${idx}`}>
+                        <li key={`${s.step_order}-${idx}`} className="flex flex-col">
                           {/* Step row */}
-                          <div className="flex items-start gap-3 px-4 pb-2 pt-4">
+                          <div className="flex items-start gap-3 px-4 pb-2 pt-4 md:px-6 md:pt-5">
                             <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">
                               {idx + 1}
                             </span>
                             {hasText(s.instruction) ? (
-                              <p className="pt-0.5 text-sm leading-relaxed text-slate-700">{s.instruction}</p>
+                              <p className="pt-0.5 text-sm leading-relaxed text-slate-700 md:flex-1">{s.instruction}</p>
                             ) : null}
                           </div>
                           {/* Full-width photo below the step text */}
                           {hasPhoto ? (
-                            <div className="mt-1 px-4 pb-4">
+                            <div className="mt-1 px-4 pb-4 md:mx-auto md:mt-3 md:w-full md:max-w-[50%] md:px-6 md:pb-6 md:[&_button]:mx-auto md:[&_button]:block md:[&_button]:max-w-full md:[&_img]:max-h-[240px] md:[&_img]:w-full md:[&_img]:max-w-full md:[&_img]:rounded-xl md:[&_img]:object-cover md:[&_img]:aspect-auto">
                               <GuestSectionMedia
                                 guestImagePath={s.guest_image_path}
                                 driveMediaUrl={s.drive_media_url}
@@ -484,7 +634,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                           ) : null}
                           {/* Divider (not last) */}
                           {idx !== visibleSteps.length - 1 ? (
-                            <div className="mx-4 border-b-2 border-slate-200" />
+                            <div className="mx-4 border-b-2 border-slate-200 md:mx-6" />
                           ) : null}
                         </li>
                       );
@@ -497,7 +647,11 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             /* ── Wi-Fi ────────────────────────────────────────────── */
             if (sectionKey === 'wifi') {
               return (
-                <section id="wifi-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section
+                  id="wifi-section"
+                  key={sectionKey}
+                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
                   <SectionHeading
                     label="Wi-Fi"
                     icon={
@@ -506,7 +660,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </svg>
                     }
                   />
-                  <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="mt-4 grid grid-cols-2 gap-3 md:hidden">
                     {hasText(portal.wifi_network_name) ? (
                       <div className="rounded-xl bg-slate-50 px-3 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Network</p>
@@ -526,6 +680,40 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                       </div>
                     ) : null}
                   </div>
+                  <div className="mt-4 hidden md:block">
+                    <div className="grid grid-cols-2 gap-0 overflow-hidden rounded-xl border border-slate-200">
+                      {hasText(portal.wifi_network_name) ? (
+                        <div className="border-r border-slate-200 bg-slate-50/80 px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Network name</p>
+                          <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{portal.wifi_network_name}</p>
+                        </div>
+                      ) : (
+                        <div className="border-r border-slate-200 bg-slate-50/80 px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Network name</p>
+                          <p className="mt-1 text-sm text-slate-400">—</p>
+                        </div>
+                      )}
+                      {hasText(portal.wifi_password) ? (
+                        <div className="bg-slate-50/80 px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Password</p>
+                          <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{portal.wifi_password}</p>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50/80 px-4 py-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Password</p>
+                          <p className="mt-1 text-sm text-slate-400">—</p>
+                        </div>
+                      )}
+                    </div>
+                    {hasText(portal.wifi_password) ? (
+                      <CopyTextButton
+                        text={portal.wifi_password || ''}
+                        idleLabel="Tap to copy password"
+                        copiedLabel="Copied!"
+                        className="mt-4 flex w-full items-center justify-center rounded-xl border-2 border-[#E0A24D] bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 active:opacity-80"
+                      />
+                    ) : null}
+                  </div>
                 </section>
               );
             }
@@ -533,7 +721,11 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             /* ── House rules ──────────────────────────────────────── */
             if (sectionKey === 'rules') {
               return (
-                <section id="rules-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section
+                  id="rules-section"
+                  key={sectionKey}
+                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
                   <SectionHeading
                     label="House rules"
                     icon={
@@ -562,7 +754,10 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                 .filter((f) => hasText(f.question) && hasText(f.answer))
                 .map((f) => ({ question: f.question, answer: f.answer }));
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section
+                  key={sectionKey}
+                  className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
                   <SectionHeading
                     label="FAQ"
                     icon={
@@ -579,7 +774,13 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             /* ── Host contact ─────────────────────────────────────── */
             if (sectionKey === 'host') {
               return (
-                <section id="host-section" key={sectionKey} className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section
+                  id="host-section"
+                  key={sectionKey}
+                  className={`scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]${
+                    showDesktopHostSidebar ? ' md:hidden' : ''
+                  }`}
+                >
                   <SectionHeading
                     label="Your host"
                     icon={
@@ -657,7 +858,10 @@ export default async function GuestPortalPage({ token }: { token: string }) {
               const detail = customDetails.find((d) => d.detail_order === idx);
               if (!detail) return null;
               return (
-                <section key={sectionKey} className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm">
+                <section
+                  key={sectionKey}
+                  className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                >
                   {hasText(detail.title) ? (
                     <SectionHeading
                       label={detail.title}
@@ -669,7 +873,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
                     />
                   ) : null}
                   {hasText(detail.message) ? (
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">{detail.message}</p>
+                    <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{detail.message}</p>
                   ) : null}
                   <GuestSectionMedia
                     guestImagePath={detail.guest_image_path}
@@ -683,9 +887,37 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             return null;
           })}
 
+          {visibleGuidebookTips.length > 0 ? (
+            <section className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] md:[&_img]:max-h-[240px] md:[&_img]:rounded-xl md:[&_img]:object-cover">
+              <SectionHeading
+                label="Guidebook tips"
+                icon={
+                  <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+                    <path d="M10 2.25a.75.75 0 0 1 .73.57l.85 3.24a.75.75 0 0 0 .53.53l3.24.85a.75.75 0 0 1 0 1.46l-3.24.85a.75.75 0 0 0-.53.53l-.85 3.24a.75.75 0 0 1-1.46 0l-.85-3.24a.75.75 0 0 0-.53-.53l-3.24-.85a.75.75 0 0 1 0-1.46l3.24-.85a.75.75 0 0 0 .53-.53l.85-3.24A.75.75 0 0 1 10 2.25Z" />
+                  </svg>
+                }
+              />
+              <ul className="mt-4 space-y-6">
+                {visibleGuidebookTips.map((t, idx) => (
+                  <li key={`${t.tip_order}-${idx}`}>
+                    {hasText(t.label) ? <p className="text-sm font-semibold text-slate-900">{t.label}</p> : null}
+                    {hasText(t.description) ? (
+                      <p className="mt-1 text-sm leading-relaxed text-slate-700">{t.description}</p>
+                    ) : null}
+                    <GuestSectionMedia
+                      guestImagePath={t.guest_image_path}
+                      driveMediaUrl={t.drive_media_url}
+                      guestMediaPublicBase={guestMediaPublicBase}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           {/* Social links */}
           <GuestSocialLinks
-            className="pt-2"
+            className="pt-2 md:pt-1 md:pb-1"
             links={{
               facebook: portal.social_facebook_url,
               instagram: portal.social_instagram_url,
@@ -695,7 +927,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             }}
           />
 
-          <div className="flex justify-center pb-24 pt-3">
+          <div className="flex justify-center pb-24 pt-3 md:pb-10 md:pt-4">
             <span className="inline-flex flex-col items-center gap-1.5 text-[11px] text-slate-500">
               <span>Powered by</span>
               <Link
@@ -717,6 +949,7 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             </span>
           </div>
         </div>
+      </div>
       </div>
     </main>
   );

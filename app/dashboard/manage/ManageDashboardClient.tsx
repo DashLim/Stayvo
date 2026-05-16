@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { CSSProperties, Dispatch, SetStateAction } from 'react';
 import { useEffect, useState, useTransition } from 'react';
 import {
   DndContext,
@@ -22,6 +23,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cloneProperty, deleteProperty } from '@/app/actions/properties';
+import { capitalizeWordStarts } from '@/lib/capitalize-word-starts';
 import {
   createLocation,
   deleteLocation,
@@ -113,7 +115,7 @@ function SortablePropertyRow({
   pending: boolean;
   editMode: boolean;
   openMenuPropertyId: string | null;
-  setOpenMenuPropertyId: React.Dispatch<React.SetStateAction<string | null>>;
+  setOpenMenuPropertyId: Dispatch<SetStateAction<string | null>>;
   onMoveProperty: (id: string, locId: string) => void;
   onToggleLive: (id: string, live: boolean) => void;
   onDeleteProperty: (id: string, name: string) => void;
@@ -162,7 +164,31 @@ function SortablePropertyRow({
           </div>
         </div>
         {!editMode ? (
-          <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className="flex shrink-0 items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <Link
+              href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
+              prefetch={false}
+              className={`hidden h-8 items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700 backdrop-blur-sm transition hover:bg-slate-300/90 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/14 dark:hover:text-slate-950 md:inline-flex ${trelloPressFx}`}
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
+                <path
+                  d="M10 3H5.5A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9A2.5 2.5 0 0 0 17 14.5V10"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="m12.5 3.5 2.5 2.5m-2.5-2.5-4 4-.5 2.5 2.5-.5 4-4a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0Z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Edit
+            </Link>
+            <div className="relative md:hidden">
             <PressButton
               type="button"
               onClick={() =>
@@ -208,6 +234,7 @@ function SortablePropertyRow({
                 </button>
               </div>
             ) : null}
+            </div>
           </div>
         ) : (
           <div className="flex shrink-0 items-center gap-2">
@@ -229,11 +256,11 @@ function SortablePropertyRow({
               type="button"
               disabled={pending}
               onClick={() => onDeleteProperty(p.id, p.property_name || 'Untitled')}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 ${trelloPressFx}`}
+              className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
               aria-label="Delete property"
               title="Delete property"
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
                 <path
                   d="M9 3.75h6m-7.5 3h9l-.67 10.05A2.25 2.25 0 0 1 13.58 19h-3.16a2.25 2.25 0 0 1-2.25-2.2L7.5 6.75Zm2.75 3.5v5.5m3.5-5.5v5.5"
                   stroke="currentColor"
@@ -242,6 +269,9 @@ function SortablePropertyRow({
                   strokeLinejoin="round"
                 />
               </svg>
+              <span className="hidden text-sm font-semibold text-rose-700 dark:text-rose-400 md:inline">
+                Delete Property
+              </span>
             </PressButton>
           </div>
         )}
@@ -267,7 +297,29 @@ function SortablePropertyRow({
   );
 }
 
-function SortableLocationCard({
+type LocationGroupPanelProps = {
+  group: Group;
+  flatLocations: LocRow[];
+  pending: boolean;
+  editMode: boolean;
+  canAddProperty: boolean;
+  openMenuPropertyId: string | null;
+  setOpenMenuPropertyId: Dispatch<SetStateAction<string | null>>;
+  onMoveProperty: (id: string, locId: string) => void;
+  onToggleLive: (id: string, live: boolean) => void;
+  onDeleteLocation: (id: string, name: string, count: number) => void;
+  onDeleteProperty: (id: string, name: string) => void;
+  onCloneProperty: (id: string, name: string) => void;
+  onPropertyDragEnd: (locationId: string, event: DragEndEvent) => void;
+  sectionRef?: (node: HTMLElement | null) => void;
+  sectionStyle?: CSSProperties;
+  locationDragListeners?: object;
+  locationDragAttributes?: object;
+  /** When false (desktop panel), location drag handle is hidden. */
+  enableLocationDrag?: boolean;
+};
+
+function LocationGroupPanel({
   group,
   flatLocations,
   pending,
@@ -281,45 +333,30 @@ function SortableLocationCard({
   onDeleteProperty,
   onCloneProperty,
   onPropertyDragEnd,
-}: {
-  group: Group;
-  flatLocations: LocRow[];
-  pending: boolean;
-  editMode: boolean;
-  canAddProperty: boolean;
-  openMenuPropertyId: string | null;
-  setOpenMenuPropertyId: React.Dispatch<React.SetStateAction<string | null>>;
-  onMoveProperty: (id: string, locId: string) => void;
-  onToggleLive: (id: string, live: boolean) => void;
-  onDeleteLocation: (id: string, name: string, count: number) => void;
-  onDeleteProperty: (id: string, name: string) => void;
-  onCloneProperty: (id: string, name: string) => void;
-  onPropertyDragEnd: (locationId: string, event: DragEndEvent) => void;
-}) {
+  sectionRef,
+  sectionStyle,
+  locationDragListeners,
+  locationDragAttributes,
+  enableLocationDrag = false,
+}: LocationGroupPanelProps) {
   const { loc, properties } = { loc: group.location, properties: group.properties };
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: loc.id, disabled: !editMode || pending });
-
   const propertySensors = useManageDragSensors();
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.45 : 1,
-    zIndex: isDragging ? 20 : undefined,
-  };
 
   return (
     <section
-      ref={setNodeRef}
-      style={style}
-      className="glass rounded-[20px] border border-slate-200/80 bg-slate-50/65 p-4 dark:border-white/12 dark:bg-neutral-900/60"
+      ref={sectionRef}
+      style={sectionStyle}
+      className="glass rounded-[20px] border border-slate-200/80 bg-slate-50/65 p-4 dark:border-white/12 dark:bg-neutral-900/60 md:p-6"
     >
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/50 dark:border-white/10 pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/50 dark:border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <DragHandle listeners={listeners} attributes={attributes} hidden={!editMode} />
+          <DragHandle
+            listeners={locationDragListeners}
+            attributes={locationDragAttributes}
+            hidden={!editMode || !enableLocationDrag}
+          />
           <div>
-            <h2 className="text-lg font-semibold text-brand">{loc.name}</h2>
+            <h2 className="text-lg font-semibold text-brand md:text-xl">{loc.name}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {properties.length} propert{properties.length === 1 ? 'y' : 'ies'}
             </p>
@@ -331,11 +368,11 @@ function SortableLocationCard({
               <Link
                 href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
                 prefetch={false}
-                className={`inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 ${trelloPressFx}`}
+                className={`inline-flex h-7 w-7 items-center justify-center gap-2 rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
                 aria-label={`Add property under ${loc.name}`}
                 title={`Add property under ${loc.name}`}
               >
-                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
                   <path
                     d="M10 5v10M5 10h10"
                     stroke="currentColor"
@@ -343,6 +380,7 @@ function SortableLocationCard({
                     strokeLinecap="round"
                   />
                 </svg>
+                <span className="hidden text-sm font-semibold md:inline">Add Property</span>
               </Link>
             ) : (
               <button
@@ -352,11 +390,11 @@ function SortableLocationCard({
                     `Free accounts can have up to ${FREE_TIER_MAX_PROPERTIES} properties. Stayvo Pro includes unlimited properties.`
                   )
                 }
-                className={`inline-flex h-7 w-7 cursor-not-allowed items-center justify-center rounded-full bg-brand/45 text-sm font-bold text-white shadow-sm ${trelloPressFx}`}
+                className={`inline-flex h-7 w-7 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand/45 text-sm font-bold text-white shadow-sm md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
                 aria-label="Property limit reached"
                 title="Property limit reached"
               >
-                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
                   <path
                     d="M10 5v10M5 10h10"
                     stroke="currentColor"
@@ -364,6 +402,7 @@ function SortableLocationCard({
                     strokeLinecap="round"
                   />
                 </svg>
+                <span className="hidden text-sm font-semibold md:inline">Add Property</span>
               </button>
             )
           ) : null}
@@ -372,7 +411,7 @@ function SortableLocationCard({
               type="button"
               disabled={pending}
               onClick={() => onDeleteLocation(loc.id, loc.name, properties.length)}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 ${trelloPressFx}`}
+              className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
               aria-label="Delete location"
               title={
                 properties.length > 0
@@ -380,7 +419,7 @@ function SortableLocationCard({
                   : 'Delete this empty location'
               }
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
                 <path
                   d="M9 3.75h6m-7.5 3h9l-.67 10.05A2.25 2.25 0 0 1 13.58 19h-3.16a2.25 2.25 0 0 1-2.25-2.2L7.5 6.75Zm2.75 3.5v5.5m3.5-5.5v5.5"
                   stroke="currentColor"
@@ -389,6 +428,9 @@ function SortableLocationCard({
                   strokeLinejoin="round"
                 />
               </svg>
+              <span className="hidden text-sm font-semibold text-rose-700 dark:text-rose-400 md:inline">
+                Delete Location
+              </span>
             </PressButton>
           ) : null}
         </div>
@@ -434,6 +476,61 @@ function SortableLocationCard({
   );
 }
 
+function SortableLocationCard({
+  group,
+  flatLocations,
+  pending,
+  editMode,
+  canAddProperty,
+  openMenuPropertyId,
+  setOpenMenuPropertyId,
+  onMoveProperty,
+  onToggleLive,
+  onDeleteLocation,
+  onDeleteProperty,
+  onCloneProperty,
+  onPropertyDragEnd,
+}: Omit<
+  LocationGroupPanelProps,
+  'sectionRef' | 'sectionStyle' | 'locationDragListeners' | 'locationDragAttributes' | 'enableLocationDrag'
+>) {
+  const loc = group.location;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: loc.id,
+    disabled: !editMode || pending,
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.45 : 1,
+    zIndex: isDragging ? 20 : undefined,
+  };
+
+  return (
+    <LocationGroupPanel
+      group={group}
+      flatLocations={flatLocations}
+      pending={pending}
+      editMode={editMode}
+      canAddProperty={canAddProperty}
+      openMenuPropertyId={openMenuPropertyId}
+      setOpenMenuPropertyId={setOpenMenuPropertyId}
+      onMoveProperty={onMoveProperty}
+      onToggleLive={onToggleLive}
+      onDeleteLocation={onDeleteLocation}
+      onDeleteProperty={onDeleteProperty}
+      onCloneProperty={onCloneProperty}
+      onPropertyDragEnd={onPropertyDragEnd}
+      sectionRef={setNodeRef}
+      sectionStyle={style}
+      locationDragListeners={listeners}
+      locationDragAttributes={attributes}
+      enableLocationDrag
+    />
+  );
+}
+
 export default function ManageDashboardClient({ locationGroups }: { locationGroups: Group[] }) {
   const router = useRouter();
   const limits = useHostDashboardLimits();
@@ -445,15 +542,26 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
   const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [openMenuPropertyId, setOpenMenuPropertyId] = useState<string | null>(null);
+  const [desktopLocationId, setDesktopLocationId] = useState<string | null>(null);
+  const [addLocOpen, setAddLocOpen] = useState(false);
+  const [newLocName, setNewLocName] = useState('');
+
+  useEffect(() => {
+    if (groups.length === 0) {
+      setDesktopLocationId(null);
+      return;
+    }
+    setDesktopLocationId((prev) => {
+      if (prev && groups.some((g) => g.location.id === prev)) return prev;
+      return groups[0].location.id;
+    });
+  }, [groups]);
 
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent('stayvo:manage-edit-state', { detail: { active: editMode } })
     );
   }, [editMode]);
-
-  const [addLocOpen, setAddLocOpen] = useState(false);
-  const [newLocName, setNewLocName] = useState('');
 
   useEffect(() => {
     setGroups(locationGroups);
@@ -633,9 +741,13 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
   }
 
   const activeGroup = activeLocationId ? groups.find((g) => g.location.id === activeLocationId) : null;
+  const desktopSelectedGroup =
+    desktopLocationId != null
+      ? (groups.find((g) => g.location.id === desktopLocationId) ?? null)
+      : null;
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-6 w-full space-y-6">
       {/* Edit mode banner */}
       {editMode ? (
         <div className="flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/70 px-4 py-2 text-xs font-semibold text-amber-800 backdrop-blur-sm dark:border-amber-700/40 dark:bg-amber-950/50 dark:text-amber-400">
@@ -660,8 +772,9 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
             <input
               autoFocus
               type="text"
+              autoCapitalize="words"
               value={newLocName}
-              onChange={(e) => setNewLocName(e.target.value)}
+              onChange={(e) => setNewLocName(capitalizeWordStarts(e.target.value))}
               onKeyDown={(e) => { if (e.key === 'Enter') void submitNewLocation(); }}
               placeholder="Location name"
               className="mt-3 w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
@@ -693,22 +806,89 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         </p>
       ) : null}
 
-      <DndContext
-        sensors={locationSensors}
-        collisionDetection={closestCorners}
-        onDragStart={onLocationDragStart}
-        onDragEnd={(e) => void onLocationDragEnd(e)}
-      >
-        <SortableContext
-          id="stayvo-locations"
-          items={groups.map((g) => g.location.id)}
-          strategy={verticalListSortingStrategy}
+      <div className={editMode ? '' : 'md:hidden'}>
+        <DndContext
+          sensors={locationSensors}
+          collisionDetection={closestCorners}
+          onDragStart={onLocationDragStart}
+          onDragEnd={(e) => void onLocationDragEnd(e)}
         >
-          <div className="space-y-6">
-            {groups.map((group) => (
-              <SortableLocationCard
-                key={group.location.id}
-                group={group}
+          <SortableContext
+            id="stayvo-locations"
+            items={groups.map((g) => g.location.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-6">
+              {groups.map((group) => (
+                <SortableLocationCard
+                  key={group.location.id}
+                  group={group}
+                  flatLocations={flatLocations}
+                  pending={pending}
+                  editMode={editMode}
+                  canAddProperty={canAddProperty}
+                  openMenuPropertyId={openMenuPropertyId}
+                  setOpenMenuPropertyId={setOpenMenuPropertyId}
+                  onMoveProperty={onMoveProperty}
+                  onToggleLive={onToggleLive}
+                  onDeleteLocation={onDeleteLocation}
+                  onDeleteProperty={onDeleteProperty}
+                  onCloneProperty={onCloneProperty}
+                  onPropertyDragEnd={onPropertyDragEnd}
+                />
+              ))}
+            </div>
+          </SortableContext>
+
+          <DragOverlay>
+            {activeGroup && editMode ? (
+              <div className="glass rounded-[20px] p-4 shadow-2xl ring-1 ring-brand/30">
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{activeGroup.location.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {`${activeGroup.properties.length} propert${activeGroup.properties.length === 1 ? 'y' : 'ies'}`}
+                </p>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
+
+      {!editMode ? (
+        <div className="hidden min-h-0 md:flex md:gap-8">
+          <aside className="sticky top-6 w-[220px] shrink-0 space-y-1 self-start md:max-h-[min(36rem,calc(100dvh-6rem))] md:overflow-y-auto md:pr-1">
+            {groups.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">No locations yet.</p>
+            ) : (
+              groups.map((g) => {
+                const selected = g.location.id === desktopLocationId;
+                return (
+                  <button
+                    key={g.location.id}
+                    type="button"
+                    onClick={() => setDesktopLocationId(g.location.id)}
+                    className={`flex w-full flex-col items-start rounded-full px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
+                      selected
+                        ? 'bg-brand font-bold text-amber-950 shadow-sm dark:text-amber-950'
+                        : 'text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="w-full truncate">{g.location.name}</span>
+                    <span
+                      className={`mt-0.5 text-xs font-medium ${
+                        selected ? 'text-amber-950/80' : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {g.properties.length} propert{g.properties.length === 1 ? 'y' : 'ies'}
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </aside>
+          <div className="min-w-0 flex-1">
+            {desktopSelectedGroup ? (
+              <LocationGroupPanel
+                group={desktopSelectedGroup}
                 flatLocations={flatLocations}
                 pending={pending}
                 editMode={editMode}
@@ -721,23 +901,14 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 onDeleteProperty={onDeleteProperty}
                 onCloneProperty={onCloneProperty}
                 onPropertyDragEnd={onPropertyDragEnd}
+                enableLocationDrag={false}
               />
-            ))}
+            ) : (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Select a location.</p>
+            )}
           </div>
-        </SortableContext>
-
-        <DragOverlay>
-          {activeGroup && editMode ? (
-            <div className="glass rounded-[20px] p-4 shadow-2xl ring-1 ring-brand/30">
-              <p className="font-semibold text-slate-900 dark:text-slate-100">{activeGroup.location.name}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {activeGroup.properties.length} propert
-                {activeGroup.properties.length === 1 ? 'y' : 'ies'}
-              </p>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+        </div>
+      ) : null}
     </div>
   );
 }

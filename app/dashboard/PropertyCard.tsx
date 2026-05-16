@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -34,8 +34,9 @@ type PropertyCardProps = {
     id: string;
     property_name: string;
     internal_name: string | null;
-    is_live: boolean;
   };
+  /** Location group label (e.g. dashboard section name). */
+  locationGroupName?: string | null;
   links: GuestLinkItem[];
   nowIso: string;
   hostDisplayName: string | null;
@@ -46,24 +47,45 @@ type PropertyCardProps = {
   onLinksPanelChange?: (panel: 'active' | 'generate' | null) => void;
 };
 
-/** Native date inputs have a large intrinsic min-width on mobile WebKit; clip inside this shell. */
+/** Native date input — avoid clipping; `showPicker()` helps when ancestors use transforms (e.g. Framer scale). */
 function DateField({
   className = '',
+  onMouseDown,
+  onClick,
   ...props
 }: Omit<ComponentProps<'input'>, 'type'>) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const disabled = props.disabled;
+
+  function tryOpenPicker() {
+    const el = inputRef.current;
+    if (!el || el.disabled) return;
+    try {
+      el.showPicker?.();
+    } catch {
+      /* InvalidStateError, unsupported, etc. */
+    }
+  }
+
   return (
     <div
-      className={`w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-brand/30 dark:border-white/20 ${
+      className={`w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-brand/30 dark:border-white/20 ${
         disabled
           ? 'cursor-not-allowed bg-slate-100 dark:bg-white/25'
           : 'bg-white dark:bg-white/88'
       } ${className}`}
     >
       <input
+        ref={inputRef}
         type="date"
         {...props}
-        className={`block w-full min-w-0 max-w-full bg-transparent py-0.5 text-sm text-slate-900 outline-none [color-scheme:light] dark:text-slate-950 dark:[color-scheme:dark] ${
+        onMouseDown={(e) => {
+          onMouseDown?.(e);
+          if (e.defaultPrevented || e.button !== 0 || disabled) return;
+          queueMicrotask(() => tryOpenPicker());
+        }}
+        onClick={onClick}
+        className={`block min-h-[2.25rem] w-full min-w-[10.5rem] max-w-full cursor-pointer bg-transparent py-0.5 text-sm text-slate-900 outline-none [color-scheme:light] dark:text-slate-950 dark:[color-scheme:dark] ${
           disabled ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' : ''
         }`}
       />
@@ -107,9 +129,9 @@ const EXPIRED_GRACE_MS = 14 * 24 * 60 * 60 * 1000;
 const LINKS_PANEL_EASE = [0.25, 0.1, 0.25, 1] as const;
 
 const linksPanelMotionProps = {
-  initial: { opacity: 0, height: 0, y: -10 },
-  animate: { opacity: 1, height: 'auto' as const, y: 0 },
-  exit: { opacity: 0, height: 0, y: -6 },
+  initial: { opacity: 0, height: 0 },
+  animate: { opacity: 1, height: 'auto' as const },
+  exit: { opacity: 0, height: 0 },
   transition: { duration: 0.28, ease: LINKS_PANEL_EASE },
 };
 
@@ -299,24 +321,30 @@ export default function PropertyCard({
     }
   }
 
-  const displayTitle =
-    (property.internal_name ?? '').trim() || property.property_name;
+  const propertyName = (property.property_name ?? '').trim() || 'Untitled';
+  const internalTrimmed = (property.internal_name ?? '').trim();
+  const cardTitle = internalTrimmed || propertyName;
 
   const activeLinks = links.filter((l) => isActiveLink(l, nowIso));
   const recentExpiredLinks = links.filter((l) => isRecentlyExpired(l, nowIso));
 
   return (
     <motion.div
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={linksPanel ? undefined : { scale: 1.01 }}
+      whileTap={linksPanel ? undefined : { scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="glass rounded-[20px] p-5 dark:bg-[#1a1b1f] dark:border-white/12"
+      className="glass flex min-h-0 w-full min-w-0 max-w-full flex-col rounded-[20px] p-5 dark:border-white/12 dark:bg-[#1a1b1f] md:p-4"
     >
-      <h2 className="min-w-0 text-left text-base font-semibold text-slate-900 dark:text-slate-100">
-        {displayTitle}
-      </h2>
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-slate-100">
+            {cardTitle}
+          </h2>
+        </div>
+        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{propertyName}</p>
+      </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-start gap-2">
+      <div className="mt-4 flex min-w-0 max-w-full flex-wrap items-center justify-start gap-2 md:mt-3 md:flex-nowrap">
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
@@ -324,7 +352,7 @@ export default function PropertyCard({
           onClick={() =>
             setLinksPanel(linksPanel === 'active' ? null : 'active')
           }
-          className="group inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
+          className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950 md:whitespace-nowrap"
         >
           <span>Active links</span>
           <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 group-hover:text-slate-900 dark:bg-white/30 dark:text-slate-900 dark:group-hover:bg-white/45 dark:group-hover:text-slate-950">
@@ -340,7 +368,7 @@ export default function PropertyCard({
             setLinksPanel(linksPanel === 'generate' ? null : 'generate');
             setError(null);
           }}
-          className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
+          className="shrink-0 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90 md:whitespace-nowrap"
         >
           Generate Link
         </motion.button>
@@ -350,12 +378,12 @@ export default function PropertyCard({
         {linksPanel === 'generate' ? (
           <motion.div
             key={`generate-${property.id}`}
-            className="overflow-hidden"
+            className="overflow-x-hidden overflow-y-visible"
             {...linksPanelMotionProps}
           >
             <form
               onSubmit={onGenerate}
-              className="mt-4 overflow-x-hidden rounded-2xl border border-slate-200 bg-white/75 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
+              className="mt-4 overflow-x-hidden overflow-y-visible rounded-2xl border border-slate-200 bg-white/75 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:[backdrop-filter:none] md:[-webkit-backdrop-filter:none]"
             >
               <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                 Generate guest link
@@ -389,7 +417,7 @@ export default function PropertyCard({
                     className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
                   />
                 </div>
-                <div className="min-w-0 max-w-full">
+                <div className="max-w-full min-w-[11rem] sm:min-w-[12rem]">
                   <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
                     Checkout date
                   </label>
@@ -489,7 +517,7 @@ export default function PropertyCard({
         {linksPanel === 'active' ? (
           <motion.div
             key={`active-${property.id}`}
-            className="overflow-hidden"
+            className="overflow-x-hidden overflow-y-visible"
             {...linksPanelMotionProps}
           >
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white/75 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5">

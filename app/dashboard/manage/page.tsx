@@ -54,7 +54,9 @@ export default async function DashboardManagePage() {
 
   return (
     <main className="py-10">
-      <ManageDashboardClientNoSSR locationGroups={locationGroups} />
+      <div className="w-full md:mx-auto md:max-w-[1100px]">
+        <ManageDashboardClientNoSSR locationGroups={locationGroups} />
+      </div>
     </main>
   );
 }

@@ -53,6 +53,7 @@ export default function GuestSectionQuickNav({
         const el = document.getElementById(id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) continue;
         const distance = Math.abs(rect.top - activationY);
         if (distance < nextDistance) {
           nextDistance = distance;
@@ -205,7 +206,7 @@ export default function GuestSectionQuickNav({
   return createPortal(
     <div
       ref={barRef}
-      className="fixed inset-x-0 z-50 px-3 pb-2"
+      className="fixed inset-x-0 z-50 px-3 pb-2 md:hidden"
       style={{ bottom: 'calc(env(safe-area-inset-bottom) + 8px)' }}
     >
       {barContent}

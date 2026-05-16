@@ -11,6 +11,7 @@ import {
   updateHostProfilePassword,
 } from '@/app/actions/host-account';
 import PressButton from '@/app/_components/PressButton';
+import ThemeToggle from '@/app/_components/ThemeToggle';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
 import type { HostTier } from '@/lib/host-tier';
 
@@ -18,10 +19,12 @@ export default function ProfileClient({
   email,
   initialHostName,
   hostTier,
+  checkoutBanner,
 }: {
   email: string;
   initialHostName: string;
   hostTier: HostTier;
+  checkoutBanner?: null | 'success' | 'canceled';
 }) {
   const router = useRouter();
   const [hostName, setHostName] = useState(() =>
@@ -140,7 +143,7 @@ export default function ProfileClient({
   }
 
   return (
-    <div className="mt-8 max-w-md space-y-4">
+    <div className="mx-auto mt-8 w-full max-w-[600px] space-y-4 md:space-y-5">
       {error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3 text-sm text-rose-800 backdrop-blur-sm dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400" role="alert">
           {error}
@@ -151,14 +154,33 @@ export default function ProfileClient({
           {info}
         </div>
       ) : null}
+      {checkoutBanner === 'success' ? (
+        <div
+          className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400"
+          role="status"
+        >
+          Payment received. Stripe is updating your account — refresh in a moment if you still show
+          as Free (usually a few seconds).
+        </div>
+      ) : null}
+      {checkoutBanner === 'canceled' ? (
+        <div
+          className="rounded-2xl border border-slate-200 bg-slate-50/90 p-3 text-sm text-slate-700 backdrop-blur-sm dark:border-white/15 dark:bg-white/8 dark:text-slate-200"
+          role="status"
+        >
+          Checkout was canceled. Nothing was charged.
+        </div>
+      ) : null}
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Current email</h2>
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+          Current email
+        </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{email || '—'}</p>
       </section>
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Plan</h2>
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Plan</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           You are on the{' '}
           <span className="font-semibold text-slate-800 dark:text-slate-200">
@@ -168,21 +190,50 @@ export default function ProfileClient({
         </p>
         {hostTier === 'free' ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-            Upgrade to Pro for unlimited properties, multiple locations, video uploads, FAQ, and
-            more custom blocks. Contact{' '}
-            <a className="font-medium text-brand underline-offset-2 hover:underline" href="mailto:legal@stayvo.app">
-              legal@stayvo.app
-            </a>{' '}
-            to learn more.
+            Upgrade to Pro for unlimited properties, multiple locations, video uploads, FAQ, and more
+            custom blocks.
           </p>
+        ) : null}
+        {hostTier === 'free' ? (
+          <PressButton
+            type="button"
+            disabled={busy}
+            onClick={() =>
+              void (async () => {
+                setError(null);
+                setInfo(null);
+                setBusy(true);
+                try {
+                  const res = await fetch('/api/stripe/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                  });
+                  const data = (await res.json()) as { error?: string; url?: string };
+                  if (!res.ok) throw new Error(data.error ?? 'Could not start checkout.');
+                  const url = data.url;
+                  if (!url) throw new Error('No checkout URL returned.');
+                  window.location.assign(url);
+                } catch (e: unknown) {
+                  setError(e instanceof Error ? e.message : 'Checkout failed.');
+                } finally {
+                  setBusy(false);
+                }
+              })()
+            }
+            className="mt-4 w-full rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60 md:w-auto md:min-w-[200px]"
+          >
+            Upgrade to Pro — $9/month
+          </PressButton>
         ) : null}
       </section>
 
       <form
         onSubmit={onSaveHostName}
-        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12"
+        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Host display name</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+          Host display name
+        </h2>
         <input
           value={hostName}
           onChange={(e) => setHostName(sanitizeHostDisplayNameInput(e.target.value))}
@@ -203,11 +254,25 @@ export default function ProfileClient({
         </PressButton>
       </form>
 
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+              Appearance
+            </h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Switch between light and dark mode for the host dashboard.
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+      </section>
+
       <form
         onSubmit={onChangeEmail}
-        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12"
+        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Change email</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Change email</h2>
         <input
           type="email"
           required
@@ -228,9 +293,11 @@ export default function ProfileClient({
 
       <form
         onSubmit={onChangePassword}
-        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12"
+        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Change password</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+          Change password
+        </h2>
         <input
           type="password"
           required
@@ -258,7 +325,7 @@ export default function ProfileClient({
         </PressButton>
       </form>
 
-      <div className="glass flex flex-col gap-3 rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
+      <div className="glass flex flex-col gap-3 rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
         <PressButton
           type="button"
           disabled={busy}
@@ -277,8 +344,8 @@ export default function ProfileClient({
         </PressButton>
       </div>
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Legal</h2>
+      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Legal</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
           Review the latest Privacy Policy and Terms of Service.
         </p>

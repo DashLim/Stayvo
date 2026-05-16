@@ -3,6 +3,9 @@ import DashboardClient from '@/app/dashboard/DashboardClient';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { guestLinkPublicBaseUrl } from '@/lib/guest-portal-url';
 
+/** Always refetch locations/properties so the dashboard matches Manage after edits. */
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const nowIso = new Date().toISOString();
   const supabase = await createSupabaseServerClient();
@@ -13,27 +16,20 @@ export default async function DashboardPage() {
 
   if (userError || !user) redirect('/login?redirect=/dashboard');
 
-  const [
-    { data: locations, error: locationsError },
-    { data: properties, error: propertiesError },
-    { count: totalPropertyCount },
-  ] = await Promise.all([
-    supabase
-      .from('locations')
-      .select('id, name, sort_order')
-      .eq('user_id', user.id)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('properties')
-      .select('id, property_name, internal_name, is_live, location_id, sort_order')
-      .eq('user_id', user.id)
-      .eq('is_live', true)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id),
-  ]);
+  const [{ data: locations, error: locationsError }, { data: properties, error: propertiesError }] =
+    await Promise.all([
+      supabase
+        .from('locations')
+        .select('id, name, sort_order')
+        .eq('user_id', user.id)
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('properties')
+        .select('id, property_name, internal_name, location_id, sort_order')
+        .eq('user_id', user.id)
+        .eq('is_live', true)
+        .order('sort_order', { ascending: true }),
+    ]);
 
   if (locationsError || propertiesError) {
     return (
@@ -67,7 +63,6 @@ export default async function DashboardPage() {
       id: p.id as string,
       property_name: (p.property_name as string) ?? '',
       internal_name: p.internal_name as string | null,
-      is_live: Boolean(p.is_live),
     })),
   }));
 
@@ -102,7 +97,7 @@ export default async function DashboardPage() {
         locationOptions={locationOptions}
         guestLinks={guestLinks ?? []}
         guestLinksError={Boolean(guestLinksError)}
-        hasAnyProperty={(totalPropertyCount ?? 0) > 0}
+        hasAnyLiveProperty={(propList.length ?? 0) > 0}
         hostDisplayName={hostDisplayName}
         guestLinkBaseUrl={guestLinkBaseUrl}
       />

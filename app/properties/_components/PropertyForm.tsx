@@ -28,6 +28,7 @@ import {
   normalizeSectionOrder,
   type CustomDetail as GuestLayoutCustomDetail,
 } from '@/lib/guest-layout';
+import { capitalizeWordStarts } from '@/lib/capitalize-word-starts';
 import type {
   CustomDetailInput,
   HouseRuleInput,
@@ -176,7 +177,7 @@ export default function PropertyForm({
       hostName: '',
       hostWhatsappNumber: '',
       hostWhatsappChatNumber: '',
-      isLive: false,
+      isLive: true,
       locationId: '',
       socialFacebookUrl: '',
       socialInstagramUrl: '',
@@ -440,10 +441,10 @@ export default function PropertyForm({
   }
 
   return (
-    <main className="pb-10">
+    <main className="pb-10 md:mx-auto md:max-w-[1100px] md:px-8 md:pb-16 md:[background:linear-gradient(160deg,#FDF6EC_0%,#FAF0DC_100%)] dark:md:bg-transparent">
       {/* Sticky header */}
-      <header className="glass-header sticky top-0 z-30 -mx-4 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-3 gap-y-2">
+      <header className="glass-header sticky top-0 z-30 max-md:-mx-4 max-md:px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:px-0 md:pb-4">
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 md:max-w-[1100px]">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <PressButton
               type="button"
@@ -561,7 +562,7 @@ export default function PropertyForm({
         id="stayvo-property-form"
         onSubmit={onSubmit}
         autoComplete="off"
-        className="mt-6 space-y-7"
+        className="mt-6 space-y-7 md:mt-8 md:space-y-0"
       >
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
@@ -574,26 +575,32 @@ export default function PropertyForm({
           </div>
         ) : null}
 
-        {/* Hero Image */}
-        <section className="glass rounded-[20px] p-4">
-          <div className="mb-3">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Hero image</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Displayed as the full-width background of the guest welcome header.
-            </p>
+        <div className="flex flex-col gap-7 md:flex-row md:items-start md:gap-x-10 lg:gap-x-12">
+          {/* Left rail (desktop): hero — mirrors guest portal sticky column */}
+          <div className="flex flex-col gap-7 md:sticky md:top-28 md:w-[40%] md:min-w-0 md:max-w-[440px] md:flex-shrink-0 md:self-start md:gap-6">
+            {/* Hero Image */}
+            <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-200/70 md:bg-white/85 md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] md:ring-1 md:ring-white/60 md:backdrop-blur-sm dark:md:border-white/10 dark:md:bg-white/8 dark:md:ring-white/10">
+              <div className="mb-3">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Hero image</h2>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Shown at the top of the guest portal (same place as the live preview).
+                </p>
+              </div>
+              <GuestImageSlot
+                propertyId={propertyId}
+                slot="detail:0"
+                value={heroImagePath}
+                onChange={setHeroImagePath}
+                allowVideo={mediaAllowVideo}
+                guestMediaPublicBase={guestMediaPublicBase}
+              />
+            </section>
           </div>
-          <GuestImageSlot
-            propertyId={propertyId}
-            slot="detail:0"
-            value={heroImagePath}
-            onChange={setHeroImagePath}
-            allowVideo={mediaAllowVideo}
-            guestMediaPublicBase={guestMediaPublicBase}
-          />
-        </section>
 
+          {/* Right column: all other fields */}
+          <div className="flex min-w-0 flex-1 flex-col gap-7 md:gap-6">
         {/* Property Info */}
-        <section className="glass rounded-[20px] p-4">
+        <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Property details</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -652,8 +659,9 @@ export default function PropertyForm({
               <textarea
                 required
                 rows={3}
+                autoCapitalize="words"
                 value={propertyName}
-                onChange={(e) => setPropertyName(e.target.value)}
+                onChange={(e) => setPropertyName(capitalizeWordStarts(e.target.value))}
                 placeholder="Property name"
                 className="mt-1 min-h-[4.5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
@@ -667,8 +675,10 @@ export default function PropertyForm({
                 For internal record only.
               </p>
               <input
+                type="text"
+                autoCapitalize="words"
                 value={internalName}
-                onChange={(e) => setInternalName(e.target.value)}
+                onChange={(e) => setInternalName(capitalizeWordStarts(e.target.value))}
                 className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
@@ -710,10 +720,11 @@ export default function PropertyForm({
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Parking details
               </label>
-              <input
+              <textarea
+                rows={4}
                 value={parkingDetails}
                 onChange={(e) => setParkingDetails(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
+                className="mt-1 min-h-[5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
@@ -753,7 +764,7 @@ export default function PropertyForm({
         </section>
 
         {/* Check-in steps */}
-        <section className="glass rounded-[20px] p-4">
+        <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Check-in instructions</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -856,7 +867,7 @@ export default function PropertyForm({
         </section>
 
         {/* House rules */}
-        <section className="glass rounded-[20px] p-4">
+        <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">House rules</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -940,7 +951,7 @@ export default function PropertyForm({
 
         {/* FAQ (Pro) */}
         {isProTier(hostTier) ? (
-          <section className="glass rounded-[20px] p-4">
+          <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
             <div className="mb-4">
               <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">FAQ</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -1025,7 +1036,7 @@ export default function PropertyForm({
             </div>
           </section>
         ) : (
-          <section className="glass rounded-[20px] p-4">
+          <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">FAQ</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Guest FAQ is included with Stayvo Pro.
@@ -1034,7 +1045,7 @@ export default function PropertyForm({
         )}
 
         {/* Social links (guest page footer) */}
-        <section className="glass rounded-[20px] p-4">
+        <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Social links</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -1118,7 +1129,7 @@ export default function PropertyForm({
         </section>
 
         {/* Custom blocks */}
-        <section className="glass rounded-[20px] p-4">
+        <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Custom block</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -1172,7 +1183,7 @@ export default function PropertyForm({
                   </div>
                 </div>
 
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div className="mt-3 grid gap-3">
                   <div>
                     <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                       Title
@@ -1192,7 +1203,8 @@ export default function PropertyForm({
                     <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
                       Message
                     </label>
-                    <input
+                    <textarea
+                      rows={5}
                       value={d.message}
                       onChange={(e) => {
                         const v = e.target.value;
@@ -1202,7 +1214,7 @@ export default function PropertyForm({
                           )
                         );
                       }}
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
+                      className="mt-1 min-h-[7.5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -1242,7 +1254,7 @@ export default function PropertyForm({
         </section>
 
         {/* Host Info */}
-        <section className="glass rounded-[20px] p-4">
+        <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
           <div className="mb-4">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Host contact</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">How guests reach you.</p>
@@ -1281,7 +1293,7 @@ export default function PropertyForm({
         </section>
 
         {mode === 'edit' && propertyId ? (
-          <section className="rounded-[20px] border border-rose-200 bg-rose-50/40 p-4 backdrop-blur-sm dark:border-rose-500/25 dark:bg-rose-950/50 dark:ring-1 dark:ring-inset dark:ring-rose-400/10">
+          <section className="rounded-[20px] border border-rose-200 bg-rose-50/40 p-4 backdrop-blur-sm md:rounded-2xl md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:border-rose-500/25 dark:bg-rose-950/50 dark:ring-1 dark:ring-inset dark:ring-rose-400/10">
             <h2 className="text-base font-semibold text-rose-900 dark:text-rose-200">Danger zone</h2>
             <p className="mt-1 text-sm text-rose-800/90 dark:text-rose-300">
               Permanently delete this property and all guest links created for it.
@@ -1297,7 +1309,10 @@ export default function PropertyForm({
           </section>
         ) : null}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <PressButton
             type="submit"
             disabled={submitting || deleting}

@@ -35,5 +35,6 @@ Phase 2 includes:
 Set the same environment variables in Vercel:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_APP_URL` (your deployed domain)
+- `NEXT_PUBLIC_APP_URL` (your deployed domain, e.g. `https://app.stayvo.io`)
+- Stripe (Pro checkout): `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` (webhook updates `host_plan`). Apply migration `supabase/migrations/0020_host_plan_stripe.sql`.
 
