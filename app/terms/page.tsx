@@ -1,7 +1,8 @@
 import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
-const LAST_UPDATED = 'May 9, 2026';
+/** When these Terms change, update LAST_UPDATED and see docs/legal-pages-checklist.md */
+const LAST_UPDATED = 'May 16, 2026';
 
 export default function TermsOfServicePage() {
   return (
@@ -110,9 +111,9 @@ export default function TermsOfServicePage() {
               10. Subscription tiers and acceptable use
             </h2>
             <p className="mt-2">
-              Stayvo may offer different subscription tiers (for example Free and Pro) with different
-              feature limits. What is included in each tier may change over time; the product will
-              reflect what is available on your account.
+              Stayvo offers subscription tiers (for example Free and Pro) with different feature
+              limits. What is included in each tier may change over time; the product will reflect
+              what is available on your account. Paid Pro plans are described in Section 11.
             </p>
             <p className="mt-2">
               Stayvo reserves the right to review accounts with excessive storage or bandwidth usage
@@ -122,7 +123,80 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">11. Changes to these Terms</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              11. Paid subscriptions, billing, and cancellation
+            </h2>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Plans and pricing.</span>{' '}
+              Stayvo Pro is a recurring paid subscription. At checkout you may choose monthly billing
+              (currently USD $9 per month) or annual billing (currently USD $90 per year). Prices,
+              currencies, and available plans may change; any change applies to new purchases and, where
+              required by law, to renewals after reasonable notice.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Payment processing.</span>{' '}
+              Payments are processed by Stripe, Inc. (or its affiliates). By subscribing, you authorize
+              Stripe to charge your payment method on a recurring basis until you cancel. Stayvo does
+              not store full payment card numbers; Stripe handles card data according to its own terms
+              and privacy policy.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Renewal.</span> Subscriptions
+              renew automatically at the end of each billing period (monthly or annual) unless you
+              cancel before the renewal date.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">How to cancel.</span> You
+              may cancel from your Stayvo Profile using{' '}
+              <span className="font-medium">Manage subscription</span>, which opens Stripe&apos;s secure
+              billing portal. You can also contact us at{' '}
+              <a
+                href={SUPPORT_MAILTO}
+                className="font-medium text-brand underline-offset-2 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>{' '}
+              for help.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                Access after cancellation.
+              </span>{' '}
+              If you cancel, your Pro features remain available until the end of your{' '}
+              <span className="font-medium">current paid billing period</span>—whether you are on a
+              monthly or annual plan. After that date, your account moves to the Free tier (or as
+              otherwise shown in the app). This is the same for monthly and annual subscribers unless
+              Stripe or your cancellation choice provides for immediate termination.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Refunds.</span> Fees are
+              generally non-refundable except where required by applicable law. If you believe you were
+              charged in error, contact{' '}
+              <a
+                href={SUPPORT_MAILTO}
+                className="font-medium text-brand underline-offset-2 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>{' '}
+              promptly.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                Failed or disputed payments.
+              </span>{' '}
+              If a payment fails or a subscription lapses, we may suspend or remove Pro features until
+              payment is resolved. Chargebacks or abuse of the billing system may result in account
+              suspension.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Plan changes.</span> You
+              may switch between monthly and annual billing where offered in the Stripe billing portal,
+              subject to Stripe&apos;s rules and any proration Stripe applies.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Changes to these Terms</h2>
             <p className="mt-2">
               We may update these Terms from time to time. Continued use after updates means you
               accept the revised Terms.
@@ -130,7 +204,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Contact</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">13. Contact</h2>
             <p className="mt-2">
               For Terms questions, contact:{' '}
               <a

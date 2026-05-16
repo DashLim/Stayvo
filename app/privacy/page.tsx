@@ -1,7 +1,8 @@
 import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
-const LAST_UPDATED = 'May 9, 2026';
+/** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
+const LAST_UPDATED = 'May 16, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -33,6 +34,15 @@ export default function PrivacyPolicyPage() {
                 authentication metadata, profile values such as host display name.
               </li>
               <li>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  Subscription and billing data:
+                </span>{' '}
+                plan tier (Free or Pro), subscription status, billing period end date, Stripe customer
+                and subscription identifiers, and billing interval (monthly or annual). Payment card
+                numbers and card security codes are collected and stored by Stripe, not on Stayvo
+                servers.
+              </li>
+              <li>
                 <span className="font-medium text-slate-900 dark:text-slate-100">Property and content data:</span>{' '}
                 property details, guest portal text, links, uploaded media files.
               </li>
@@ -56,6 +66,7 @@ export default function PrivacyPolicyPage() {
               <li>Generate and deliver guest portal links and hosted media.</li>
               <li>Support account security, fraud prevention, and abuse detection.</li>
               <li>Provide analytics and operational reporting to hosts.</li>
+              <li>Process subscriptions, payments, renewals, and cancellations through our payment provider.</li>
               <li>Comply with legal obligations and enforce our terms.</li>
             </ul>
           </section>
@@ -80,6 +91,21 @@ export default function PrivacyPolicyPage() {
               Supabase, and Cloudflare R2). These providers process data on our behalf as needed
               to provide the service.
             </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Payments:</span> Paid
+              subscriptions are processed by Stripe, Inc. Stripe receives payment method details,
+              billing address where provided, and transaction information. Stripe&apos;s use of your
+              data is also governed by{' '}
+              <a
+                href="https://stripe.com/privacy"
+                className="font-medium text-brand underline-offset-2 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Stripe&apos;s Privacy Policy
+              </a>
+              .
+            </p>
           </section>
 
           <section>
@@ -88,6 +114,12 @@ export default function PrivacyPolicyPage() {
               We retain account and property data while an account is active, and for a reasonable
               period afterward for backup, security, and legal purposes. Hosts can request account
               deletion from the Profile page.
+            </p>
+            <p className="mt-2">
+              Billing-related records (such as subscription status and Stripe identifiers) are kept
+              while you have an active or recently ended subscription, and as needed for tax,
+              accounting, fraud prevention, and legal compliance. Stripe may retain payment records
+              according to its own policies.
             </p>
           </section>
 
