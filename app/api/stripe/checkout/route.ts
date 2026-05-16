@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerAppOrigin } from '@/lib/app-origin-server';
+import { resolveStripeCustomerId } from '@/lib/stripe-customer';
 import {
   getStripe,
   stripePriceIdForInterval,
@@ -65,7 +66,13 @@ export async function POST(request: Request) {
   }
 
   const origin = getServerAppOrigin();
-  const stripeCustomerId = (plan as { stripe_customer_id?: string | null }).stripe_customer_id;
+  const storedCustomerId = (plan as { stripe_customer_id?: string | null }).stripe_customer_id;
+  const stripeCustomerId = await resolveStripeCustomerId(
+    stripe,
+    supabase,
+    user.id,
+    storedCustomerId
+  );
 
   try {
     const session = await stripe.checkout.sessions.create({

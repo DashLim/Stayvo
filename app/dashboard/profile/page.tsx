@@ -27,9 +27,10 @@ export default async function DashboardProfilePage({
     .eq('user_id', user.id)
     .maybeSingle();
 
-  const canManageSubscription = Boolean(
+  const hasStripeCustomer = Boolean(
     (planRow as { stripe_customer_id?: string | null } | null)?.stripe_customer_id?.trim()
   );
+  const canManageSubscription = hostTier === 'pro' && hasStripeCustomer;
 
   const sp = await (searchParams ?? Promise.resolve({} as { checkout?: string }));
   const checkoutParam = sp.checkout;

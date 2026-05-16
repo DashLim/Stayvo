@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getServerAppOrigin } from '@/lib/app-origin-server';
+import { resolveStripeCustomerId } from '@/lib/stripe-customer';
 import { getStripe } from '@/lib/stripe-server';
 
 export async function POST() {
@@ -28,8 +29,15 @@ export async function POST() {
     .eq('user_id', user.id)
     .maybeSingle();
 
-  const stripeCustomerId = (plan as { stripe_customer_id?: string | null } | null)
-    ?.stripe_customer_id?.trim();
+  const storedCustomerId = (plan as { stripe_customer_id?: string | null } | null)
+    ?.stripe_customer_id;
+
+  const stripeCustomerId = await resolveStripeCustomerId(
+    stripe,
+    supabase,
+    user.id,
+    storedCustomerId
+  );
 
   if (!stripeCustomerId) {
     return NextResponse.json(
