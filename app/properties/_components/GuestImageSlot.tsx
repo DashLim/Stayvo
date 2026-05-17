@@ -63,6 +63,18 @@ function formatUploadError(err: unknown): string {
   return msg;
 }
 
+async function uploadVideoViaServerAction(
+  propertyId: string,
+  slot: string,
+  file: File
+): Promise<{ path: string }> {
+  const fd = new FormData();
+  fd.set('file', file);
+  const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
+  if (!res.ok) throw new Error(res.error);
+  return { path: res.path };
+}
+
 async function uploadVideoDirectToR2(
   propertyId: string,
   file: File
@@ -79,11 +91,20 @@ async function uploadVideoDirectToR2(
   });
   const presignData = (await presignRes.json()) as {
     error?: string;
+    useServerUpload?: boolean;
     uploadUrl?: string;
     path?: string;
     headers?: { 'Content-Type'?: string };
   };
+
+  if (presignRes.ok && presignData.useServerUpload) {
+    throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
+  }
+
   if (!presignRes.ok) {
+    if (presignRes.status === 503) {
+      throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
+    }
     throw new Error(presignData.error ?? 'Could not start video upload.');
   }
   const { uploadUrl, path, headers } = presignData;
@@ -99,7 +120,7 @@ async function uploadVideoDirectToR2(
     },
   });
   if (!putRes.ok) {
-    throw new Error('Video upload to storage failed. Try again or use a smaller file.');
+    throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
   }
 
   const completeRes = await fetch('/api/guest-media/complete', {
@@ -121,6 +142,22 @@ async function uploadVideoDirectToR2(
     throw new Error('Could not finish video upload.');
   }
   return { path: completeData.path };
+}
+
+async function uploadVideo(
+  propertyId: string,
+  slot: string,
+  file: File
+): Promise<{ path: string }> {
+  try {
+    return await uploadVideoDirectToR2(propertyId, file);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : '';
+    if (msg !== '__STAYVO_USE_SERVER_UPLOAD__') {
+      throw err;
+    }
+  }
+  return uploadVideoViaServerAction(propertyId, slot, file);
 }
 
 export default function GuestImageSlot({
@@ -165,7 +202,7 @@ export default function GuestImageSlot({
       setPhase('upload');
 
       if (looksLikeVideoFile(processed)) {
-        const { path } = await uploadVideoDirectToR2(propertyId, processed);
+        const { path } = await uploadVideo(propertyId, slot, processed);
         onChange(path);
       } else {
         const fd = new FormData();

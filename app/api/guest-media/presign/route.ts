@@ -12,10 +12,8 @@ export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   if (!isGuestMediaR2Enabled()) {
-    return NextResponse.json(
-      { error: 'Direct video upload is not available. Contact support@stayvo.io.' },
-      { status: 503 }
-    );
+    // Client falls back to server-action upload (Supabase Storage or R2 via server).
+    return NextResponse.json({ useServerUpload: true as const });
   }
 
   let body: unknown;
