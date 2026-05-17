@@ -55,6 +55,74 @@ async function prepareMediaForGuestUpload(
   throw new Error(options.allowVideo ? 'Only image/video files are allowed.' : 'Only image files are allowed on your plan.');
 }
 
+function formatUploadError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : 'Upload failed.';
+  if (msg.includes('unexpected response was received from the server')) {
+    return 'Upload failed because the file is too large for the server. Try a video under 30 MB, save the property, and upload again. If this continues, email support@stayvo.io.';
+  }
+  return msg;
+}
+
+async function uploadVideoDirectToR2(
+  propertyId: string,
+  file: File
+): Promise<{ path: string }> {
+  const presignRes = await fetch('/api/guest-media/presign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      propertyId,
+      mimeType: file.type,
+      fileName: file.name,
+      byteSize: file.size,
+    }),
+  });
+  const presignData = (await presignRes.json()) as {
+    error?: string;
+    uploadUrl?: string;
+    path?: string;
+    headers?: { 'Content-Type'?: string };
+  };
+  if (!presignRes.ok) {
+    throw new Error(presignData.error ?? 'Could not start video upload.');
+  }
+  const { uploadUrl, path, headers } = presignData;
+  if (!uploadUrl || !path) {
+    throw new Error('Could not start video upload.');
+  }
+
+  const putRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
+    },
+  });
+  if (!putRes.ok) {
+    throw new Error('Video upload to storage failed. Try again or use a smaller file.');
+  }
+
+  const completeRes = await fetch('/api/guest-media/complete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      propertyId,
+      path,
+      mimeType: file.type,
+      fileName: file.name,
+      byteSize: file.size,
+    }),
+  });
+  const completeData = (await completeRes.json()) as { error?: string; path?: string; ok?: boolean };
+  if (!completeRes.ok) {
+    throw new Error(completeData.error ?? 'Could not finish video upload.');
+  }
+  if (!completeData.path) {
+    throw new Error('Could not finish video upload.');
+  }
+  return { path: completeData.path };
+}
+
 export default function GuestImageSlot({
   propertyId,
   slot = 'detail:0',
@@ -90,18 +158,24 @@ export default function GuestImageSlot({
     setError(null);
     setBusy(true);
     try {
-      const processed = await prepareMediaForGuestUpload(file, { allowVideo });
-      setPhase('upload');
-      const fd = new FormData();
-      fd.set('file', processed);
       if (!propertyId) {
         throw new Error('Please save property first, then upload media.');
       }
-      const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
-      if (!res.ok) throw new Error(res.error);
-      onChange(res.path);
+      const processed = await prepareMediaForGuestUpload(file, { allowVideo });
+      setPhase('upload');
+
+      if (looksLikeVideoFile(processed)) {
+        const { path } = await uploadVideoDirectToR2(propertyId, processed);
+        onChange(path);
+      } else {
+        const fd = new FormData();
+        fd.set('file', processed);
+        const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
+        if (!res.ok) throw new Error(res.error);
+        onChange(res.path);
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Upload failed.');
+      setError(formatUploadError(err));
     } finally {
       setBusy(false);
       setPhase('idle');

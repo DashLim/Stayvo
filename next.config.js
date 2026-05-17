@@ -15,7 +15,8 @@ const nextConfig = {
   // Turbopack defaults to on-disk SST cache in dev; on some setups this races/compacts badly (ENOENT .sst).
   experimental: {
     serverActions: {
-      bodySizeLimit: '5mb',
+      // Guest videos up to 30 MB (see GUEST_VIDEO_MAX_BYTES); images after compression ≤ 5 MB.
+      bodySizeLimit: '32mb',
     },
     turbopackFileSystemCacheForDev: false,
   },

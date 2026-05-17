@@ -8,6 +8,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 let client: S3Client | null = null;
 
@@ -43,6 +44,34 @@ function getClient(): S3Client {
 
 function getBucket(): string {
   return process.env.R2_BUCKET_NAME!.trim();
+}
+
+/** Browser uploads large videos directly to R2 (bypasses Server Action body limits on Vercel). */
+export async function r2PresignedPutGuestMedia(
+  key: string,
+  contentType: string,
+  expiresInSeconds = 600
+): Promise<{ ok: true; uploadUrl: string } | { ok: false; error: string }> {
+  if (!isGuestMediaR2Enabled()) {
+    return { ok: false, error: 'Direct upload is not configured.' };
+  }
+  try {
+    const uploadUrl = await getSignedUrl(
+      // Presigner types can lag @aws-sdk/client-s3 minor versions; runtime client is compatible.
+      getClient() as unknown as Parameters<typeof getSignedUrl>[0],
+      new PutObjectCommand({
+        Bucket: getBucket(),
+        Key: key,
+        ContentType: contentType,
+        CacheControl: 'max-age=31536000',
+      }),
+      { expiresIn: expiresInSeconds }
+    );
+    return { ok: true, uploadUrl };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: msg };
+  }
 }
 
 export async function r2PutGuestMedia(
