@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When these Terms change, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 16, 2026';
+const LAST_UPDATED = 'May 17, 2026';
 
 export default function TermsOfServicePage() {
   return (
@@ -20,6 +20,9 @@ export default function TermsOfServicePage() {
             <p className="mt-2">
               By creating or using a Stayvo account, you agree to these Terms. If you do not
               agree, do not use the service.
+            </p>
+            <p className="mt-2">
+              Stayvo is operated by Lim Chee Siong, based in Malaysia.
             </p>
           </section>
 
@@ -108,13 +111,8 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              10. Subscription tiers and acceptable use
+              10. Usage limits and fair use
             </h2>
-            <p className="mt-2">
-              Stayvo offers subscription tiers (for example Free and Pro) with different feature
-              limits. What is included in each tier may change over time; the product will reflect
-              what is available on your account. Paid Pro plans are described in Section 11.
-            </p>
             <p className="mt-2">
               Stayvo reserves the right to review accounts with excessive storage or bandwidth usage
               that may impact platform stability or operating costs, and to contact the account owner
@@ -126,6 +124,11 @@ export default function TermsOfServicePage() {
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               11. Paid subscriptions, billing, and cancellation
             </h2>
+            <p className="mt-2">
+              Stayvo offers subscription tiers (for example Free and Pro) with different feature
+              limits. What is included in each tier may change over time; the product will reflect
+              what is available on your account.
+            </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Plans and pricing.</span>{' '}
               Stayvo Pro is a recurring paid subscription. At checkout you may choose monthly billing
@@ -196,7 +199,23 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Changes to these Terms</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Governing law</h2>
+            <p className="mt-2">
+              These Terms are governed by the laws of Malaysia. Any disputes shall be resolved in the
+              courts of Malaysia.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">13. Age requirement</h2>
+            <p className="mt-2">
+              You must be at least 18 years old to create a Stayvo account. By using Stayvo, you
+              confirm you meet this requirement.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">14. Changes to these Terms</h2>
             <p className="mt-2">
               We may update these Terms from time to time. Continued use after updates means you
               accept the revised Terms.
@@ -204,7 +223,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">13. Contact</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">15. Contact</h2>
             <p className="mt-2">
               For Terms questions, contact:{' '}
               <a

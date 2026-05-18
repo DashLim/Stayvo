@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 16, 2026';
+const LAST_UPDATED = 'May 17, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -25,8 +25,21 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">2. Who we are</h2>
+            <p className="mt-2">
+              Stayvo is operated by Lim Chee Siong, based in Malaysia. Contact:{' '}
+              <a
+                href={SUPPORT_MAILTO}
+                className="font-medium text-brand underline-offset-2 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              2. Information we collect
+              3. Information we collect
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>
@@ -61,7 +74,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              3. How we use information
+              4. How we use information
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>Provide and maintain the Stayvo service.</li>
@@ -75,7 +88,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              4. Legal basis (where applicable)
+              5. Legal basis (where applicable)
             </h2>
             <p className="mt-2">
               Depending on your location, we process data based on contractual necessity,
@@ -85,7 +98,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              5. Sharing and processors
+              6. Sharing and processors
             </h2>
             <p className="mt-2">
               We use trusted infrastructure providers to operate Stayvo, including hosting,
@@ -111,7 +124,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">6. Data retention</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">7. Data retention</h2>
             <p className="mt-2">
               We retain account and property data while an account is active, and for a reasonable
               period afterward for backup, security, and legal purposes. Hosts can request account
@@ -127,7 +140,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              7. Guests opening a host link (no Stayvo account)
+              8. Guests opening a host link (no Stayvo account)
             </h2>
             <p className="mt-2">
               If you open a guest portal link, you do not create a Stayvo account. We process limited
@@ -144,7 +157,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              8. Host responsibilities for guest data
+              9. Host responsibilities for guest data
             </h2>
             <p className="mt-2">
               Hosts are responsible for ensuring they have an appropriate legal basis and any
@@ -154,7 +167,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              9. Security and international transfers
+              10. Security and international transfers
             </h2>
             <p className="mt-2">
               We use reasonable technical and organizational measures to protect data. Your
@@ -163,15 +176,63 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">10. Your rights</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">11. Your rights</h2>
             <p className="mt-2">
               Depending on your jurisdiction, you may have rights to access, correct, delete, or
-              restrict your personal data, and to object to certain processing.
+              restrict your personal data, and to object to certain processing. To exercise these
+              rights, contact us at{' '}
+              <a
+                href={SUPPORT_MAILTO}
+                className="font-medium text-brand underline-offset-2 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+              .
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                UK and European Economic Area (GDPR):
+              </span>{' '}
+              If you are in the UK or EEA, you may have the right to access your personal data, request
+              erasure, receive a copy in a portable format (data portability), restrict processing, and
+              object to certain processing, subject to applicable law and exceptions.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                California (CCPA/CPRA):
+              </span>{' '}
+              If you are a California resident, you may have the right to know what personal information
+              we collect and how we use it, the right to delete personal information (subject to
+              exceptions), and the right to opt out of the sale or sharing of personal information.
+              Stayvo does not sell your personal data.
             </p>
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">11. Changes</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              12. Cookies and local storage
+            </h2>
+            <p className="mt-2">
+              Stayvo uses browser local storage for essential service functions, including a random
+              visitor identifier on guest portal links so hosts can count unique link opens. This
+              storage is not used for advertising.
+            </p>
+            <p className="mt-2">
+              Stayvo does not use advertising cookies or third-party ad tracking on the guest portal
+              or host dashboard for behavioral advertising.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">13. Do Not Track</h2>
+            <p className="mt-2">
+              Some browsers offer a &quot;Do Not Track&quot; (DNT) signal. Stayvo does not currently
+              respond to Do Not Track browser signals.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">14. Changes</h2>
             <p className="mt-2">
               We may update this policy from time to time. When we do, we will update the “Last
               updated” date on this page.
@@ -179,7 +240,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Contact</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">15. Contact</h2>
             <p className="mt-2">
               For privacy questions, contact:{' '}
               <a

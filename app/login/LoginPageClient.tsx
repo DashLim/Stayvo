@@ -14,6 +14,7 @@ export default function LoginPageClient() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/dashboard';
   const configError = searchParams.get('error') === 'config';
+  const authLinkError = searchParams.get('error') === 'auth';
   const accountDeleted = searchParams.get('deleted') === '1';
 
   const supabase = useMemo(() => tryCreateSupabaseBrowserClient(), []);
@@ -115,6 +116,16 @@ export default function LoginPageClient() {
           </div>
         ) : null}
 
+        {authLinkError ? (
+          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            That sign-in or reset link is invalid or has expired.{' '}
+            <Link href="/login/forgot-password" className="font-semibold underline-offset-2 hover:underline">
+              Request a new password reset
+            </Link>
+            .
+          </div>
+        ) : null}
+
         {!supabase || configError ? (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <p className="font-medium">Supabase environment variables are missing</p>
@@ -170,9 +181,17 @@ export default function LoginPageClient() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Password
-            </label>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block text-sm font-medium text-slate-700">Password</label>
+              {mode === 'login' ? (
+                <Link
+                  href="/login/forgot-password"
+                  className="text-xs font-semibold text-brand underline-offset-2 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              ) : null}
+            </div>
             <input
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2"
               type="password"

@@ -8,7 +8,7 @@ import { isRefreshTokenUnusable } from '@/lib/supabase/auth-errors';
 function isLoginPath(pathname: string | null) {
   if (!pathname) return false;
   const p = pathname.replace(/\/$/, '') || '/';
-  return p === '/login';
+  return p === '/login' || p.startsWith('/login/');
 }
 
 /**
