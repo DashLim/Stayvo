@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import StayvoProLink from '@/app/_components/StayvoProLink';
 import { redirect } from 'next/navigation';
 import PropertyFormClient from '@/app/properties/_components/PropertyFormClient';
 import { ensureGeneralLocation } from '@/app/actions/locations';
@@ -35,8 +36,8 @@ export default async function NewPropertyPage({
       <main className="mx-auto max-w-lg py-12 px-4">
         <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Property limit</h1>
         <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          Free accounts can have up to {FREE_TIER_MAX_PROPERTIES} properties. Stayvo Pro includes
-          unlimited properties and additional features.
+          Free accounts can have up to {FREE_TIER_MAX_PROPERTIES} properties.{' '}
+          <StayvoProLink /> includes unlimited properties and additional features.
         </p>
         <p className="mt-4">
           <Link

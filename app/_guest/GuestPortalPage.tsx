@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import Image from 'next/image';
+import GuestPortalLegalFooter from '@/app/_guest/GuestPortalLegalFooter';
+import GuestCookieNotice from '@/app/_guest/GuestCookieNotice';
 import GuestPortalView, { type GuestPortalViewData } from '@/app/_guest/GuestPortalView';
 import { createSupabasePublicClient } from '@/lib/supabase/public';
 import { guestPropertyMediaResolvedPublicBase } from '@/lib/guest-property-media';
@@ -51,27 +51,8 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             Please contact your host for an updated guest link.
           </p>
         </section>
-        <div className="mt-5 flex justify-center">
-          <span className="inline-flex flex-col items-center gap-1.5 text-[11px] text-slate-500">
-            <span>Powered by</span>
-            <Link
-              href="https://stayvo.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block rounded-md outline-none ring-brand/40 transition-opacity hover:opacity-90 focus-visible:ring-2"
-              aria-label="Stayvo — opens in a new tab"
-            >
-              <Image
-                src="/brand/stayvo-guest-logo-lockup.png"
-                alt=""
-                width={1024}
-                height={365}
-                unoptimized
-                className="h-7 w-auto max-w-[180px]"
-              />
-            </Link>
-          </span>
-        </div>
+        <GuestPortalLegalFooter variant="guest" />
+        <GuestCookieNotice />
       </main>
     );
   }

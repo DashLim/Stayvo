@@ -33,6 +33,8 @@ import {
   setPropertyLocation,
 } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
+import StayvoProMessage from '@/app/_components/StayvoProMessage';
+import { STAYVO_PRO_PROFILE_HREF } from '@/lib/stayvo-pro';
 import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
 import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
 
@@ -339,6 +341,7 @@ function LocationGroupPanel({
   locationDragAttributes,
   enableLocationDrag = false,
 }: LocationGroupPanelProps) {
+  const router = useRouter();
   const { loc, properties } = { loc: group.location, properties: group.properties };
   const propertySensors = useManageDragSensors();
 
@@ -385,11 +388,7 @@ function LocationGroupPanel({
             ) : (
               <button
                 type="button"
-                onClick={() =>
-                  window.alert(
-                    `Free accounts can have up to ${FREE_TIER_MAX_PROPERTIES} properties. Stayvo Pro includes unlimited properties.`
-                  )
-                }
+                onClick={() => router.push(STAYVO_PRO_PROFILE_HREF)}
                 className={`inline-flex h-7 w-7 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand/45 text-sm font-bold text-white shadow-sm md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
                 aria-label="Property limit reached"
                 title="Property limit reached"
@@ -578,7 +577,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     }
     function onAddLocation() {
       if (limits.tier !== 'pro') {
-        setError('Additional locations are available on Stayvo Pro.');
+        router.push(STAYVO_PRO_PROFILE_HREF);
         return;
       }
       setNewLocName('');
@@ -590,7 +589,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       window.removeEventListener('stayvo:manage-toggle-edit', onToggleEdit);
       window.removeEventListener('stayvo:manage-add-location', onAddLocation);
     };
-  }, [limits.tier]);
+  }, [limits.tier, router]);
 
   useEffect(() => {
     window.dispatchEvent(new Event(addLocOpen ? 'stayvo:add-location-open' : 'stayvo:add-location-close'));
@@ -802,7 +801,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
 
       {error ? (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400">
-          {error}
+          <StayvoProMessage text={error} />
         </p>
       ) : null}
 

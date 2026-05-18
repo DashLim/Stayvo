@@ -43,6 +43,8 @@ import {
 } from '@/app/actions/properties';
 import { updateLocationName } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
+import StayvoProLink from '@/app/_components/StayvoProLink';
+import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 import type { HostTier } from '@/lib/host-tier';
 import { isProTier, maxCustomBlocksForTier } from '@/lib/host-tier';
@@ -587,7 +589,7 @@ export default function PropertyForm({
       >
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
-            {error}
+            <StayvoProMessage text={error} />
           </div>
         ) : null}
         {success ? (
@@ -613,6 +615,7 @@ export default function PropertyForm({
                 value={heroImagePath}
                 onChange={setHeroImagePath}
                 allowVideo={false}
+                showProVideoHint={false}
                 compressImages={false}
                 guestMediaPublicBase={guestMediaPublicBase}
               />
@@ -1082,7 +1085,7 @@ export default function PropertyForm({
           <section className="glass rounded-[20px] p-4 md:rounded-2xl md:border md:border-slate-100 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-white/5">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">FAQ</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Guest FAQ is included with Stayvo Pro.
+              Guest FAQ is included with <StayvoProLink />.
             </p>
           </section>
         )}
@@ -1179,7 +1182,7 @@ export default function PropertyForm({
               Add custom sections shown on the guest page.
               {hostTier === 'free' ? (
                 <span className="block pt-1 text-xs text-slate-500 dark:text-slate-500">
-                  Free includes up to {customBlocksCap} blocks; Stayvo Pro allows more.
+                  Free includes up to {customBlocksCap} blocks; <StayvoProLink /> allows more.
                 </span>
               ) : null}
             </p>

@@ -246,7 +246,10 @@ export default function ProfileClient({
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{email || '—'}</p>
       </section>
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+      <section
+        id="plan"
+        className="glass scroll-mt-24 rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
+      >
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Plan</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           You are on the{' '}

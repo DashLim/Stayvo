@@ -332,7 +332,7 @@ export default function PropertyCard({
     <motion.div
       whileTap={linksPanel ? undefined : { scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="glass flex min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden rounded-[20px] p-5 dark:border-white/12 dark:bg-[#1a1b1f] md:p-4"
+      className="glass flex min-h-0 w-full min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-[20px] p-5 dark:border-white/12 dark:bg-[#1a1b1f] md:p-4"
     >
       <div>
         <div className="flex flex-wrap items-center gap-2">
@@ -343,7 +343,7 @@ export default function PropertyCard({
         <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{propertyName}</p>
       </div>
 
-      <div className="mt-4 grid min-w-0 grid-cols-1 gap-2 md:mt-3">
+      <div className="mt-4 flex w-full min-w-0 flex-wrap items-center justify-start gap-2 md:mt-3">
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}
@@ -351,7 +351,7 @@ export default function PropertyCard({
           onClick={() =>
             setLinksPanel(linksPanel === 'active' ? null : 'active')
           }
-          className="group inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
+          className="group inline-flex max-w-full shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-semibold text-slate-600 backdrop-blur-sm transition hover:bg-white/80 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
         >
           <span>Active links</span>
           <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 group-hover:text-slate-900 dark:bg-white/30 dark:text-slate-900 dark:group-hover:bg-white/45 dark:group-hover:text-slate-950">
@@ -367,7 +367,7 @@ export default function PropertyCard({
             setLinksPanel(linksPanel === 'generate' ? null : 'generate');
             setError(null);
           }}
-          className="w-full min-w-0 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
+          className="max-w-full shrink-0 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:opacity-90"
         >
           Generate Link
         </motion.button>

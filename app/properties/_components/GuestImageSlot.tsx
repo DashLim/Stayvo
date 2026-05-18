@@ -1,5 +1,7 @@
 'use client';
 
+import StayvoProLink from '@/app/_components/StayvoProLink';
+import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import { removeGuestPropertyMedia, uploadGuestPropertyMedia } from '@/app/actions/guest-property-media';
 import PressButton from '@/app/_components/PressButton';
 import {
@@ -174,6 +176,7 @@ export default function GuestImageSlot({
   onChange,
   allowVideo = false,
   compressImages = true,
+  showProVideoHint = true,
   guestMediaPublicBase,
 }: {
   propertyId: string | undefined;
@@ -182,6 +185,8 @@ export default function GuestImageSlot({
   onChange: (nextPath: string) => void;
   allowVideo?: boolean;
   compressImages?: boolean;
+  /** When false (e.g. hero), hide “video on Pro” upsell — slot is images-only by design. */
+  showProVideoHint?: boolean;
   guestMediaPublicBase?: string | null;
 }) {
   const hasPath = (value ?? '').trim().length > 0;
@@ -267,9 +272,11 @@ export default function GuestImageSlot({
                 <>
                   {' '}
                   <span className="block sm:inline">Images only, max 5MB.</span>
-                  <span className="mt-0.5 block text-slate-500 dark:text-slate-500">
-                    Video upload available on Stayvo Pro.
-                  </span>
+                  {showProVideoHint ? (
+                    <span className="mt-0.5 block text-slate-500 dark:text-slate-500">
+                      Video upload available on <StayvoProLink />.
+                    </span>
+                  ) : null}
                 </>
               )}
             </span>
@@ -339,7 +346,7 @@ export default function GuestImageSlot({
 
       {error ? (
         <p className="mt-2 text-sm font-medium text-rose-600 dark:text-rose-400" role="alert">
-          {error}
+          <StayvoProMessage text={error} />
         </p>
       ) : null}
     </div>

@@ -48,7 +48,9 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <span className="font-medium text-slate-900 dark:text-slate-100">Guest link data:</span> guest name
-                (if entered by host), tokenized link usage, and open/visit events.
+                (if entered by host), tokenized link usage, open/visit events, and a random visitor identifier stored
+                in your browser&apos;s local storage (used only to count unique opens for the host, not for
+                advertising).
               </li>
               <li>
                 <span className="font-medium text-slate-900 dark:text-slate-100">Technical data:</span> IP address,
@@ -125,7 +127,24 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              7. Host responsibilities for guest data
+              7. Guests opening a host link (no Stayvo account)
+            </h2>
+            <p className="mt-2">
+              If you open a guest portal link, you do not create a Stayvo account. We process limited
+              data to display the guide your host published and to operate the link (including
+              essential storage and open analytics for the host, as described above).
+            </p>
+            <p className="mt-2">
+              Buttons or links on the guest page (for example Google Maps, Waze, or WhatsApp) open
+              third-party services governed by those providers&apos; policies. Stayvo does not require
+              guests to accept Stayvo Terms before viewing property information; hosts agree to Terms
+              when they use the dashboard.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              8. Host responsibilities for guest data
             </h2>
             <p className="mt-2">
               Hosts are responsible for ensuring they have an appropriate legal basis and any
@@ -135,7 +154,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              8. Security and international transfers
+              9. Security and international transfers
             </h2>
             <p className="mt-2">
               We use reasonable technical and organizational measures to protect data. Your
@@ -144,7 +163,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">9. Your rights</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">10. Your rights</h2>
             <p className="mt-2">
               Depending on your jurisdiction, you may have rights to access, correct, delete, or
               restrict your personal data, and to object to certain processing.
@@ -152,7 +171,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">10. Changes</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">11. Changes</h2>
             <p className="mt-2">
               We may update this policy from time to time. When we do, we will update the “Last
               updated” date on this page.
@@ -160,7 +179,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">11. Contact</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">12. Contact</h2>
             <p className="mt-2">
               For privacy questions, contact:{' '}
               <a

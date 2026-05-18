@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { STAYVO_PRO_PROFILE_HREF } from '@/lib/stayvo-pro';
 import { motion } from 'framer-motion';
 import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
 import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
@@ -15,6 +16,7 @@ const headerByPath: Array<{ match: (path: string) => boolean; title: string }> =
 ];
 
 export default function DashboardStickyHeader() {
+  const router = useRouter();
   const pathname = usePathname() ?? '/dashboard';
   const normalizedPath = pathname.replace(/\/$/, '') || '/';
   const active = headerByPath.find((item) => item.match(normalizedPath));
@@ -117,9 +119,7 @@ export default function DashboardStickyHeader() {
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => {
                 if (!canAddLocations) {
-                  window.alert(
-                    'Additional locations are available on Stayvo Pro.'
-                  );
+                  router.push(STAYVO_PRO_PROFILE_HREF);
                   return;
                 }
                 window.dispatchEvent(new Event('stayvo:manage-add-location'));
@@ -151,11 +151,7 @@ export default function DashboardStickyHeader() {
               {atPropertyLimit ? (
                 <button
                   type="button"
-                  onClick={() =>
-                    window.alert(
-                      `Free accounts can have up to ${FREE_TIER_MAX_PROPERTIES} properties. Stayvo Pro includes unlimited properties.`
-                    )
-                  }
+                  onClick={() => router.push(STAYVO_PRO_PROFILE_HREF)}
                   className="inline-flex h-10 w-10 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand/45 text-base font-bold text-white shadow-md md:w-auto md:px-4"
                   title="Property limit reached"
                   aria-label="Add property unavailable"

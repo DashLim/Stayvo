@@ -9,6 +9,8 @@ import StayOpenTracker from '@/app/stay/[token]/StayOpenTracker';
 import GuestSectionQuickNav from '@/app/stay/[token]/GuestSectionQuickNav';
 import CopyTextButton from '@/app/stay/[token]/CopyTextButton';
 import DesktopGuestLeftColumn from '@/app/_guest/DesktopGuestLeftColumn';
+import GuestCookieNotice from '@/app/_guest/GuestCookieNotice';
+import GuestPortalLegalFooter from '@/app/_guest/GuestPortalLegalFooter';
 import GuestSectionHeading from '@/app/_guest/GuestSectionHeading';
 import {
   formatDate,
@@ -246,6 +248,7 @@ export default function GuestPortalView({
       style={{ background: 'linear-gradient(160deg, #FDF6EC 0%, #FAF0DC 100%)' }}
     >
       {token ? <StayOpenTracker token={token} /> : null}
+      {variant === 'guest' ? <GuestCookieNotice /> : null}
 
       <div className="flex flex-col md:flex-row md:items-start md:gap-x-10 lg:gap-x-12">
         {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -768,27 +771,7 @@ export default function GuestPortalView({
             }}
           />
 
-          <div className="flex justify-center pb-24 pt-3 md:pb-10 md:pt-4">
-            <span className="inline-flex flex-col items-center gap-1.5 text-[11px] text-slate-500">
-              <span>Powered by</span>
-              <Link
-                href="https://stayvo.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block rounded-md opacity-90 outline-none ring-brand/40 transition-opacity hover:opacity-100 focus-visible:ring-2"
-                aria-label="Stayvo — opens in a new tab"
-              >
-                <Image
-                  src="/brand/stayvo-guest-logo-lockup.png"
-                  alt=""
-                  width={1024}
-                  height={365}
-                  unoptimized
-                  className="h-7 w-auto max-w-[180px]"
-                />
-              </Link>
-            </span>
-          </div>
+          <GuestPortalLegalFooter variant={variant} />
         </div>
       </div>
       </div>
