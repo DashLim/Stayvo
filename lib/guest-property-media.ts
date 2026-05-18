@@ -4,8 +4,8 @@ export const GUEST_PROPERTY_MEDIA_BUCKET = 'guest-property-media';
 
 /** Max original file size before client compression (5 MB). */
 export const GUEST_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-/** Max video file size before upload (30 MB). */
-export const GUEST_VIDEO_MAX_BYTES = 30 * 1024 * 1024;
+/** Max video file size before upload (15 MB). */
+export const GUEST_VIDEO_MAX_BYTES = 15 * 1024 * 1024;
 
 function normalizeGuestMediaBase(raw: string | undefined): string | null {
   const t = raw?.trim().replace(/\/$/, '');

@@ -3,8 +3,6 @@
  * object if other slots still reference it. Legacy `library/` paths remain supported.
  */
 export const DEDUP_SEGMENT = 'dedup';
-/** Staging uploads before server-side video transcode. */
-export const INCOMING_SEGMENT = 'incoming';
 export const LEGACY_LIBRARY_SEGMENT = 'library';
 
 export function isSharedDedupStoragePath(userId: string, storagePath: string | null | undefined) {

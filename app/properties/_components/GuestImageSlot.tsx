@@ -9,12 +9,12 @@ import {
   isVideoStoragePath,
 } from '@/lib/guest-property-media';
 import { compressGuestImageForUpload } from '@/lib/guest-media-compress-client';
+import { sha256HexOfFile } from '@/lib/guest-media-hash-client';
 import { useId, useState } from 'react';
 
 function looksLikeImageFile(file: File): boolean {
   const t = (file.type || '').toLowerCase();
   if (t.startsWith('image/') && !t.startsWith('video/')) return true;
-  // iOS Safari often leaves type empty for camera-roll picks
   return /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(file.name || '');
 }
 
@@ -22,10 +22,6 @@ function looksLikeVideoFile(file: File): boolean {
   const t = (file.type || '').toLowerCase();
   if (t.startsWith('video/')) return true;
   return /\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(file.name || '');
-}
-
-function formatMb(bytes: number): string {
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 async function prepareMediaForGuestUpload(
@@ -48,7 +44,7 @@ async function prepareMediaForGuestUpload(
       throw new Error('Video uploads are available on Stayvo Pro.');
     }
     if (file.size > GUEST_VIDEO_MAX_BYTES) {
-      throw new Error('Video must be 30 MB or smaller.');
+      throw new Error('Video must be 15 MB or smaller.');
     }
     return file;
   }
@@ -59,7 +55,7 @@ async function prepareMediaForGuestUpload(
 function formatUploadError(err: unknown): string {
   const msg = err instanceof Error ? err.message : 'Upload failed.';
   if (msg.includes('unexpected response was received from the server')) {
-    return 'Upload failed because the file is too large for the server. Try a video under 30 MB, save the property, and upload again. If this continues, email support@stayvo.io.';
+    return 'Upload failed because the file is too large for the server. Try a video under 15 MB, save the property, and upload again. If this continues, email support@stayvo.io.';
   }
   return msg;
 }
@@ -68,21 +64,19 @@ async function uploadVideoViaServerAction(
   propertyId: string,
   slot: string,
   file: File
-): Promise<{ path: string; notice?: string }> {
+): Promise<{ path: string }> {
   const fd = new FormData();
   fd.set('file', file);
   const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
   if (!res.ok) throw new Error(res.error);
-  return {
-    path: res.path,
-    notice: 'Video compressed for guests.',
-  };
+  return { path: res.path };
 }
 
 async function uploadVideoDirectToR2(
   propertyId: string,
   file: File
-): Promise<{ path: string; notice?: string }> {
+): Promise<{ path: string }> {
+  const contentSha256 = await sha256HexOfFile(file);
   const presignRes = await fetch('/api/guest-media/presign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -91,7 +85,7 @@ async function uploadVideoDirectToR2(
       mimeType: file.type,
       fileName: file.name,
       byteSize: file.size,
-      serverTranscode: true,
+      contentSha256,
     }),
   });
   const presignData = (await presignRes.json()) as {
@@ -100,6 +94,7 @@ async function uploadVideoDirectToR2(
     uploadUrl?: string;
     path?: string;
     headers?: { 'Content-Type'?: string };
+    skipUpload?: boolean;
   };
 
   if (presignRes.ok && presignData.useServerUpload) {
@@ -113,57 +108,54 @@ async function uploadVideoDirectToR2(
     throw new Error(presignData.error ?? 'Could not start video upload.');
   }
 
-  const { uploadUrl, path, headers } = presignData;
-  if (!uploadUrl || !path) {
+  const { uploadUrl, path, headers, skipUpload } = presignData;
+  if (!path) {
     throw new Error('Could not start video upload.');
   }
 
-  const putRes = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: {
-      'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
-    },
-  });
-  if (!putRes.ok) {
-    throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
+  if (!skipUpload) {
+    if (!uploadUrl) {
+      throw new Error('Could not start video upload.');
+    }
+    const putRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
+      },
+    });
+    if (!putRes.ok) {
+      throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
+    }
   }
 
-  const transcodeRes = await fetch('/api/guest-media/transcode', {
+  const completeRes = await fetch('/api/guest-media/complete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       propertyId,
-      incomingPath: path,
+      path,
       mimeType: file.type,
       fileName: file.name,
+      byteSize: file.size,
+      contentSha256,
     }),
   });
-  const transcodeData = (await transcodeRes.json()) as {
-    error?: string;
-    path?: string;
-    byteSize?: number;
-  };
-  if (!transcodeRes.ok) {
-    throw new Error(transcodeData.error ?? 'Could not compress video on the server.');
+  const completeData = (await completeRes.json()) as { error?: string; path?: string; ok?: boolean };
+  if (!completeRes.ok) {
+    throw new Error(completeData.error ?? 'Could not finish video upload.');
   }
-  if (!transcodeData.path) {
-    throw new Error('Could not compress video on the server.');
+  if (!completeData.path) {
+    throw new Error('Could not finish video upload.');
   }
-
-  const notice =
-    typeof transcodeData.byteSize === 'number'
-      ? `Video compressed for guests (${formatMb(transcodeData.byteSize)}).`
-      : 'Video compressed for guests.';
-
-  return { path: transcodeData.path, notice };
+  return { path: completeData.path };
 }
 
 async function uploadVideo(
   propertyId: string,
   slot: string,
   file: File
-): Promise<{ path: string; notice?: string }> {
+): Promise<{ path: string }> {
   try {
     return await uploadVideoDirectToR2(propertyId, file);
   } catch (err: unknown) {
@@ -188,11 +180,8 @@ export default function GuestImageSlot({
   slot?: string;
   value: string;
   onChange: (nextPath: string) => void;
-  /** When false (Free tier), only images may be uploaded. */
   allowVideo?: boolean;
-  /** When false, upload image bytes as-is (hero image). Section media defaults to true. */
   compressImages?: boolean;
-  /** Server-resolved public origin for stored paths (R2 or Supabase); avoids wrong URLs in the browser. */
   guestMediaPublicBase?: string | null;
 }) {
   const hasPath = (value ?? '').trim().length > 0;
@@ -202,9 +191,8 @@ export default function GuestImageSlot({
   );
   const inputId = useId();
   const [busy, setBusy] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'compress' | 'upload'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'upload'>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -212,15 +200,10 @@ export default function GuestImageSlot({
     if (!file) return;
 
     setError(null);
-    setNotice(null);
     setBusy(true);
     try {
       if (!propertyId) {
         throw new Error('Please save property first, then upload media.');
-      }
-      const isVideo = looksLikeVideoFile(file);
-      if (isVideo) {
-        setPhase('compress');
       }
       const processed = await prepareMediaForGuestUpload(file, {
         allowVideo,
@@ -229,9 +212,8 @@ export default function GuestImageSlot({
       setPhase('upload');
 
       if (looksLikeVideoFile(processed)) {
-        const { path, notice } = await uploadVideo(propertyId, slot, processed);
+        const { path } = await uploadVideo(propertyId, slot, processed);
         onChange(path);
-        if (notice) setNotice(notice);
       } else {
         const fd = new FormData();
         fd.set('file', processed);
@@ -279,7 +261,7 @@ export default function GuestImageSlot({
               {allowVideo ? (
                 <>
                   {' '}
-                  <span className="block sm:inline">Image max 5MB; video max 30MB.</span>
+                  <span className="block sm:inline">Image max 5MB; video max 15MB.</span>
                 </>
               ) : (
                 <>
@@ -306,11 +288,7 @@ export default function GuestImageSlot({
             </label>
           ) : (
             <span className={`${uploadControlClassName} cursor-wait opacity-60`} aria-live="polite">
-              {phase === 'compress'
-                ? 'Compressing on server…'
-                : phase === 'upload'
-                  ? 'Uploading…'
-                  : 'Processing…'}
+              {phase === 'upload' ? 'Uploading…' : 'Processing…'}
             </span>
           )}
           {hasPath ? (
@@ -354,12 +332,6 @@ export default function GuestImageSlot({
             />
           )}
         </div>
-      ) : null}
-
-      {notice ? (
-        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200/90" role="status">
-          {notice}
-        </p>
       ) : null}
 
       {error ? (

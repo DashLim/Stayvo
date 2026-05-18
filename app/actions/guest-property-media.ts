@@ -17,7 +17,6 @@ import {
   GUEST_VIDEO_MAX_BYTES,
 } from '@/lib/guest-property-media';
 import { DEDUP_SEGMENT, isSharedDedupStoragePath } from '@/lib/host-media-library';
-import { transcodeVideoBuffer } from '@/lib/guest-media-transcode-server';
 
 /** iOS often omits `file.type` for camera-roll picks; infer from filename when needed. */
 function resolvedMediaMime(file: File): string | null {
@@ -76,7 +75,7 @@ function validateMediaFile(file: File): { ok: true; mime: string } | { ok: false
   }
   if (mime.startsWith('video/')) {
     if (file.size > GUEST_VIDEO_MAX_BYTES) {
-      return { ok: false, error: 'Video must be 30 MB or smaller.' };
+      return { ok: false, error: 'Video must be 15 MB or smaller.' };
     }
     return { ok: true, mime };
   }
@@ -311,18 +310,7 @@ async function uploadGuestPropertyMediaDeduped(
   if (!allowVideo && mime.startsWith('video/')) {
     return { ok: false, error: 'Video uploads are available on Stayvo Pro.' };
   }
-  let buffer = Buffer.from(await file.arrayBuffer());
-  let storedMime = mime;
-
-  if (mime.startsWith('video/')) {
-    const transcoded = await transcodeVideoBuffer(buffer);
-    if (!transcoded.ok) {
-      return { ok: false, error: transcoded.error };
-    }
-    buffer = Buffer.from(transcoded.buffer);
-    storedMime = 'video/mp4';
-  }
-
+  const buffer = Buffer.from(await file.arrayBuffer());
   const hash = sha256Hex(buffer);
 
   const { data: existing } = await supabase
@@ -344,7 +332,7 @@ async function uploadGuestPropertyMediaDeduped(
       .eq('content_sha256', hash);
   }
 
-  const ext = extFromMediaMime(storedMime);
+  const ext = extFromMediaMime(mime);
   const filename = `${hash}.${ext}`;
   const path = `${userId}/${DEDUP_SEGMENT}/${filename}`;
   const assetId = crypto.randomUUID();
@@ -354,7 +342,7 @@ async function uploadGuestPropertyMediaDeduped(
     user_id: userId,
     storage_path: path,
     filename,
-    mime_type: storedMime,
+    mime_type: mime,
     byte_size: buffer.length,
     content_sha256: hash,
   });
@@ -374,7 +362,7 @@ async function uploadGuestPropertyMediaDeduped(
     return { ok: false, error: insertError.message };
   }
 
-  const uploaded = await uploadBufferToGuestMedia(path, buffer, storedMime);
+  const uploaded = await uploadBufferToGuestMedia(path, buffer, mime);
   if (!uploaded.ok) {
     await supabase.from('host_media_assets').delete().eq('id', assetId).eq('user_id', userId);
     return { ok: false, error: uploaded.error };

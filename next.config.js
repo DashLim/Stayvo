@@ -15,16 +15,13 @@ const nextConfig = {
   // Turbopack defaults to on-disk SST cache in dev; on some setups this races/compacts badly (ENOENT .sst).
   experimental: {
     serverActions: {
-      // Guest videos up to 30 MB (see GUEST_VIDEO_MAX_BYTES); images after compression ≤ 5 MB.
-      bodySizeLimit: '32mb',
+      // Guest videos up to 15 MB (see GUEST_VIDEO_MAX_BYTES); images after compression ≤ 5 MB.
+      bodySizeLimit: '18mb',
     },
     turbopackFileSystemCacheForDev: false,
   },
   // Next 16 defaults to Turbopack for `next build`; empty config acknowledges we also define webpack() for dev.
   turbopack: {},
-  outputFileTracingIncludes: {
-    '/api/guest-media/transcode': ['./node_modules/ffmpeg-static/**/*'],
-  },
   // Avoid flaky webpack pack cache on some machines (ENOENT rename / missing chunks).
   // Dev may compile a bit slower; production builds are unchanged.
   webpack: (config, { dev }) => {

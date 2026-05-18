@@ -81,11 +81,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // FFmpeg WASM (~31 MB) — always network, never cache-first.
-  if (url.pathname.startsWith('/ffmpeg/')) {
-    return;
-  }
-
   // Other static assets → cache-first
   if (url.pathname.match(/\.(ico|png|svg|webp|jpg|jpeg|woff2?|ttf|css|js)$/)) {
     event.respondWith(
