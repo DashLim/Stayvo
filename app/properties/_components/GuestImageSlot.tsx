@@ -9,8 +9,6 @@ import {
   isVideoStoragePath,
 } from '@/lib/guest-property-media';
 import { compressGuestImageForUpload } from '@/lib/guest-media-compress-client';
-import { compressGuestVideoForUpload } from '@/lib/guest-media-compress-video-client';
-import { sha256HexOfFile } from '@/lib/guest-media-hash-client';
 import { useId, useState } from 'react';
 
 function looksLikeImageFile(file: File): boolean {
@@ -26,14 +24,15 @@ function looksLikeVideoFile(file: File): boolean {
   return /\.(mp4|webm|ogg|mov|m4v|avi|mkv)$/i.test(file.name || '');
 }
 
+function formatMb(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 async function prepareMediaForGuestUpload(
   file: File,
   options: {
     allowVideo: boolean;
     compressImages: boolean;
-    compressVideos: boolean;
-    onVideoCompressProgress?: (ratio: number) => void;
-    onVideoCompressWarning?: (message: string) => void;
   }
 ): Promise<File> {
   if (looksLikeImageFile(file)) {
@@ -51,14 +50,7 @@ async function prepareMediaForGuestUpload(
     if (file.size > GUEST_VIDEO_MAX_BYTES) {
       throw new Error('Video must be 30 MB or smaller.');
     }
-    if (!options.compressVideos) return file;
-    const result = await compressGuestVideoForUpload(file, {
-      onProgress: options.onVideoCompressProgress,
-    });
-    if (result.warning) {
-      options.onVideoCompressWarning?.(result.warning);
-    }
-    return result.file;
+    return file;
   }
 
   throw new Error(options.allowVideo ? 'Only image/video files are allowed.' : 'Only image files are allowed on your plan.');
@@ -76,19 +68,21 @@ async function uploadVideoViaServerAction(
   propertyId: string,
   slot: string,
   file: File
-): Promise<{ path: string }> {
+): Promise<{ path: string; notice?: string }> {
   const fd = new FormData();
   fd.set('file', file);
   const res = await uploadGuestPropertyMedia(propertyId, slot, fd);
   if (!res.ok) throw new Error(res.error);
-  return { path: res.path };
+  return {
+    path: res.path,
+    notice: 'Video compressed for guests.',
+  };
 }
 
 async function uploadVideoDirectToR2(
   propertyId: string,
   file: File
-): Promise<{ path: string }> {
-  const contentSha256 = await sha256HexOfFile(file);
+): Promise<{ path: string; notice?: string }> {
   const presignRes = await fetch('/api/guest-media/presign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -97,7 +91,7 @@ async function uploadVideoDirectToR2(
       mimeType: file.type,
       fileName: file.name,
       byteSize: file.size,
-      contentSha256,
+      serverTranscode: true,
     }),
   });
   const presignData = (await presignRes.json()) as {
@@ -106,8 +100,6 @@ async function uploadVideoDirectToR2(
     uploadUrl?: string;
     path?: string;
     headers?: { 'Content-Type'?: string };
-    skipUpload?: boolean;
-    reused?: boolean;
   };
 
   if (presignRes.ok && presignData.useServerUpload) {
@@ -120,54 +112,58 @@ async function uploadVideoDirectToR2(
     }
     throw new Error(presignData.error ?? 'Could not start video upload.');
   }
-  const { uploadUrl, path, headers, skipUpload } = presignData;
-  if (!path) {
+
+  const { uploadUrl, path, headers } = presignData;
+  if (!uploadUrl || !path) {
     throw new Error('Could not start video upload.');
   }
 
-  if (!skipUpload) {
-    if (!uploadUrl) {
-      throw new Error('Could not start video upload.');
-    }
-    const putRes = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-      headers: {
-        'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
-      },
-    });
-    if (!putRes.ok) {
-      throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
-    }
+  const putRes = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
+    },
+  });
+  if (!putRes.ok) {
+    throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
   }
 
-  const completeRes = await fetch('/api/guest-media/complete', {
+  const transcodeRes = await fetch('/api/guest-media/transcode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       propertyId,
-      path,
+      incomingPath: path,
       mimeType: file.type,
       fileName: file.name,
-      byteSize: file.size,
-      contentSha256,
     }),
   });
-  const completeData = (await completeRes.json()) as { error?: string; path?: string; ok?: boolean };
-  if (!completeRes.ok) {
-    throw new Error(completeData.error ?? 'Could not finish video upload.');
+  const transcodeData = (await transcodeRes.json()) as {
+    error?: string;
+    path?: string;
+    byteSize?: number;
+  };
+  if (!transcodeRes.ok) {
+    throw new Error(transcodeData.error ?? 'Could not compress video on the server.');
   }
-  if (!completeData.path) {
-    throw new Error('Could not finish video upload.');
+  if (!transcodeData.path) {
+    throw new Error('Could not compress video on the server.');
   }
-  return { path: completeData.path };
+
+  const notice =
+    typeof transcodeData.byteSize === 'number'
+      ? `Video compressed for guests (${formatMb(transcodeData.byteSize)}).`
+      : 'Video compressed for guests.';
+
+  return { path: transcodeData.path, notice };
 }
 
 async function uploadVideo(
   propertyId: string,
   slot: string,
   file: File
-): Promise<{ path: string }> {
+): Promise<{ path: string; notice?: string }> {
   try {
     return await uploadVideoDirectToR2(propertyId, file);
   } catch (err: unknown) {
@@ -186,7 +182,6 @@ export default function GuestImageSlot({
   onChange,
   allowVideo = false,
   compressImages = true,
-  compressVideos = true,
   guestMediaPublicBase,
 }: {
   propertyId: string | undefined;
@@ -197,8 +192,6 @@ export default function GuestImageSlot({
   allowVideo?: boolean;
   /** When false, upload image bytes as-is (hero image). Section media defaults to true. */
   compressImages?: boolean;
-  /** When false, upload video bytes as-is (hero). Section media compresses to smaller MP4. */
-  compressVideos?: boolean;
   /** Server-resolved public origin for stored paths (R2 or Supabase); avoids wrong URLs in the browser. */
   guestMediaPublicBase?: string | null;
 }) {
@@ -210,7 +203,6 @@ export default function GuestImageSlot({
   const inputId = useId();
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'compress' | 'upload'>('idle');
-  const [compressPercent, setCompressPercent] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -226,22 +218,20 @@ export default function GuestImageSlot({
       if (!propertyId) {
         throw new Error('Please save property first, then upload media.');
       }
-      setPhase('compress');
-      setCompressPercent(null);
+      const isVideo = looksLikeVideoFile(file);
+      if (isVideo) {
+        setPhase('compress');
+      }
       const processed = await prepareMediaForGuestUpload(file, {
         allowVideo,
         compressImages,
-        compressVideos,
-        onVideoCompressProgress: (ratio) =>
-          setCompressPercent(Math.min(100, Math.round(ratio * 100))),
-        onVideoCompressWarning: (message) => setNotice(message),
       });
-      setCompressPercent(null);
       setPhase('upload');
 
       if (looksLikeVideoFile(processed)) {
-        const { path } = await uploadVideo(propertyId, slot, processed);
+        const { path, notice } = await uploadVideo(propertyId, slot, processed);
         onChange(path);
+        if (notice) setNotice(notice);
       } else {
         const fd = new FormData();
         fd.set('file', processed);
@@ -317,9 +307,7 @@ export default function GuestImageSlot({
           ) : (
             <span className={`${uploadControlClassName} cursor-wait opacity-60`} aria-live="polite">
               {phase === 'compress'
-                ? compressPercent !== null
-                  ? `Compressing… ${compressPercent}%`
-                  : 'Compressing…'
+                ? 'Compressing on server…'
                 : phase === 'upload'
                   ? 'Uploading…'
                   : 'Processing…'}

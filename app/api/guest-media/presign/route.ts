@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import {
   assertGuestMediaUploadAuth,
   buildDedupStoragePath,
+  buildIncomingStoragePath,
   resolvedMediaMime,
   validateMediaUpload,
 } from '@/lib/guest-media-upload-api';
@@ -12,7 +13,6 @@ export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   if (!isGuestMediaR2Enabled()) {
-    // Client falls back to server-action upload (Supabase Storage or R2 via server).
     return NextResponse.json({ useServerUpload: true as const });
   }
 
@@ -27,16 +27,13 @@ export async function POST(request: Request) {
   const mimeType = String((body as { mimeType?: unknown }).mimeType ?? '').trim();
   const fileName = String((body as { fileName?: unknown }).fileName ?? '').trim();
   const byteSize = Number((body as { byteSize?: unknown }).byteSize);
+  const serverTranscode = Boolean((body as { serverTranscode?: unknown }).serverTranscode);
   const contentSha256 = String((body as { contentSha256?: unknown }).contentSha256 ?? '')
     .trim()
     .toLowerCase();
 
   if (!propertyId || !Number.isFinite(byteSize) || byteSize <= 0) {
     return NextResponse.json({ error: 'Missing propertyId or byteSize.' }, { status: 400 });
-  }
-
-  if (!/^[a-f0-9]{64}$/.test(contentSha256)) {
-    return NextResponse.json({ error: 'Missing or invalid contentSha256.' }, { status: 400 });
   }
 
   const auth = await assertGuestMediaUploadAuth(propertyId);
@@ -59,6 +56,25 @@ export async function POST(request: Request) {
   const validation = validateMediaUpload(mime, byteSize, auth.allowVideo);
   if (!validation.ok) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  if (serverTranscode) {
+    const path = buildIncomingStoragePath(auth.userId, mime);
+    const signed = await r2PresignedPutGuestMedia(path, mime);
+    if (!signed.ok) {
+      return NextResponse.json({ error: signed.error }, { status: 502 });
+    }
+    return NextResponse.json({
+      uploadUrl: signed.uploadUrl,
+      path,
+      method: 'PUT',
+      headers: { 'Content-Type': mime },
+      serverTranscode: true as const,
+    });
+  }
+
+  if (!/^[a-f0-9]{64}$/.test(contentSha256)) {
+    return NextResponse.json({ error: 'Missing or invalid contentSha256.' }, { status: 400 });
   }
 
   const path = buildDedupStoragePath(auth.userId, mime, contentSha256);

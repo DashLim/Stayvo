@@ -22,6 +22,9 @@ const nextConfig = {
   },
   // Next 16 defaults to Turbopack for `next build`; empty config acknowledges we also define webpack() for dev.
   turbopack: {},
+  outputFileTracingIncludes: {
+    '/api/guest-media/transcode': ['./node_modules/ffmpeg-static/**/*'],
+  },
   // Avoid flaky webpack pack cache on some machines (ENOENT rename / missing chunks).
   // Dev may compile a bit slower; production builds are unchanged.
   webpack: (config, { dev }) => {

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getHostTier } from '@/lib/host-plan';
-import { DEDUP_SEGMENT } from '@/lib/host-media-library';
+import { DEDUP_SEGMENT, INCOMING_SEGMENT } from '@/lib/host-media-library';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   GUEST_IMAGE_MAX_BYTES,
@@ -113,4 +113,15 @@ export function buildDedupStoragePath(
   const hash = contentSha256.trim().toLowerCase();
   const ext = extFromMediaMime(mime);
   return `${userId}/${DEDUP_SEGMENT}/${hash}.${ext}`;
+}
+
+/** Temporary key for raw video upload before server transcode. */
+export function buildIncomingStoragePath(userId: string, mime: string): string {
+  const ext = extFromMediaMime(mime);
+  return `${userId}/${INCOMING_SEGMENT}/${crypto.randomUUID()}.${ext}`;
+}
+
+export function isIncomingStoragePath(userId: string, storagePath: string): boolean {
+  const p = storagePath.trim();
+  return p.startsWith(`${userId}/${INCOMING_SEGMENT}/`);
 }

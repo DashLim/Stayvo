@@ -3,6 +3,7 @@ import 'server-only';
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
@@ -111,6 +112,20 @@ export async function r2DeleteGuestMedia(
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: msg };
   }
+}
+
+export async function r2GetGuestMediaBuffer(key: string): Promise<Buffer> {
+  const res = await getClient().send(
+    new GetObjectCommand({
+      Bucket: getBucket(),
+      Key: key,
+    })
+  );
+  if (!res.Body) {
+    throw new Error('Object not found in storage.');
+  }
+  const bytes = await res.Body.transformToByteArray();
+  return Buffer.from(bytes);
 }
 
 export async function r2GuestMediaExists(key: string): Promise<boolean> {
