@@ -9,6 +9,7 @@ import {
   isVideoStoragePath,
 } from '@/lib/guest-property-media';
 import { compressGuestImageForUpload } from '@/lib/guest-media-compress-client';
+import { compressGuestVideoForUpload } from '@/lib/guest-media-compress-video-client';
 import { sha256HexOfFile } from '@/lib/guest-media-hash-client';
 import { useId, useState } from 'react';
 
@@ -27,7 +28,12 @@ function looksLikeVideoFile(file: File): boolean {
 
 async function prepareMediaForGuestUpload(
   file: File,
-  options: { allowVideo: boolean; compressImages: boolean }
+  options: {
+    allowVideo: boolean;
+    compressImages: boolean;
+    compressVideos: boolean;
+    onVideoCompressProgress?: (ratio: number) => void;
+  }
 ): Promise<File> {
   if (looksLikeImageFile(file)) {
     if (file.size > GUEST_IMAGE_MAX_BYTES) {
@@ -44,8 +50,10 @@ async function prepareMediaForGuestUpload(
     if (file.size > GUEST_VIDEO_MAX_BYTES) {
       throw new Error('Video must be 30 MB or smaller.');
     }
-    // Client-side video transcoding is expensive/unreliable on mobile; keep original.
-    return file;
+    if (!options.compressVideos) return file;
+    return compressGuestVideoForUpload(file, {
+      onProgress: options.onVideoCompressProgress,
+    });
   }
 
   throw new Error(options.allowVideo ? 'Only image/video files are allowed.' : 'Only image files are allowed on your plan.');
@@ -173,6 +181,7 @@ export default function GuestImageSlot({
   onChange,
   allowVideo = false,
   compressImages = true,
+  compressVideos = true,
   guestMediaPublicBase,
 }: {
   propertyId: string | undefined;
@@ -183,6 +192,8 @@ export default function GuestImageSlot({
   allowVideo?: boolean;
   /** When false, upload image bytes as-is (hero image). Section media defaults to true. */
   compressImages?: boolean;
+  /** When false, upload video bytes as-is (hero). Section media compresses to smaller MP4. */
+  compressVideos?: boolean;
   /** Server-resolved public origin for stored paths (R2 or Supabase); avoids wrong URLs in the browser. */
   guestMediaPublicBase?: string | null;
 }) {
@@ -193,7 +204,8 @@ export default function GuestImageSlot({
   );
   const inputId = useId();
   const [busy, setBusy] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'upload'>('idle');
+  const [phase, setPhase] = useState<'idle' | 'compress' | 'upload'>('idle');
+  const [compressPercent, setCompressPercent] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -207,7 +219,16 @@ export default function GuestImageSlot({
       if (!propertyId) {
         throw new Error('Please save property first, then upload media.');
       }
-      const processed = await prepareMediaForGuestUpload(file, { allowVideo, compressImages });
+      setPhase('compress');
+      setCompressPercent(null);
+      const processed = await prepareMediaForGuestUpload(file, {
+        allowVideo,
+        compressImages,
+        compressVideos,
+        onVideoCompressProgress: (ratio) =>
+          setCompressPercent(Math.min(100, Math.round(ratio * 100))),
+      });
+      setCompressPercent(null);
       setPhase('upload');
 
       if (looksLikeVideoFile(processed)) {
@@ -287,7 +308,13 @@ export default function GuestImageSlot({
             </label>
           ) : (
             <span className={`${uploadControlClassName} cursor-wait opacity-60`} aria-live="polite">
-              {phase === 'upload' ? 'Uploading…' : 'Processing…'}
+              {phase === 'compress'
+                ? compressPercent !== null
+                  ? `Compressing… ${compressPercent}%`
+                  : 'Compressing…'
+                : phase === 'upload'
+                  ? 'Uploading…'
+                  : 'Processing…'}
             </span>
           )}
           {hasPath ? (

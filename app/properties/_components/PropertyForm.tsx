@@ -591,7 +591,7 @@ export default function PropertyForm({
                 slot="detail:0"
                 value={heroImagePath}
                 onChange={setHeroImagePath}
-                allowVideo={mediaAllowVideo}
+                allowVideo={false}
                 compressImages={false}
                 guestMediaPublicBase={guestMediaPublicBase}
               />

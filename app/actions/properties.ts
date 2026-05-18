@@ -14,6 +14,7 @@ import {
   normalizeSectionOrder as normalizeGuestSectionOrder,
   type CustomDetail as GuestCustomDetailStub,
 } from '@/lib/guest-layout';
+import { isVideoStoragePath } from '@/lib/guest-property-media';
 
 function customDetailStubsForSectionOrder(count: number): GuestCustomDetailStub[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -85,6 +86,16 @@ export type PropertyFormInput = {
 
 function normalizeString(value: string | null | undefined) {
   return (value ?? '').trim();
+}
+
+function normalizeHeroImagePath(
+  raw: string | undefined
+): { ok: true; path: string | null } | { ok: false; error: string } {
+  const path = normalizeString(raw) || null;
+  if (path && isVideoStoragePath(path)) {
+    return { ok: false, error: 'Hero image must be a photo, not a video.' };
+  }
+  return { ok: true, path };
 }
 
 /** DB without migration 0017 has no host_whatsapp_chat_number — retry without it. */
@@ -279,6 +290,11 @@ export async function createProperty(input: PropertyFormInput) {
     return { ok: false as const, error: socialParsed.error };
   }
 
+  const heroImage = normalizeHeroImagePath(input.heroImagePath);
+  if (!heroImage.ok) {
+    return { ok: false as const, error: heroImage.error };
+  }
+
   const payload = {
     user_id: user.id,
     property_name: normalizeString(input.propertyName),
@@ -300,7 +316,7 @@ export async function createProperty(input: PropertyFormInput) {
     guest_section_order: sectionOrder,
     location_id: locationId,
     sort_order: sortOrder,
-    hero_image_path: normalizeString(input.heroImagePath) || null,
+    hero_image_path: heroImage.path,
     ...socialParsed.urls,
   };
 
@@ -522,6 +538,11 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     return { ok: false as const, error: socialParsed.error };
   }
 
+  const heroImage = normalizeHeroImagePath(input.heroImagePath);
+  if (!heroImage.ok) {
+    return { ok: false as const, error: heroImage.error };
+  }
+
   const payload = {
     property_name: normalizeString(input.propertyName),
     internal_name: normalizeString(input.internalName) || null,
@@ -542,7 +563,7 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     guest_section_order: sectionOrder,
     location_id: newLocationId,
     sort_order: sortOrder,
-    hero_image_path: normalizeString(input.heroImagePath) || null,
+    hero_image_path: heroImage.path,
     ...socialParsed.urls,
   };
 
