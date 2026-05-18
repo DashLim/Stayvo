@@ -3,14 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { tryCreateSupabaseBrowserClient } from '@/lib/supabase/client';
-
-function isRefreshTokenUnusable(err: { message?: string } | null): boolean {
-  if (!err?.message) return false;
-  const m = err.message;
-  return (
-    m.includes('Invalid Refresh Token') || m.includes('Refresh Token Not Found')
-  );
-}
+import { isRefreshTokenUnusable } from '@/lib/supabase/auth-errors';
 
 function isLoginPath(pathname: string | null) {
   if (!pathname) return false;
@@ -19,24 +12,15 @@ function isLoginPath(pathname: string | null) {
 }
 
 /**
- * Clears broken Supabase sessions (missing/invalid refresh token) before any page
- * creates a browser client — avoids AuthApiError spam from `LoginPageClient` mounting
- * before recovery ran.
- *
- * Only gates `/login` so marketing routes (e.g. `/`) keep full SSR HTML.
+ * Clears broken Supabase sessions (missing/invalid refresh token) in the browser.
+ * `/login` waits for cleanup before paint; other routes run cleanup in the background.
  */
 export default function SupabaseSessionRecovery({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const needsClientCleanup = isLoginPath(pathname ?? null);
-  const [ready, setReady] = useState(() => !needsClientCleanup);
+  const blockUntilReady = isLoginPath(pathname ?? null);
+  const [ready, setReady] = useState(() => !blockUntilReady);
 
   useLayoutEffect(() => {
-    if (!needsClientCleanup) {
-      setReady(true);
-      return;
-    }
-
-    setReady(false);
     let cancelled = false;
 
     void (async () => {
@@ -45,19 +29,24 @@ export default function SupabaseSessionRecovery({ children }: { children: ReactN
         if (!cancelled) setReady(true);
         return;
       }
-      const { error } = await supabase.auth.getSession();
-      if (cancelled) return;
-      if (error && isRefreshTokenUnusable(error)) {
-        await supabase.auth.signOut({ scope: 'local' });
+      try {
+        const { error } = await supabase.auth.getSession();
+        if (error && isRefreshTokenUnusable(error)) {
+          await supabase.auth.signOut({ scope: 'local' });
+        }
+      } catch (err) {
+        if (isRefreshTokenUnusable(err as { message?: string; code?: string })) {
+          await supabase.auth.signOut({ scope: 'local' });
+        }
       }
-      setReady(true);
+      if (!cancelled) setReady(true);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [needsClientCleanup]);
+  }, [pathname]);
 
-  if (!ready) return null;
+  if (blockUntilReady && !ready) return null;
   return <>{children}</>;
 }

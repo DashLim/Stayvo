@@ -267,6 +267,9 @@ export default function GuestImageSlot({
                 <>
                   {' '}
                   <span className="block sm:inline">Images only, max 5MB.</span>
+                  <span className="mt-0.5 block text-slate-500 dark:text-slate-500">
+                    Video upload available on Stayvo Pro.
+                  </span>
                 </>
               )}
             </span>

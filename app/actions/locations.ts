@@ -87,6 +87,44 @@ export async function createLocation(name: string) {
   return { ok: true as const, id: data.id as string };
 }
 
+export async function updateLocationName(locationId: string, name: string) {
+  const trimmed = (name ?? '').trim();
+  if (!trimmed) {
+    return { ok: false as const, error: 'Location name is required.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) return { ok: false as const, error: 'Unauthorized' };
+
+  const { data: loc, error: fetchError } = await supabase
+    .from('locations')
+    .select('id, name')
+    .eq('id', locationId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (fetchError || !loc) {
+    return { ok: false as const, error: 'Location not found.' };
+  }
+
+  if ((loc.name as string) === trimmed) {
+    return { ok: true as const };
+  }
+
+  const { error } = await supabase
+    .from('locations')
+    .update({ name: trimmed })
+    .eq('id', locationId)
+    .eq('user_id', user.id);
+
+  if (error) return { ok: false as const, error: error.message };
+  return { ok: true as const };
+}
+
 async function getNextPropertySortOrder(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   locationId: string

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import Image from 'next/image';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { safeGetUser } from '@/lib/supabase/safe-auth';
 import ForceLightMode from '@/app/_components/ForceLightMode';
 
 // ── Icons ────────────────────────────────────────────────────────────────────
@@ -636,9 +637,7 @@ function Footer() {
 
 export default async function HomePage() {
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await safeGetUser(supabase);
 
   if (user) redirect('/dashboard');
 

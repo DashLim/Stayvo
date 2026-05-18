@@ -41,6 +41,7 @@ import {
   deleteProperty,
   updateProperty,
 } from '@/app/actions/properties';
+import { updateLocationName } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 import type { HostTier } from '@/lib/host-tier';
@@ -310,6 +311,17 @@ export default function PropertyForm({
     ensureString(defaults.locationId) ||
       (locations[0]?.id ?? '')
   );
+  const initialLocationId =
+    ensureString(defaults.locationId) || (locations[0]?.id ?? '');
+  const [locationName, setLocationName] = useState(() => {
+    const match = locations.find((loc) => loc.id === initialLocationId);
+    return match?.name ?? locations[0]?.name ?? '';
+  });
+
+  useEffect(() => {
+    const match = locations.find((loc) => loc.id === locationId);
+    if (match) setLocationName(match.name);
+  }, [locationId, locations]);
 
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -354,16 +366,20 @@ export default function PropertyForm({
   useEffect(() => {
     if (initialFormSnapshotRef.current !== null) return;
     const id = window.setTimeout(() => {
-      initialFormSnapshotRef.current = JSON.stringify(getCurrentFormInput());
+      initialFormSnapshotRef.current = getFormSnapshot();
     }, 0);
     return () => window.clearTimeout(id);
     // Baseline once after mount; intentional empty deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- capture initial snapshot only
   }, []);
 
+  function getFormSnapshot() {
+    return JSON.stringify({ ...getCurrentFormInput(), locationName });
+  }
+
   const isDirty =
     initialFormSnapshotRef.current !== null &&
-    JSON.stringify(getCurrentFormInput()) !== initialFormSnapshotRef.current;
+    getFormSnapshot() !== initialFormSnapshotRef.current;
 
   useEffect(() => {
     if (!isDirty) return;
@@ -396,6 +412,11 @@ export default function PropertyForm({
     try {
       const rawInput = getCurrentFormInput();
       const input = isProTier(hostTier) ? rawInput : { ...rawInput, faqs: [] };
+
+      if (locationId && locationName.trim()) {
+        const nameRes = await updateLocationName(locationId, locationName);
+        if (!nameRes.ok) throw new Error(nameRes.error);
+      }
 
       if (mode === 'create') {
         const res = await createProperty(input);
@@ -627,13 +648,18 @@ export default function PropertyForm({
           </div>
 
           <div className="mb-4 rounded-2xl border border-white/50 bg-white/40 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/40">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">Location</label>
+            <div className="grid gap-3">
+              <div className="min-w-0">
+                <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Location group
+                </label>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Which city or area this property belongs to on your dashboard.
+                </p>
                 <select
                   value={locationId}
                   onChange={(e) => setLocationId(e.target.value)}
-                  className="mt-2 w-full max-w-md rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-medium text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:[color-scheme:dark]"
+                  className="mt-2 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-medium text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:[color-scheme:dark]"
                 >
                   {locations.length === 0 ? (
                     <option value="">Create a location from Property management first</option>
@@ -645,6 +671,22 @@ export default function PropertyForm({
                     ))
                   )}
                 </select>
+              </div>
+              <div className="min-w-0">
+                <label className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Location name
+                </label>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Shown on your dashboard (e.g. Aspen, Colorado).
+                </p>
+                <input
+                  type="text"
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
+                  disabled={!locationId}
+                  placeholder="e.g. Miami, Florida"
+                  className="mt-2 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-medium text-slate-900 outline-none ring-brand/30 focus:ring-2 disabled:opacity-50 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder:text-slate-500"
+                />
               </div>
             </div>
           </div>

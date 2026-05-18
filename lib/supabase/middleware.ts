@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isRefreshTokenUnusable } from '@/lib/supabase/auth-errors';
 import { getSupabasePublicEnv } from '@/lib/supabase/env';
 
 export async function updateSession(request: NextRequest) {
@@ -43,9 +44,20 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Must be called on every request to keep the session in sync.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  // Keep session in sync; clear stale cookies so RSC does not throw AuthApiError.
+  let user: { sub?: string } | undefined;
+  try {
+    const { data, error } = await supabase.auth.getClaims();
+    if (error && isRefreshTokenUnusable(error)) {
+      await supabase.auth.signOut({ scope: 'local' });
+    } else {
+      user = data?.claims;
+    }
+  } catch (err) {
+    if (isRefreshTokenUnusable(err as { message?: string; code?: string })) {
+      await supabase.auth.signOut({ scope: 'local' });
+    }
+  }
 
   const pathname = request.nextUrl.pathname;
   const isProtected =

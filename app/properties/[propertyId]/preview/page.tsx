@@ -128,7 +128,6 @@ export default async function PropertyPreviewPage({
       socialXUrl={property.social_x_url ?? null}
       socialTiktokUrl={property.social_tiktok_url ?? null}
       socialYoutubeUrl={property.social_youtube_url ?? null}
-      socialAirbnbUrl={property.social_airbnb_url ?? null}
       socialDirectBookingUrl={
         (property as { social_direct_booking_url?: string | null })
           .social_direct_booking_url ?? null
