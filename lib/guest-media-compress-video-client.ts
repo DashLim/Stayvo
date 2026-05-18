@@ -1,9 +1,14 @@
 import { GUEST_VIDEO_MAX_BYTES } from '@/lib/guest-property-media';
 
-/** Skip re-encode when already small (typical after phone export). */
-const SKIP_BELOW_BYTES = 4 * 1024 * 1024;
-const COMPRESS_TIMEOUT_MS = 3 * 60 * 1000;
-const FFMPEG_CORE_VERSION = '0.12.6';
+const COMPRESS_TIMEOUT_MS = 4 * 60 * 1000;
+const FFMPEG_PUBLIC_BASE = '/ffmpeg';
+
+export type GuestVideoCompressResult = {
+  file: File;
+  compressed: boolean;
+  /** Shown when the original file was uploaded instead. */
+  warning?: string;
+};
 
 type FfmpegBundle = {
   ffmpeg: import('@ffmpeg/ffmpeg').FFmpeg;
@@ -22,19 +27,19 @@ function inputExtension(file: File): string {
   return 'mp4';
 }
 
-async function loadFfmpeg(onLoadProgress?: (ratio: number) => void): Promise<FfmpegBundle> {
+function formatMb(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function loadFfmpeg(): Promise<FfmpegBundle> {
   const { FFmpeg } = await import('@ffmpeg/ffmpeg');
   const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
   const ffmpeg = new FFmpeg();
 
-  if (onLoadProgress) {
-    ffmpeg.on('log', () => {});
-    ffmpeg.on('progress', ({ progress }) => {
-      if (Number.isFinite(progress)) onLoadProgress(Math.min(1, Math.max(0, progress)));
-    });
-  }
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : '';
+  const baseURL = `${origin}${FFMPEG_PUBLIC_BASE}`;
 
-  const baseURL = `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm`;
   await ffmpeg.load({
     coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
     wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
@@ -43,9 +48,12 @@ async function loadFfmpeg(onLoadProgress?: (ratio: number) => void): Promise<Ffm
   return { ffmpeg, fetchFile };
 }
 
-async function getFfmpeg(onLoadProgress?: (ratio: number) => void): Promise<FfmpegBundle> {
+async function getFfmpeg(): Promise<FfmpegBundle> {
   if (!ffmpegBundlePromise) {
-    ffmpegBundlePromise = loadFfmpeg(onLoadProgress);
+    ffmpegBundlePromise = loadFfmpeg().catch((err) => {
+      ffmpegBundlePromise = null;
+      throw err;
+    });
   }
   return ffmpegBundlePromise;
 }
@@ -65,26 +73,37 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+function fallbackResult(file: File, reason: string): GuestVideoCompressResult {
+  return {
+    file,
+    compressed: false,
+    warning: reason,
+  };
+}
+
 /**
- * Re-encode guest guide videos in-browser (H.264 MP4, max 1280px wide).
- * Falls back to the original file if compression fails or times out.
+ * Re-encode guest guide videos in-browser (H.264 MP4, max 1280×720).
+ * Falls back to the original when compression is unavailable on this device.
  */
 export async function compressGuestVideoForUpload(
   file: File,
   options?: { onProgress?: (ratio: number) => void }
-): Promise<File> {
-  if (file.size <= SKIP_BELOW_BYTES) return file;
+): Promise<GuestVideoCompressResult> {
+  if (file.size > GUEST_VIDEO_MAX_BYTES) {
+    throw new Error('Video must be 30 MB or smaller.');
+  }
 
-  const run = async (): Promise<File> => {
-    const bundle = await getFfmpeg((ratio) => options?.onProgress?.(ratio * 0.15));
-    const { ffmpeg, fetchFile } = bundle;
+  const run = async (): Promise<GuestVideoCompressResult> => {
+    options?.onProgress?.(0.02);
+    const { ffmpeg, fetchFile } = await getFfmpeg();
+    options?.onProgress?.(0.12);
 
     const inputName = `input.${inputExtension(file)}`;
     const outputName = 'output.mp4';
 
     const progressHandler = ({ progress }: { progress: number }) => {
       if (Number.isFinite(progress)) {
-        options?.onProgress?.(0.15 + progress * 0.85);
+        options?.onProgress?.(0.12 + progress * 0.88);
       }
     };
     ffmpeg.on('progress', progressHandler);
@@ -95,17 +114,21 @@ export async function compressGuestVideoForUpload(
         '-i',
         inputName,
         '-vf',
-        "scale='min(1280,iw)':-2",
+        "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease",
         '-c:v',
         'libx264',
         '-crf',
-        '28',
+        '30',
         '-preset',
-        'fast',
+        'veryfast',
+        '-maxrate',
+        '2M',
+        '-bufsize',
+        '4M',
         '-c:a',
         'aac',
         '-b:a',
-        '128k',
+        '96k',
         '-movflags',
         '+faststart',
         outputName,
@@ -116,24 +139,34 @@ export async function compressGuestVideoForUpload(
         data instanceof Uint8Array ? data : new TextEncoder().encode(String(data));
       const blob = new Blob([new Uint8Array(bytes)], { type: 'video/mp4' });
 
-      if (blob.size >= file.size) return file;
       if (blob.size > GUEST_VIDEO_MAX_BYTES) {
         throw new Error('COMPRESS_TOO_LARGE');
       }
 
       const baseName = (file.name || 'video').replace(/\.[^.]+$/, '') || 'video';
-      return new File([blob], `${baseName}.mp4`, { type: 'video/mp4' });
+      const outFile = new File([blob], `${baseName}.mp4`, { type: 'video/mp4' });
+
+      const savedBytes = file.size - outFile.size;
+      if (savedBytes < 64 * 1024) {
+        return {
+          file: outFile,
+          compressed: true,
+          warning: `Video optimized for web playback (${formatMb(outFile.size)}).`,
+        };
+      }
+
+      return {
+        file: outFile,
+        compressed: true,
+      };
     } finally {
       ffmpeg.off('progress', progressHandler);
-      try {
-        await ffmpeg.deleteFile(inputName);
-      } catch {
-        /* ignore */
-      }
-      try {
-        await ffmpeg.deleteFile(outputName);
-      } catch {
-        /* ignore */
+      for (const name of [inputName, outputName]) {
+        try {
+          await ffmpeg.deleteFile(name);
+        } catch {
+          /* ignore */
+        }
       }
     }
   };
@@ -141,15 +174,22 @@ export async function compressGuestVideoForUpload(
   try {
     return await withTimeout(run(), COMPRESS_TIMEOUT_MS);
   } catch (err) {
-    const code = err instanceof Error ? err.message : '';
+    const code = err instanceof Error ? err.message : String(err);
     if (code === 'COMPRESS_TOO_LARGE') {
       throw new Error(
-        'Video is still too large after compression. Try a shorter clip or lower resolution, then upload again.'
+        'Video is still too large after compression. Try a shorter clip, then upload again.'
       );
     }
-    if (file.size > GUEST_VIDEO_MAX_BYTES) {
-      throw new Error('Video must be 30 MB or smaller.');
+    if (code === 'COMPRESS_TIMEOUT') {
+      return fallbackResult(
+        file,
+        'Compression timed out — uploaded the original video. Try a shorter clip for a smaller file.'
+      );
     }
-    return file;
+    console.warn('[Stayvo] guest video compression failed:', err);
+    return fallbackResult(
+      file,
+      'Could not compress on this device — uploaded the original video.'
+    );
   }
 }

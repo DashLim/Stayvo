@@ -10,3 +10,6 @@ supabase/.temp/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Copied from @ffmpeg/core on install/build (~31 MB)
+/public/ffmpeg/

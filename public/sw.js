@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stayvo-v4';
+const CACHE_NAME = 'stayvo-v5';
 
 // Static assets to pre-cache on install
 const PRECACHE_URLS = ['/', '/dashboard', '/offline.html'];
@@ -78,6 +78,11 @@ self.addEventListener('fetch', (event) => {
 
   // Brand logos (public/brand/*) are replaced often; cache-first here shows stale images after export.
   if (url.pathname.startsWith('/brand/')) {
+    return;
+  }
+
+  // FFmpeg WASM (~31 MB) — always network, never cache-first.
+  if (url.pathname.startsWith('/ffmpeg/')) {
     return;
   }
 

@@ -33,6 +33,7 @@ async function prepareMediaForGuestUpload(
     compressImages: boolean;
     compressVideos: boolean;
     onVideoCompressProgress?: (ratio: number) => void;
+    onVideoCompressWarning?: (message: string) => void;
   }
 ): Promise<File> {
   if (looksLikeImageFile(file)) {
@@ -51,9 +52,13 @@ async function prepareMediaForGuestUpload(
       throw new Error('Video must be 30 MB or smaller.');
     }
     if (!options.compressVideos) return file;
-    return compressGuestVideoForUpload(file, {
+    const result = await compressGuestVideoForUpload(file, {
       onProgress: options.onVideoCompressProgress,
     });
+    if (result.warning) {
+      options.onVideoCompressWarning?.(result.warning);
+    }
+    return result.file;
   }
 
   throw new Error(options.allowVideo ? 'Only image/video files are allowed.' : 'Only image files are allowed on your plan.');
@@ -207,6 +212,7 @@ export default function GuestImageSlot({
   const [phase, setPhase] = useState<'idle' | 'compress' | 'upload'>('idle');
   const [compressPercent, setCompressPercent] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -214,6 +220,7 @@ export default function GuestImageSlot({
     if (!file) return;
 
     setError(null);
+    setNotice(null);
     setBusy(true);
     try {
       if (!propertyId) {
@@ -227,6 +234,7 @@ export default function GuestImageSlot({
         compressVideos,
         onVideoCompressProgress: (ratio) =>
           setCompressPercent(Math.min(100, Math.round(ratio * 100))),
+        onVideoCompressWarning: (message) => setNotice(message),
       });
       setCompressPercent(null);
       setPhase('upload');
@@ -358,6 +366,12 @@ export default function GuestImageSlot({
             />
           )}
         </div>
+      ) : null}
+
+      {notice ? (
+        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200/90" role="status">
+          {notice}
+        </p>
       ) : null}
 
       {error ? (
