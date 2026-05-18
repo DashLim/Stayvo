@@ -51,8 +51,8 @@ export default async function GuestPortalPage({ token }: { token: string }) {
             Please contact your host for an updated guest link.
           </p>
         </section>
-        <GuestPortalLegalFooter variant="guest" />
-        <GuestCookieNotice />
+        <GuestPortalLegalFooter variant="guest" noQuickNav />
+        <GuestCookieNotice stackAboveQuickNav={false} />
       </main>
     );
   }

@@ -8,6 +8,22 @@
   --bg-base-2: #faf0dc;
   --bg-glow:   rgba(224, 162, 77, 0.12);
   --text-base: #0f172a;
+  /* Guest portal fixed bottom chrome (quick nav + optional cookie banner) */
+  --stayvo-guest-quick-nav-offset: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  --stayvo-guest-footer-pad: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  --stayvo-guest-footer-pad-cookie: calc(13rem + env(safe-area-inset-bottom, 0px));
+}
+
+html.stayvo-guest-cookie-open {
+  --stayvo-guest-footer-pad: var(--stayvo-guest-footer-pad-cookie);
+}
+
+.guest-portal-legal-footer--no-quick-nav {
+  --stayvo-guest-footer-pad: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+html.stayvo-guest-cookie-open .guest-portal-legal-footer--no-quick-nav {
+  --stayvo-guest-footer-pad: calc(8.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .dark {

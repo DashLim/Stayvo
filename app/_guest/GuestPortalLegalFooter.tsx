@@ -3,11 +3,20 @@ import Image from 'next/image';
 
 type GuestPortalLegalFooterProps = {
   variant: 'guest' | 'preview';
+  /** Expired-link and other pages without the section quick nav. */
+  noQuickNav?: boolean;
 };
 
-export default function GuestPortalLegalFooter({ variant }: GuestPortalLegalFooterProps) {
+export default function GuestPortalLegalFooter({
+  variant,
+  noQuickNav = false,
+}: GuestPortalLegalFooterProps) {
   return (
-    <footer className="flex flex-col items-center gap-3 pb-24 pt-3 md:gap-4 md:pb-10 md:pt-4">
+    <footer
+      className={`guest-portal-legal-footer flex flex-col items-center gap-3 pt-3 max-md:pb-[var(--stayvo-guest-footer-pad)] md:gap-4 md:pb-10 md:pt-4 ${
+        noQuickNav ? 'guest-portal-legal-footer--no-quick-nav' : ''
+      }`}
+    >
       {variant === 'guest' ? (
         <p className="max-w-sm px-4 text-center text-[11px] leading-relaxed text-slate-500">
           This guide is provided by your host via Stayvo.

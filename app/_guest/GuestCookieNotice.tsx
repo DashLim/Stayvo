@@ -5,7 +5,12 @@ import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'stayvo.guestLegalAck.v1';
 
-export default function GuestCookieNotice() {
+export default function GuestCookieNotice({
+  stackAboveQuickNav = true,
+}: {
+  /** When false (e.g. expired-link page), sit flush to the bottom — no section quick nav. */
+  stackAboveQuickNav?: boolean;
+}) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -16,6 +21,16 @@ export default function GuestCookieNotice() {
     }
     setVisible(true);
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (visible) {
+      root.classList.add('stayvo-guest-cookie-open');
+    } else {
+      root.classList.remove('stayvo-guest-cookie-open');
+    }
+    return () => root.classList.remove('stayvo-guest-cookie-open');
+  }, [visible]);
 
   function dismiss() {
     try {
@@ -32,7 +47,9 @@ export default function GuestCookieNotice() {
     <div
       role="dialog"
       aria-label="Privacy notice"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-white/95 px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] backdrop-blur-md pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
+      className={`fixed inset-x-0 bottom-0 z-[60] border-t border-slate-200/80 bg-white/95 px-4 py-3 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] backdrop-blur-md pt-3 md:pb-[calc(0.75rem+env(safe-area-inset-bottom))] ${
+        stackAboveQuickNav ? 'max-md:bottom-[var(--stayvo-guest-quick-nav-offset)] max-md:pb-3' : 'pb-[calc(0.75rem+env(safe-area-inset-bottom))]'
+      }`}
     >
       <div className="mx-auto flex max-w-[1100px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <p className="text-center text-xs leading-relaxed text-slate-600 sm:text-left">
