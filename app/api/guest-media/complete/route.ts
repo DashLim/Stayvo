@@ -24,9 +24,16 @@ export async function POST(request: Request) {
   const mimeType = String((body as { mimeType?: unknown }).mimeType ?? '').trim();
   const fileName = String((body as { fileName?: unknown }).fileName ?? '').trim();
   const byteSize = Number((body as { byteSize?: unknown }).byteSize);
+  const contentSha256 = String((body as { contentSha256?: unknown }).contentSha256 ?? '')
+    .trim()
+    .toLowerCase();
 
   if (!propertyId || !path || !Number.isFinite(byteSize) || byteSize <= 0) {
     return NextResponse.json({ error: 'Missing propertyId, path, or byteSize.' }, { status: 400 });
+  }
+
+  if (!/^[a-f0-9]{64}$/.test(contentSha256)) {
+    return NextResponse.json({ error: 'Missing or invalid contentSha256.' }, { status: 400 });
   }
 
   const auth = await assertGuestMediaUploadAuth(propertyId);
@@ -66,7 +73,7 @@ export async function POST(request: Request) {
     filename,
     mime_type: mime,
     byte_size: Math.round(byteSize),
-    content_sha256: null,
+    content_sha256: contentSha256,
   });
 
   if (insertError) {

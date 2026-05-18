@@ -2,7 +2,7 @@
 
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { deleteGuestMediaFolderForProperty } from '@/app/actions/guest-property-media';
-import { GUEST_PROPERTY_MEDIA_BUCKET } from '@/lib/guest-property-media';
+import { deleteGuestMediaPathsIfUnreferenced } from '@/lib/guest-media-cleanup';
 import { getHostTier } from '@/lib/host-plan';
 import {
   FREE_TIER_MAX_CUSTOM_BLOCKS,
@@ -478,7 +478,7 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     error: existingError,
   } = await supabase
     .from('properties')
-    .select('id, location_id, sort_order')
+    .select('id, location_id, sort_order, hero_image_path')
     .eq('id', propertyId)
     .eq('user_id', user.id)
     .maybeSingle();
@@ -737,9 +737,17 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     if (p) nextImagePaths.add(p);
   }
 
-  const removedPaths = [...previousImagePaths].filter((p) => !nextImagePaths.has(p));
-  if (removedPaths.length > 0) {
-    await supabase.storage.from(GUEST_PROPERTY_MEDIA_BUCKET).remove(removedPaths);
+  const removedPaths = new Set(
+    [...previousImagePaths].filter((p) => !nextImagePaths.has(p))
+  );
+  const prevHero = (existing.hero_image_path ?? '').trim();
+  const nextHero = (payload.hero_image_path ?? '').trim();
+  if (prevHero && prevHero !== nextHero) {
+    removedPaths.add(prevHero);
+  }
+
+  if (removedPaths.size > 0) {
+    await deleteGuestMediaPathsIfUnreferenced(supabase, user.id, removedPaths);
   }
 
   return { ok: true as const };

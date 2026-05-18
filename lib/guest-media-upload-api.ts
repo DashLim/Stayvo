@@ -105,7 +105,12 @@ export async function assertGuestMediaUploadAuth(propertyId: string) {
   };
 }
 
-export function buildDirectUploadStoragePath(userId: string, mime: string): string {
+export function buildDedupStoragePath(
+  userId: string,
+  mime: string,
+  contentSha256: string
+): string {
+  const hash = contentSha256.trim().toLowerCase();
   const ext = extFromMediaMime(mime);
-  return `${userId}/${DEDUP_SEGMENT}/${crypto.randomUUID()}.${ext}`;
+  return `${userId}/${DEDUP_SEGMENT}/${hash}.${ext}`;
 }

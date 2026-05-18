@@ -8,7 +8,8 @@ import {
   guestPropertyMediaPublicUrl,
   isVideoStoragePath,
 } from '@/lib/guest-property-media';
-import imageCompression from 'browser-image-compression';
+import { compressGuestImageForUpload } from '@/lib/guest-media-compress-client';
+import { sha256HexOfFile } from '@/lib/guest-media-hash-client';
 import { useId, useState } from 'react';
 
 function looksLikeImageFile(file: File): boolean {
@@ -26,19 +27,14 @@ function looksLikeVideoFile(file: File): boolean {
 
 async function prepareMediaForGuestUpload(
   file: File,
-  options: { allowVideo: boolean }
+  options: { allowVideo: boolean; compressImages: boolean }
 ): Promise<File> {
   if (looksLikeImageFile(file)) {
     if (file.size > GUEST_IMAGE_MAX_BYTES) {
       throw new Error('Image must be 5 MB or smaller.');
     }
-    // Keep visual quality while shrinking payload for faster uploads.
-    return imageCompression(file, {
-      maxSizeMB: 5,
-      maxWidthOrHeight: 2560,
-      useWebWorker: true,
-      initialQuality: 0.9,
-    });
+    if (!options.compressImages) return file;
+    return compressGuestImageForUpload(file);
   }
 
   if (looksLikeVideoFile(file)) {
@@ -79,6 +75,7 @@ async function uploadVideoDirectToR2(
   propertyId: string,
   file: File
 ): Promise<{ path: string }> {
+  const contentSha256 = await sha256HexOfFile(file);
   const presignRes = await fetch('/api/guest-media/presign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -87,6 +84,7 @@ async function uploadVideoDirectToR2(
       mimeType: file.type,
       fileName: file.name,
       byteSize: file.size,
+      contentSha256,
     }),
   });
   const presignData = (await presignRes.json()) as {
@@ -95,6 +93,8 @@ async function uploadVideoDirectToR2(
     uploadUrl?: string;
     path?: string;
     headers?: { 'Content-Type'?: string };
+    skipUpload?: boolean;
+    reused?: boolean;
   };
 
   if (presignRes.ok && presignData.useServerUpload) {
@@ -107,20 +107,25 @@ async function uploadVideoDirectToR2(
     }
     throw new Error(presignData.error ?? 'Could not start video upload.');
   }
-  const { uploadUrl, path, headers } = presignData;
-  if (!uploadUrl || !path) {
+  const { uploadUrl, path, headers, skipUpload } = presignData;
+  if (!path) {
     throw new Error('Could not start video upload.');
   }
 
-  const putRes = await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: {
-      'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
-    },
-  });
-  if (!putRes.ok) {
-    throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
+  if (!skipUpload) {
+    if (!uploadUrl) {
+      throw new Error('Could not start video upload.');
+    }
+    const putRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': (headers?.['Content-Type'] ?? file.type) || 'application/octet-stream',
+      },
+    });
+    if (!putRes.ok) {
+      throw new Error('__STAYVO_USE_SERVER_UPLOAD__');
+    }
   }
 
   const completeRes = await fetch('/api/guest-media/complete', {
@@ -132,6 +137,7 @@ async function uploadVideoDirectToR2(
       mimeType: file.type,
       fileName: file.name,
       byteSize: file.size,
+      contentSha256,
     }),
   });
   const completeData = (await completeRes.json()) as { error?: string; path?: string; ok?: boolean };
@@ -166,6 +172,7 @@ export default function GuestImageSlot({
   value,
   onChange,
   allowVideo = false,
+  compressImages = true,
   guestMediaPublicBase,
 }: {
   propertyId: string | undefined;
@@ -174,6 +181,8 @@ export default function GuestImageSlot({
   onChange: (nextPath: string) => void;
   /** When false (Free tier), only images may be uploaded. */
   allowVideo?: boolean;
+  /** When false, upload image bytes as-is (hero image). Section media defaults to true. */
+  compressImages?: boolean;
   /** Server-resolved public origin for stored paths (R2 or Supabase); avoids wrong URLs in the browser. */
   guestMediaPublicBase?: string | null;
 }) {
@@ -198,7 +207,7 @@ export default function GuestImageSlot({
       if (!propertyId) {
         throw new Error('Please save property first, then upload media.');
       }
-      const processed = await prepareMediaForGuestUpload(file, { allowVideo });
+      const processed = await prepareMediaForGuestUpload(file, { allowVideo, compressImages });
       setPhase('upload');
 
       if (looksLikeVideoFile(processed)) {
