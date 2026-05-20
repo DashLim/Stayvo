@@ -13,13 +13,15 @@ export default function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/dashboard';
+  const requestedMode = searchParams.get('mode');
+  const initialMode: AuthMode = requestedMode === 'signup' ? 'signup' : 'login';
   const configError = searchParams.get('error') === 'config';
   const authLinkError = searchParams.get('error') === 'auth';
   const accountDeleted = searchParams.get('deleted') === '1';
 
   const supabase = useMemo(() => tryCreateSupabaseBrowserClient(), []);
 
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -39,6 +41,10 @@ export default function LoginPageClient() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When these Terms change, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 17, 2026';
+const LAST_UPDATED = 'May 18, 2026';
 
 export default function TermsOfServicePage() {
   return (
@@ -22,7 +22,7 @@ export default function TermsOfServicePage() {
               agree, do not use the service.
             </p>
             <p className="mt-2">
-              Stayvo is operated by Lim Chee Siong, based in Malaysia.
+              Stayvo is operated by Tiny Land Management, based in Malaysia.
             </p>
           </section>
 

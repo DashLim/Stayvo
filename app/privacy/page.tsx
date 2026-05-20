@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 17, 2026';
+const LAST_UPDATED = 'May 18, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">2. Who we are</h2>
             <p className="mt-2">
-              Stayvo is operated by Lim Chee Siong, based in Malaysia. Contact:{' '}
+              Stayvo is operated by Tiny Land Management, based in Malaysia. Contact:{' '}
               <a
                 href={SUPPORT_MAILTO}
                 className="font-medium text-brand underline-offset-2 hover:underline"

@@ -29,7 +29,8 @@ export async function proxy(request: NextRequest) {
     const pathRedirect =
       pathname.startsWith('/dashboard') ||
       pathname.startsWith('/properties') ||
-      pathname.startsWith('/login');
+      pathname.startsWith('/login') ||
+      pathname.startsWith('/signup');
     if (pathRedirect) {
       const url = request.nextUrl.clone();
       url.hostname = appHost;
@@ -44,6 +45,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
+    '/signup',
     '/login',
     '/login/:path*',
     '/dashboard/:path*',
