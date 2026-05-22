@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 18, 2026';
+const LAST_UPDATED = 'May 20, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -220,6 +220,21 @@ export default function PrivacyPolicyPage() {
             <p className="mt-2">
               Stayvo does not use advertising cookies or third-party ad tracking on the guest portal
               or host dashboard for behavioral advertising.
+            </p>
+            <p className="mt-2">
+              On our website and host app (not on individual guest portal links for guests), we use
+              Google Analytics to understand how pages are used (for example page views and general
+              traffic). Google may set analytics cookies or similar technologies. You can learn more
+              in{' '}
+              <a
+                href="https://policies.google.com/privacy"
+                className="font-medium text-brand underline-offset-2 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Google&apos;s Privacy Policy
+              </a>
+              . Guest portal pages rely on essential local storage only, as described above.
             </p>
           </section>
 

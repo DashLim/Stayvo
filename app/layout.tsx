@@ -4,6 +4,7 @@ import AppSplash from '@/app/_components/AppSplash';
 import ThemeHydration from '@/app/_components/ThemeHydration';
 import PageTransition from '@/app/_components/PageTransition';
 import ServiceWorkerRegister from '@/app/_components/ServiceWorkerRegister';
+import GoogleAnalytics from '@/app/_components/GoogleAnalytics';
 import SupabaseSessionRecovery from '@/app/_components/SupabaseSessionRecovery';
 import './globals.css';
 
@@ -62,6 +63,7 @@ export default function RootLayout({
           <PageTransition>{children}</PageTransition>
         </SupabaseSessionRecovery>
         <ServiceWorkerRegister />
+        <GoogleAnalytics />
       </body>
     </html>
   );
