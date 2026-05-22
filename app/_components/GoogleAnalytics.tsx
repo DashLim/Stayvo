@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import Script from 'next/script';
 
 const GA_MEASUREMENT_ID =
-  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || 'G-97YKR52LHW';
+  process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || 'G-WYG79T82JM';
 
 const RESERVED_FIRST_SEGMENTS = new Set([
   'login',
