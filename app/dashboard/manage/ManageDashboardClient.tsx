@@ -34,6 +34,7 @@ import {
 } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
 import StayvoProMessage from '@/app/_components/StayvoProMessage';
+import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
 import { STAYVO_PRO_PROFILE_HREF } from '@/lib/stayvo-pro';
 import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
 import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
@@ -599,6 +600,8 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
   }, [addLocOpen]);
 
   const flatLocations = groups.map((g) => g.location);
+  const totalProperties = groups.reduce((sum, g) => sum + g.properties.length, 0);
+  const hasAnyProperty = totalProperties > 0;
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -805,7 +808,14 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         </p>
       ) : null}
 
-      <div className={editMode ? '' : 'md:hidden'}>
+      {!hasAnyProperty && !editMode ? (
+        <NoPropertiesEmptyState
+          returnTo="/dashboard/manage"
+          canAddProperty={canAddProperty}
+        />
+      ) : null}
+
+      <div className={hasAnyProperty || editMode ? (editMode ? '' : 'md:hidden') : 'hidden'}>
         <DndContext
           sensors={locationSensors}
           collisionDetection={closestCorners}
@@ -852,7 +862,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         </DndContext>
       </div>
 
-      {!editMode ? (
+      {!editMode && hasAnyProperty ? (
         <div className="hidden min-h-0 md:flex md:gap-8">
           <aside className="sticky top-6 w-[220px] shrink-0 space-y-1 self-start md:max-h-[min(36rem,calc(100dvh-6rem))] md:overflow-y-auto md:pr-1">
             {groups.length === 0 ? (

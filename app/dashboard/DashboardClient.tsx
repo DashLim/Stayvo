@@ -4,6 +4,12 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import PropertyCard from '@/app/dashboard/PropertyCard';
+import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
+import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
+import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
+import type { IcalFeedSummary } from '@/lib/ical/types';
+
+export type { IcalFeedSummary };
 
 const DashboardLocationFilterSheet = dynamic(
   () => import('@/app/dashboard/DashboardLocationFilterSheet'),
@@ -34,6 +40,8 @@ type GuestLinkItem = {
   token: string;
   created_at: string;
   is_permanent?: boolean | null;
+  link_source?: string | null;
+  ical_feed_id?: string | null;
 };
 
 type Section = {
@@ -75,7 +83,9 @@ export default function DashboardClient({
   locationOptions,
   guestLinks,
   guestLinksError,
+  icalFeeds,
   hasAnyLiveProperty,
+  hasAnyProperty,
   hostDisplayName,
   guestLinkBaseUrl,
 }: {
@@ -85,13 +95,28 @@ export default function DashboardClient({
   locationOptions: LocationOption[];
   guestLinks: GuestLinkItem[];
   guestLinksError: boolean;
+  icalFeeds: IcalFeedSummary[];
   /** True if user has at least one live property (shown on this dashboard). */
   hasAnyLiveProperty: boolean;
+  /** True if user has any property at all (including drafts not shown here). */
+  hasAnyProperty: boolean;
   /** Profile host display name — first segment of generated guest portal URLs. */
   hostDisplayName: string | null;
   /** Public origin for shared guest links (e.g. https://stayvo.io). Passed from server so it matches Vercel env at runtime. */
   guestLinkBaseUrl: string;
 }) {
+  const limits = useHostDashboardLimits();
+  const canAddProperty =
+    limits.tier === 'pro' || limits.propertyCount < FREE_TIER_MAX_PROPERTIES;
+  const icalFeedByPropertyId = useMemo(() => {
+    const m = new Map<string, IcalFeedSummary>();
+    for (const f of icalFeeds) {
+      if (!m.has(f.property_id)) {
+        m.set(f.property_id, f);
+      }
+    }
+    return m;
+  }, [icalFeeds]);
   /** Location has at least one live property — used to enable location filters. */
   const hasLiveByLocation = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -277,7 +302,9 @@ export default function DashboardClient({
       />
 
       <section className="mt-6 md:mt-8">
-        {storageReady &&
+        {!hasAnyProperty ? (
+          <NoPropertiesEmptyState returnTo="/dashboard" canAddProperty={canAddProperty} />
+        ) : storageReady &&
         selectedIds !== null &&
         selectedIds.length === 0 &&
         locationOptions.length > 0 ? (
@@ -317,6 +344,7 @@ export default function DashboardClient({
                             property={p}
                             locationGroupName={section.locationName}
                             links={linksForProperty}
+                            icalFeed={icalFeedByPropertyId.get(p.id) ?? null}
                             nowIso={nowIso}
                             hostDisplayName={hostDisplayName}
                             guestLinkBaseUrl={guestLinkBaseUrl}
@@ -397,6 +425,7 @@ export default function DashboardClient({
                               property={p}
                               locationGroupName={desktopSelectedSection.locationName}
                               links={linksForProperty}
+                              icalFeed={icalFeedByPropertyId.get(p.id) ?? null}
                               nowIso={nowIso}
                               hostDisplayName={hostDisplayName}
                               guestLinkBaseUrl={guestLinkBaseUrl}
@@ -449,14 +478,15 @@ export default function DashboardClient({
           <div className="glass rounded-[20px] p-6 text-center md:p-8">
             <h2 className="text-base font-semibold dark:text-slate-100">No live properties yet</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Create a property or open Property management to set drafts live and show them here.
+              You have properties saved as drafts. Open{' '}
+              <Link
+                href="/dashboard/manage"
+                className="font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                Property management
+              </Link>{' '}
+              to set them live and show them here.
             </p>
-            <Link
-              href="/properties/new"
-              className="mt-5 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
-            >
-              + Add your first property
-            </Link>
           </div>
         )}
         {guestLinksError ? (

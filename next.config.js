@@ -26,8 +26,8 @@ const nextConfig = {
   // Dev may compile a bit slower; production builds are unchanged.
   webpack: (config, { dev }) => {
     if (dev) {
-      // Disk cache races → ENOENT / missing manifests (see prior issues).
-      config.cache = false;
+      // Memory cache: disk cache=false made first dev compile look hung for minutes on some Macs.
+      config.cache = { type: 'memory' };
       // Avoid split vendor chunks in dev; missing `./vendor-chunks/@supabase.js`
       // happens when worker compilation references chunks not yet written.
       config.optimization = {

@@ -126,6 +126,7 @@ export default async function EditPropertyPage({
         socialXUrl: property.social_x_url ?? '',
         socialTiktokUrl: property.social_tiktok_url ?? '',
         socialYoutubeUrl: property.social_youtube_url ?? '',
+        socialAirbnbUrl: property.social_airbnb_url ?? '',
         socialDirectBookingUrl:
           (property as { social_direct_booking_url?: string | null })
             .social_direct_booking_url ?? '',

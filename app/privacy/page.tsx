@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 20, 2026';
+const LAST_UPDATED = 'May 26, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -235,6 +235,13 @@ export default function PrivacyPolicyPage() {
                 Google&apos;s Privacy Policy
               </a>
               . Guest portal pages rely on essential local storage only, as described above.
+            </p>
+            <p className="mt-2">
+              If you connect an OTA calendar (for example Airbnb or Booking.com) to a property, we
+              store the calendar feed URL securely, fetch reservation dates periodically, and use
+              that information to create or update guest links in your dashboard. Calendar data may
+              include guest names when your OTA includes them in the feed. We do not send messages to
+              guests on your behalf from calendar sync.
             </p>
           </section>
 

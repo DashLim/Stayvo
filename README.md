@@ -26,9 +26,11 @@ Phase 2 includes:
 
 ## Run locally
 
-1. Install dependencies.
-2. Start the dev server:
-   - `npm run dev`
+1. Use **Node 20 or 22** (`node -v`). Node 24 often hangs `next dev` on macOS; the repo includes `.nvmrc` (22) for nvm/fnm.
+2. Install dependencies: `npm install`
+3. Start the dev server: `npm run dev` (opens on http://localhost:3000)
+   - LAN / phone testing: `npm run dev:lan`
+   - If dev is stuck, use production locally: `npm run build && npm start`
 
 ## Vercel deployment
 

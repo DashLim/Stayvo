@@ -16,20 +16,27 @@ export default async function DashboardPage() {
 
   if (userError || !user) redirect('/login?redirect=/dashboard');
 
-  const [{ data: locations, error: locationsError }, { data: properties, error: propertiesError }] =
-    await Promise.all([
-      supabase
-        .from('locations')
-        .select('id, name, sort_order')
-        .eq('user_id', user.id)
-        .order('sort_order', { ascending: true }),
-      supabase
-        .from('properties')
-        .select('id, property_name, internal_name, location_id, sort_order')
-        .eq('user_id', user.id)
-        .eq('is_live', true)
-        .order('sort_order', { ascending: true }),
-    ]);
+  const [
+    { data: locations, error: locationsError },
+    { data: properties, error: propertiesError },
+    { count: totalPropertyCount },
+  ] = await Promise.all([
+    supabase
+      .from('locations')
+      .select('id, name, sort_order')
+      .eq('user_id', user.id)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('properties')
+      .select('id, property_name, internal_name, location_id, sort_order')
+      .eq('user_id', user.id)
+      .eq('is_live', true)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('properties')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+  ]);
 
   if (locationsError || propertiesError) {
     return (
@@ -78,9 +85,19 @@ export default async function DashboardPage() {
       : await supabase
           .from('guest_links')
           .select(
-            'id, property_id, guest_name, checkout_date, expires_at, token, created_at, is_permanent'
+            'id, property_id, guest_name, checkout_date, expires_at, token, created_at, is_permanent, link_source, ical_feed_id'
           )
           .in('property_id', propertyIds)
+          .order('created_at', { ascending: false });
+
+  const propertyIdsForFeeds = propList.map((p) => p.id as string);
+  const { data: icalFeeds } =
+    propertyIdsForFeeds.length === 0
+      ? { data: [] }
+      : await supabase
+          .from('property_ical_feeds')
+          .select('property_id, calendar_name, source, last_synced_at, last_error, created_at')
+          .in('property_id', propertyIdsForFeeds)
           .order('created_at', { ascending: false });
 
   const meta = user.user_metadata as { host_display_name?: string } | null;
@@ -97,7 +114,9 @@ export default async function DashboardPage() {
         locationOptions={locationOptions}
         guestLinks={guestLinks ?? []}
         guestLinksError={Boolean(guestLinksError)}
+        icalFeeds={icalFeeds ?? []}
         hasAnyLiveProperty={(propList.length ?? 0) > 0}
+        hasAnyProperty={(totalPropertyCount ?? 0) > 0}
         hostDisplayName={hostDisplayName}
         guestLinkBaseUrl={guestLinkBaseUrl}
       />

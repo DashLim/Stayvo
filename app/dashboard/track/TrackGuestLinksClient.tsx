@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { GuestLinkOpenStats } from '@/lib/guest-link-open-stats';
+import { sortGuestLinksByCheckoutAsc } from '@/lib/guest-link-sort';
 
 type GuestLinkItem = {
   id: string;
@@ -12,6 +13,7 @@ type GuestLinkItem = {
   token: string;
   created_at: string;
   is_permanent?: boolean | null;
+  link_source?: string | null;
 };
 
 type Section = {
@@ -124,8 +126,13 @@ function GuestCard({
         />
         <div className="pl-4 pr-3 py-3">
           <div className="flex items-start justify-between gap-2">{statusBadges}</div>
-          <p className="mt-1 text-[15px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-[15px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
             {displayGuestName(link.guest_name)}
+            {link.link_source === 'ical' ? (
+              <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                Calendar
+              </span>
+            ) : null}
           </p>
           {metaRow}
         </div>
@@ -158,8 +165,13 @@ function GuestCard({
             )}
           </div>
           <span className="h-3 w-px shrink-0 bg-slate-200 dark:bg-white/15" aria-hidden />
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold leading-none text-slate-900 dark:text-slate-100">
-            {displayGuestName(link.guest_name)}
+          <p className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm font-semibold leading-none text-slate-900 dark:text-slate-100">
+            <span className="truncate">{displayGuestName(link.guest_name)}</span>
+            {link.link_source === 'ical' ? (
+              <span className="shrink-0 rounded-full bg-brand/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-900">
+                Calendar
+              </span>
+            ) : null}
           </p>
           <div className="flex min-w-0 shrink-0 items-center gap-x-2 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
@@ -197,7 +209,13 @@ function PropertyGuestLinksBlock({
   /** When true, omit the property title row (parent shows the heading). */
   embedded?: boolean;
 }) {
-  const links = guestLinks.filter((l) => l.property_id === property.id && !isExpired(l));
+  const links = useMemo(
+    () =>
+      sortGuestLinksByCheckoutAsc(
+        guestLinks.filter((l) => l.property_id === property.id && !isExpired(l))
+      ),
+    [guestLinks, property.id]
+  );
   const openedCount = links.filter((l) => openStatsByLinkId[l.id]?.deviceCount > 0).length;
 
   return (

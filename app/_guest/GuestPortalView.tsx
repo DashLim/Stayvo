@@ -187,7 +187,14 @@ export default function GuestPortalView({
         >
           Welcome, {guestFirstName} 👋
         </p>
-      ) : null}
+      ) : (
+        <p
+          className="mt-1.5 text-sm font-medium text-white/90"
+          style={{ textShadow: '0 1px 6px rgba(0,0,0,0.45)' }}
+        >
+          Welcome 👋
+        </p>
+      )}
       {!isPreview && data.checkout_date ? (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 opacity-80" fill="currentColor" aria-hidden>
@@ -208,7 +215,9 @@ export default function GuestPortalView({
         <p className="mt-2 text-base font-medium text-slate-600">Guest preview</p>
       ) : guestFirstName ? (
         <p className="mt-2 text-base font-medium text-slate-600">Welcome, {guestFirstName} 👋</p>
-      ) : null}
+      ) : (
+        <p className="mt-2 text-base font-medium text-slate-600">Welcome 👋</p>
+      )}
       {!isPreview && data.checkout_date ? (
         <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#E0A24D]/35 bg-[#E0A24D]/12 px-3 py-1.5 text-xs font-semibold text-slate-800">
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-brand" fill="currentColor" aria-hidden>

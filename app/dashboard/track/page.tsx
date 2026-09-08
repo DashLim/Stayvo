@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getGuestLinkOpenStatsForLinkIds } from '@/app/actions/guest-link-open-stats';
 import TrackGuestLinksClient from '@/app/dashboard/track/TrackGuestLinksClient';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { sortGuestLinksByCheckoutAsc } from '@/lib/guest-link-sort';
 
 export default async function DashboardTrackPage() {
   const supabase = await createSupabaseServerClient();
@@ -66,10 +67,12 @@ export default async function DashboardTrackPage() {
       : await supabase
           .from('guest_links')
           .select(
-            'id, property_id, guest_name, checkout_date, expires_at, token, created_at, is_permanent'
+            'id, property_id, guest_name, checkout_date, expires_at, token, created_at, is_permanent, link_source'
           )
           .in('property_id', propertyIds)
-          .order('created_at', { ascending: false });
+          .order('checkout_date', { ascending: true, nullsFirst: false });
+
+  const sortedGuestLinks = sortGuestLinksByCheckoutAsc(guestLinks ?? []);
 
   const linkIds = (guestLinks ?? []).map((l) => l.id as string);
   const openStatsByLinkId =
@@ -84,7 +87,7 @@ export default async function DashboardTrackPage() {
 
         <TrackGuestLinksClient
           sections={sections}
-          guestLinks={guestLinks ?? []}
+          guestLinks={sortedGuestLinks}
           guestLinksError={Boolean(guestLinksError)}
           openStatsByLinkId={openStatsByLinkId}
         />

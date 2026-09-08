@@ -15,6 +15,8 @@ import {
   type CustomDetail as GuestCustomDetailStub,
 } from '@/lib/guest-layout';
 import { isVideoStoragePath } from '@/lib/guest-property-media';
+import { extractAirbnbListingFromUrl } from '@/lib/airbnb/extract-listing';
+import { validateAirbnbImportInput } from '@/lib/airbnb/import-input';
 
 function customDetailStubsForSectionOrder(count: number): GuestCustomDetailStub[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -80,6 +82,7 @@ export type PropertyFormInput = {
   socialXUrl?: string;
   socialTiktokUrl?: string;
   socialYoutubeUrl?: string;
+  socialAirbnbUrl?: string;
   /** Own booking site (direct reservations). */
   socialDirectBookingUrl?: string;
 };
@@ -138,6 +141,8 @@ function parseSocialUrlsFromForm(input: PropertyFormInput) {
   if (!tt.ok) return tt;
   const yt = parseHttpUrlForStorage(input.socialYoutubeUrl, 'YouTube');
   if (!yt.ok) return yt;
+  const airbnb = parseHttpUrlForStorage(input.socialAirbnbUrl, 'Airbnb listing');
+  if (!airbnb.ok) return airbnb;
   const booking = parseHttpUrlForStorage(
     input.socialDirectBookingUrl,
     'Direct booking website'
@@ -151,11 +156,47 @@ function parseSocialUrlsFromForm(input: PropertyFormInput) {
       social_x_url: x.value,
       social_tiktok_url: tt.value,
       social_youtube_url: yt.value,
-      social_airbnb_url: null,
+      social_airbnb_url: airbnb.value,
       social_direct_booking_url: booking.value,
     },
   };
 }
+
+export async function importAirbnbListing(url: string) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return {
+      ok: false as const,
+      error: 'Unauthorized',
+    };
+  }
+
+  const validatedInput = validateAirbnbImportInput(url);
+  if (!validatedInput.ok) {
+    return {
+      ok: false as const,
+      error: validatedInput.error,
+    };
+  }
+
+  const result = await extractAirbnbListingFromUrl(validatedInput.url);
+  if (!result.ok) {
+    return {
+      ok: false as const,
+      error: result.error,
+    };
+  }
+
+  return {
+    ok: true as const,
+    result: result.result,
+  };
+}
+
 
 async function nextPropertySortOrderForLocation(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,

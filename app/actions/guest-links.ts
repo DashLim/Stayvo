@@ -1,34 +1,15 @@
 'use server';
 
-import { randomBytes } from 'crypto';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-
-const SHORT_TOKEN_LEN = 6;
-const TOKEN_ALPHABET =
-  'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+import { calculateExpiryIso } from '@/lib/guest-link-expiry';
+import {
+  generateShortGuestLinkToken,
+  isUniqueViolation,
+} from '@/lib/ical/guest-link-tokens';
 
 function normalizeString(value: string | null | undefined) {
   return (value ?? '').trim();
-}
-
-function calculateExpiryIso(checkoutDate: string) {
-  const date = new Date(`${checkoutDate}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime())) {
-    throw new Error('Invalid checkout date.');
-  }
-  date.setUTCDate(date.getUTCDate() + 2);
-  date.setUTCHours(23, 59, 59, 999);
-  return date.toISOString();
-}
-
-function generateShortToken() {
-  const bytes = randomBytes(SHORT_TOKEN_LEN);
-  let out = '';
-  for (let i = 0; i < SHORT_TOKEN_LEN; i++) {
-    out += TOKEN_ALPHABET[bytes[i]! % TOKEN_ALPHABET.length];
-  }
-  return out;
 }
 
 function sanitizeCustomToken(raw: string) {
@@ -40,14 +21,6 @@ function sanitizeCustomToken(raw: string) {
     );
   }
   return t;
-}
-
-function isUniqueViolation(message: string) {
-  return (
-    message.includes('duplicate') ||
-    message.includes('unique') ||
-    message.includes('23505')
-  );
 }
 
 export async function generateGuestLink(input: {
@@ -98,7 +71,7 @@ export async function generateGuestLink(input: {
   let lastError: string | null = null;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const token = custom ?? generateShortToken();
+    const token = custom ?? generateShortGuestLinkToken();
     const expiresAt = isPermanent ? null : calculateExpiryIso(checkoutDate);
     const checkoutDb = isPermanent ? null : checkoutDate;
 
@@ -109,6 +82,7 @@ export async function generateGuestLink(input: {
       expires_at: expiresAt,
       token,
       is_permanent: isPermanent,
+      link_source: 'manual',
     });
 
     if (!insertError) {
@@ -206,6 +180,161 @@ export async function extendGuestLink(input: {
 
   revalidatePath('/dashboard');
   return { ok: true as const, token: link.token, expiresAt };
+}
+
+export async function updateGuestLinkGuestName(input: {
+  linkId: string;
+  guestName: string;
+}) {
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return { ok: false as const, error: 'Unauthorized.' };
+  }
+
+  const linkId = normalizeString(input.linkId);
+  if (!linkId) return { ok: false as const, error: 'Link is required.' };
+
+  const { data: link, error: linkError } = await supabase
+    .from('guest_links')
+    .select('id, property_id')
+    .eq('id', linkId)
+    .maybeSingle();
+
+  if (linkError || !link) {
+    return { ok: false as const, error: 'Guest link not found.' };
+  }
+
+  const { data: property, error: propertyError } = await supabase
+    .from('properties')
+    .select('id')
+    .eq('id', link.property_id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (propertyError || !property) {
+    return { ok: false as const, error: 'You cannot update this link.' };
+  }
+
+  const guestName = normalizeString(input.guestName);
+
+  const { error: updateError } = await supabase
+    .from('guest_links')
+    .update({ guest_name: guestName || null })
+    .eq('id', link.id);
+
+  if (updateError) {
+    return { ok: false as const, error: updateError.message };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/track');
+  return { ok: true as const };
+}
+
+export async function updateGuestLink(input: {
+  linkId: string;
+  guestName: string;
+  checkoutDate: string;
+  isPermanent: boolean;
+  customToken?: string;
+}) {
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return { ok: false as const, error: 'Unauthorized.' };
+  }
+
+  const linkId = normalizeString(input.linkId);
+  const guestName = normalizeString(input.guestName);
+  const checkoutDate = normalizeString(input.checkoutDate);
+  const isPermanent = Boolean(input.isPermanent);
+
+  if (!linkId) return { ok: false as const, error: 'Link is required.' };
+  if (!isPermanent && !checkoutDate) {
+    return { ok: false as const, error: 'Checkout date is required.' };
+  }
+
+  const { data: link, error: linkError } = await supabase
+    .from('guest_links')
+    .select('id, property_id, token')
+    .eq('id', linkId)
+    .maybeSingle();
+
+  if (linkError || !link) {
+    return { ok: false as const, error: 'Guest link not found.' };
+  }
+
+  const { data: property, error: propertyError } = await supabase
+    .from('properties')
+    .select('id')
+    .eq('id', link.property_id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (propertyError || !property) {
+    return { ok: false as const, error: 'You cannot update this link.' };
+  }
+
+  let nextToken = link.token as string;
+  const rawCustom = normalizeString(input.customToken ?? '');
+  if (rawCustom && rawCustom !== link.token) {
+    try {
+      const sanitized = sanitizeCustomToken(rawCustom);
+      if (!sanitized) {
+        return { ok: false as const, error: 'Custom link is invalid.' };
+      }
+      nextToken = sanitized;
+    } catch (e: unknown) {
+      return {
+        ok: false as const,
+        error: e instanceof Error ? e.message : 'Invalid custom link.',
+      };
+    }
+
+    const { data: taken } = await supabase
+      .from('guest_links')
+      .select('id')
+      .eq('token', nextToken)
+      .neq('id', link.id)
+      .maybeSingle();
+
+    if (taken) {
+      return {
+        ok: false as const,
+        error: 'That custom link is already taken. Choose another.',
+      };
+    }
+  }
+
+  const payload = {
+    guest_name: guestName || null,
+    is_permanent: isPermanent,
+    checkout_date: isPermanent ? null : checkoutDate,
+    expires_at: isPermanent ? null : calculateExpiryIso(checkoutDate),
+    token: nextToken,
+  };
+
+  const { error: updateError } = await supabase
+    .from('guest_links')
+    .update(payload)
+    .eq('id', link.id);
+
+  if (updateError) {
+    return { ok: false as const, error: updateError.message };
+  }
+
+  revalidatePath('/dashboard');
+  revalidatePath('/dashboard/track');
+  return { ok: true as const, token: nextToken };
 }
 
 export async function deleteGuestLink(input: { linkId: string }) {

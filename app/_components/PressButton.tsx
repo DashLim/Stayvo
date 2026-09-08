@@ -12,8 +12,9 @@ type Props = ComponentProps<'button'>;
 export default function PressButton({ children, className = '', ...props }: Props) {
   return (
     <motion.button
-      whileTap={{ scale: 0.92 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      whileTap={{ scale: 0.91 }}
+      whileHover={{ scale: 1.03 }}
+      transition={{ type: 'spring', stiffness: 600, damping: 22 }}
       className={className}
       {...(props as object)}
     >
