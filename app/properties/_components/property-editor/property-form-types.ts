@@ -1,0 +1,84 @@
+import type { DragEndEvent, SensorDescriptor, SensorOptions } from '@dnd-kit/core';
+import type {
+  CheckInStepInput,
+  CustomDetailInput,
+  FaqInput,
+  HouseRuleInput,
+} from '@/app/actions/properties';
+import type { PropertyFormProps } from '@/app/properties/_components/PropertyForm';
+
+export type PropertyFormModuleSharedProps = PropertyFormProps & {
+  customBlocksCap: number;
+  mediaAllowVideo: boolean;
+  formRef: React.RefObject<HTMLFormElement | null>;
+  error: string | null;
+  success: string | null;
+  submitting: boolean;
+  deleting: boolean;
+  propertyName: string;
+  setPropertyName: (v: string) => void;
+  internalName: string;
+  setInternalName: (v: string) => void;
+  fullAddress: string;
+  setFullAddress: (v: string) => void;
+  googleMapsUrl: string;
+  setGoogleMapsUrl: (v: string) => void;
+  wazeUrl: string;
+  setWazeUrl: (v: string) => void;
+  parkingDetails: string;
+  setParkingDetails: (v: string) => void;
+  wifiNetworkName: string;
+  setWifiNetworkName: (v: string) => void;
+  wifiPassword: string;
+  setWifiPassword: (v: string) => void;
+  checkInInstructions: CheckInStepInput[];
+  setCheckInInstructions: React.Dispatch<React.SetStateAction<CheckInStepInput[]>>;
+  houseRules: HouseRuleInput[];
+  setHouseRules: React.Dispatch<React.SetStateAction<HouseRuleInput[]>>;
+  faqs: FaqInput[];
+  setFaqs: React.Dispatch<React.SetStateAction<FaqInput[]>>;
+  customDetails: CustomDetailInput[];
+  setCustomDetails: React.Dispatch<React.SetStateAction<CustomDetailInput[]>>;
+  guestSectionOrder: string[];
+  setGuestSectionOrder: React.Dispatch<React.SetStateAction<string[]>>;
+  middleSectionKeys: string[];
+  sectionOrderSensors: SensorDescriptor<SensorOptions>[];
+  onSectionDragEnd: (event: DragEndEvent) => void;
+  hostName: string;
+  setHostName: (v: string) => void;
+  hostWhatsappNumber: string;
+  setHostWhatsappNumber: (v: string) => void;
+  hostWhatsappChatNumber: string;
+  setHostWhatsappChatNumber: (v: string) => void;
+  isLive: boolean;
+  setIsLive: (v: boolean) => void;
+  heroImagePath: string;
+  setHeroImagePath: (v: string) => void;
+  socialFacebookUrl: string;
+  setSocialFacebookUrl: (v: string) => void;
+  socialInstagramUrl: string;
+  setSocialInstagramUrl: (v: string) => void;
+  socialXUrl: string;
+  setSocialXUrl: (v: string) => void;
+  socialTiktokUrl: string;
+  setSocialTiktokUrl: (v: string) => void;
+  socialYoutubeUrl: string;
+  setSocialYoutubeUrl: (v: string) => void;
+  socialAirbnbUrl: string;
+  setSocialAirbnbUrl: (v: string) => void;
+  socialDirectBookingUrl: string;
+  setSocialDirectBookingUrl: (v: string) => void;
+  airbnbImportUrl: string;
+  setAirbnbImportUrl: (v: string) => void;
+  airbnbImporting: boolean;
+  airbnbImportError: string | null;
+  airbnbImportNotes: string[];
+  airbnbImportSummary: string | null;
+  onImportAirbnb: () => void | Promise<void>;
+  locationId: string;
+  setLocationId: (v: string) => void;
+  locationName: string;
+  setLocationName: (v: string) => void;
+  onDeleteProperty: () => void | Promise<void>;
+  checkinStepsLimit: number;
+};
