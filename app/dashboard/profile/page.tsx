@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import ProfileClient from '@/app/dashboard/profile/ProfileClient';
+import { hasCheckInAccessForAuthUser } from '@/lib/check-in-access';
 import { getHostTier } from '@/lib/host-plan';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
@@ -19,7 +20,8 @@ export default async function DashboardProfilePage({
   if (userError || !user) redirect('/login?redirect=/dashboard/profile');
 
   const meta = user.user_metadata as { host_display_name?: string } | null;
-  const hostTier = await getHostTier(supabase, user.id);
+  const billingTier = await getHostTier(supabase, user.id);
+  const checkInAccess = hasCheckInAccessForAuthUser(user.id);
 
   const { data: planRow } = await supabase
     .from('host_plan')
@@ -33,7 +35,7 @@ export default async function DashboardProfilePage({
   } | null;
 
   const hasStripeCustomer = Boolean(plan?.stripe_customer_id?.trim());
-  const canManageSubscription = hostTier === 'pro' && hasStripeCustomer;
+  const canManageSubscription = billingTier === 'pro' && hasStripeCustomer;
   const paymentPastDue = plan?.subscription_status === 'past_due';
 
   const sp = await (searchParams ?? Promise.resolve({} as { checkout?: string }));
@@ -48,7 +50,8 @@ export default async function DashboardProfilePage({
       <ProfileClient
         email={user.email ?? ''}
         initialHostName={(meta?.host_display_name as string | undefined) ?? ''}
-        hostTier={hostTier}
+        checkInAccess={checkInAccess}
+        billingTier={billingTier}
         checkoutBanner={checkoutBanner}
         canManageSubscription={canManageSubscription}
         paymentPastDue={paymentPastDue}

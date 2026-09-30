@@ -1,8 +1,9 @@
 export type HostTier = 'free' | 'pro';
 
 /**
- * Stayvo Check-in entitlements (Phase 2): all authenticated hosts get full product features.
- * {@link getHostTier} in lib/host-plan.ts remains for billing/profile/Stripe only.
+ * Stayvo Check-in entitlements: limits and flags for product features.
+ * Access is granted by Supabase Auth session (`lib/check-in-access.ts`), not by Free/Pro billing.
+ * {@link getHostTier} in lib/host-plan.ts is legacy Stripe billing only.
  */
 
 /** Max custom blocks per property for every Check-in user (former Pro cap). */

@@ -60,6 +60,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname;
+  // Stayvo Check-in host routes: Supabase Auth session required (see docs/stayvo-identity.md).
   const isProtected =
     pathname.startsWith('/dashboard') || pathname.startsWith('/properties');
 

@@ -26,14 +26,16 @@ import {
 export default function ProfileClient({
   email,
   initialHostName,
-  hostTier,
+  checkInAccess,
+  billingTier,
   checkoutBanner,
   canManageSubscription = false,
   paymentPastDue = false,
 }: {
   email: string;
   initialHostName: string;
-  hostTier: HostTier;
+  checkInAccess: boolean;
+  billingTier: HostTier;
   checkoutBanner?: null | 'success' | 'canceled';
   canManageSubscription?: boolean;
   paymentPastDue?: boolean;
@@ -258,9 +260,25 @@ export default function ProfileClient({
         id="plan"
         className={`${stayvoCardGlassClass} scroll-mt-24 p-4 md:p-6`}
       >
-        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Plan</h2>
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Stayvo Check-in access</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          {hostTier === 'pro' ? (
+          {checkInAccess ? (
+            <>
+              Your account has{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                full Stayvo Check-in access
+              </span>{' '}
+              (properties, guest links, guest portal content, iCal, and related host tools).
+            </>
+          ) : (
+            <>Sign in to use Stayvo Check-in.</>
+          )}
+        </p>
+        <h3 className={`${stayvoSectionTitleClass} mt-6 text-sm md:text-base`}>
+          Legacy billing (Stripe)
+        </h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          {billingTier === 'pro' ? (
             <>
               You have an active{' '}
               <span className="font-semibold text-slate-800 dark:text-slate-200">
@@ -283,13 +301,13 @@ export default function ProfileClient({
           in guest portals, up to 15 custom blocks per property, guest links, and iCal sync. A paid
           plan is not required for these features.
         </p>
-        {hostTier === 'free' ? (
+        {billingTier === 'free' ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
             Optional legacy Stayvo Pro checkout below is for billing compatibility only — not required
             for Check-in.
           </p>
         ) : null}
-        {hostTier === 'free' ? (
+        {billingTier === 'free' ? (
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <PressButton
               type="button"
@@ -324,7 +342,7 @@ export default function ProfileClient({
               Manage subscription
             </PressButton>
           </>
-        ) : hostTier === 'pro' ? (
+        ) : billingTier === 'pro' ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
             Billing was set up outside Stripe checkout. Contact{' '}
             <a
