@@ -1,5 +1,5 @@
 /**
- * Stayvo Check-in **product access** (distinct from Stripe `host_plan` billing tier).
+ * Stayvo Check-in **product access** (distinct from legacy billing records).
  *
  * Today: any authenticated Supabase Auth user (`auth.users.id`) has full Check-in access.
  * Future: access may be granted or revoked via Stayvo Core provisioning → Supabase identity mapping.

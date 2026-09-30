@@ -17,11 +17,12 @@ Stayvo Check-in
 - Host-facing data (properties, locations, guest links, media, iCal) is scoped by **`user_id` = `auth.uid()`** in Postgres RLS.
 - Optional profile hint **`host_display_name`** is stored on **`auth.users` user metadata** (not a separate profiles table).
 
-**Legacy Stripe (transitional — cleanup pending)**
+**Legacy billing (database wind-down only)**
 
-- **`POST /api/stripe/checkout`** — disabled (410); new Pro checkout is not offered (`lib/stripe-legacy-billing.ts`).
-- **`POST /api/stripe/portal`** and **`POST /api/webhooks/stripe`** — retained temporarily for legacy billing records and Stripe sync.
-- **`host_plan`** table and signup trigger — retained temporarily; not used for Check-in feature gates. The app UI no longer exposes Pro/tier or legacy billing controls. Stripe portal reads `host_plan.stripe_customer_id`; webhooks upsert billing fields via service role (`lib/stripe-sync-host-plan.ts`). See `docs/legacy-billing-wind-down.md`.
+- Stripe checkout, Customer Portal, and webhook **routes have been removed** from this application. The Stripe Dashboard webhook is disabled; no new subscriptions can be created.
+- **`public.host_plan`** and the signup trigger **`on_auth_user_created_host_plan`** may still exist in **live Supabase** until migration **`0024_remove_legacy_host_plan.sql`** is applied (prepared in repo, not applied from this project step).
+- Historical billing rows were archived to **`public.host_plan_archive_20260930`** (retain; do not drop with `host_plan` cleanup).
+- Check-in feature limits are fixed in **`lib/host-tier.ts`** (not tied to `host_plan.tier`). See **`docs/legacy-billing-wind-down.md`**.
 
 ```
 Stayvo Core (separate product — not in this repo)
@@ -48,14 +49,11 @@ This layer will decide when a Core user receives Check-in access and how their h
 | Session refresh & route protection | `lib/supabase/middleware.ts`, `proxy.ts` |
 | Server Supabase client | `lib/supabase/server.ts` |
 | Check-in product access | `lib/check-in-access.ts` |
-| Legacy billing sync (server/Stripe only) | `host_plan` table, `lib/stripe-sync-host-plan.ts`, portal/webhook routes |
 | Check-in entitlements (limits) | `lib/host-tier.ts` |
 | Dashboard host context | `app/dashboard/_components/CheckInHostProvider.tsx` |
 | Profile (Check-in access only) | `app/dashboard/profile/*` |
-| Legacy checkout (disabled) | `POST /api/stripe/checkout` → 410; see `lib/stripe-legacy-billing.ts` |
-| Legacy portal (temporary) | `POST /api/stripe/portal` |
-| Legacy Stripe webhooks (temporary) | `POST /api/webhooks/stripe` |
 | Guest portal access | Token-based `/stay/[token]` — **unchanged**; not Supabase host auth |
+| Legacy billing DB cleanup (pending apply) | `supabase/migrations/0024_remove_legacy_host_plan.sql` |
 
 ## Coupling that affects future identity mapping
 
@@ -67,7 +65,7 @@ These are intentional today but will need design when Core provisioning exists:
 
 3. **`host_display_name` in user metadata** — Convenient for guest URL slugs; provisioning should set or validate this when creating/linking users.
 
-4. **`host_plan.user_id` → auth.users** — Billing is tied to the same UUID. Core provisioning should not conflate “has Check-in access” with “has Pro subscription.”
+4. **Legacy `host_plan` (until migration applied)** — New signups may still receive a default `host_plan` row from the auth trigger in live DB. Core provisioning should not conflate “has Check-in access” with historical Pro billing.
 
 5. **Account deletion** — `deleteHostAccount` removes the Supabase Auth user via service role; Core-side lifecycle must stay coordinated externally until a unified account model exists.
 
@@ -76,5 +74,5 @@ These are intentional today but will need design when Core provisioning exists:
 ## Phase boundaries
 
 - **Check-in access foundation:** Supabase Auth; Check-in access separate from billing; no Firebase in this repo.
-- **Billing wind-down (in progress):** Checkout disabled; portal/webhook/`host_plan` retained until infrastructure removal is approved.
+- **Billing wind-down:** Application Stripe infrastructure removed; webhook disabled; archive exported; **`0024`** pending apply on Supabase.
 - **Not implemented:** Stayvo Core (Firebase Auth, separate database, provisioning/identity mapping API).

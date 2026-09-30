@@ -4,18 +4,16 @@ globs:
   - app/terms/page.tsx
   - app/privacy/page.tsx
   - lib/support-email.ts
-  - lib/stripe-server.ts
-  - app/api/stripe/**
-  - lib/stripe-*.ts
   - lib/host-tier.ts
   - docs/legacy-billing-wind-down.md
+  - docs/legal-pages-checklist.md
 ---
 
 # Legal pages
 
 Stayvo legal copy: `app/terms/page.tsx`, `app/privacy/page.tsx`, support email in `lib/support-email.ts`.
 
-When changing **pricing, Stripe/billing, subscription tiers, data collection, subprocessors, account deletion, or support contact**:
+When changing **pricing, billing, subscription tiers, data collection, subprocessors, account deletion, or support contact**:
 
 1. Read `docs/legal-pages-checklist.md` and update the affected legal section(s).
 2. Bump `LAST_UPDATED` on each edited legal page.

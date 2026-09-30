@@ -50,11 +50,11 @@ export default function PrivacyPolicyPage() {
                 <span className="font-medium text-slate-900 dark:text-slate-100">
                   Subscription and billing data:
                 </span>{' '}
-                Stayvo Check-in does not require a paid subscription. For accounts with legacy billing
-                on file, we may store plan tier and subscription status, billing period end date, Stripe
-                customer and subscription identifiers, and billing interval (monthly or annual). Payment
-                card numbers and card security codes are collected and stored by Stripe, not on Stayvo
-                servers.
+                Stayvo Check-in does not require a paid subscription. For accounts that previously had
+                legacy billing, we may retain or have retained plan tier and subscription status, billing
+                period end date, Stripe customer and subscription identifiers, and billing interval
+                (monthly or annual), including in archived records. Payment card numbers and card security
+                codes were collected and stored by Stripe, not on Stayvo servers.
               </li>
               <li>
                 <span className="font-medium text-slate-900 dark:text-slate-100">Property and content data:</span>{' '}
@@ -83,8 +83,8 @@ export default function PrivacyPolicyPage() {
               <li>Support account security, fraud prevention, and abuse detection.</li>
               <li>Provide analytics and operational reporting to hosts.</li>
               <li>
-                Process legacy subscription billing, payments, renewals, and cancellations through our
-                payment provider where applicable.
+                Respond to legacy subscription billing questions and support requests relating to
+                historical paid plans where applicable.
               </li>
               <li>Comply with legal obligations and enforce our terms.</li>
             </ul>
@@ -112,9 +112,10 @@ export default function PrivacyPolicyPage() {
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Payments:</span> Legacy
-              paid subscriptions were processed by Stripe, Inc. Stripe may still receive payment method
-              details, billing address where provided, and transaction information for accounts with
-              billing on file. Stripe&apos;s use of your
+              paid subscriptions were processed by Stripe, Inc. Stayvo Check-in no longer integrates with
+              Stripe for new billing. Stripe may retain payment method details, billing address where
+              provided, and transaction information according to its policies for historical transactions.
+              Stripe&apos;s use of your
               data is also governed by{' '}
               <a
                 href="https://stripe.com/privacy"

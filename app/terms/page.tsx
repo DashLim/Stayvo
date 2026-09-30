@@ -146,8 +146,8 @@ export default function TermsOfServicePage() {
               through Stripe. That billing was separate from Check-in features and was{' '}
               <span className="font-medium">not</span> required to use Stayvo Check-in. Historically,
               monthly billing was USD $9 per month and annual billing was USD $90 per year where those
-              plans were offered. If legacy billing still applies to your account, you may manage it as
-              described below.
+              plans were offered. If you have questions about historical Stayvo Pro billing on your
+              account, contact support as described below.
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Payment processing.</span>{' '}
@@ -203,9 +203,16 @@ export default function TermsOfServicePage() {
               lapsed.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">Plan changes.</span> If
-              legacy billing applies, you may switch between monthly and annual billing where offered in
-              the Stripe billing portal, subject to Stripe&apos;s rules and any proration Stripe applies.
+              <span className="font-medium text-slate-900 dark:text-slate-100">Plan changes.</span>{' '}
+              Legacy monthly or annual plan changes are no longer self-served in Stayvo Check-in. For
+              questions about historical billing intervals or plan changes, contact{' '}
+              <a
+                href={SUPPORT_MAILTO}
+                className="font-medium text-brand underline-offset-2 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+              .
             </p>
           </section>
 

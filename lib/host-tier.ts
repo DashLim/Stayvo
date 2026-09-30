@@ -1,9 +1,6 @@
-/** Legacy Stripe `host_plan.tier` values (billing only — not Check-in feature gates). */
-export type HostTier = 'free' | 'pro';
-
 /**
  * Stayvo Check-in entitlements: limits and flags for product features.
- * Access is granted by Supabase Auth session (`lib/check-in-access.ts`), not by billing tier.
+ * Access is granted by Supabase Auth session (`lib/check-in-access.ts`), not billing tier.
  */
 
 /** Max custom blocks per property for every Check-in user. */
