@@ -268,7 +268,7 @@ export default function LoginPageClient() {
 
           <PressButton
             disabled={submitting || !supabase || !agreedToLegal}
-            className={`w-full rounded-xl ${stayvoBtnPrimaryClass} disabled:opacity-60`}
+            className={`w-full ${stayvoBtnPrimaryClass} disabled:opacity-60`}
           >
             {submitting
               ? 'Please wait...'

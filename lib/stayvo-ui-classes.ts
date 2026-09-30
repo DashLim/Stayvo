@@ -1,52 +1,79 @@
 /**
- * Shared Tailwind class strings for Stayvo Check-in.
- * Prefer semantic colors (background, border, primary, …) backed by CSS variables in globals.css.
+ * Shared Tailwind class recipes for Stayvo Check-in.
+ * Host/admin recipes follow Stayvo Core geometry and semantics (see docs/check-in-core-design-parity.md).
+ * Guest-portal-specific recipes are kept separate where the warm marketing feel differs.
  */
 
-export const stayvoCardClass =
-  'rounded-2xl border border-border bg-card text-card-foreground shadow-sm';
+/** Host/admin opaque panel (Core card pattern) */
+export const stayvoHostCardClass =
+  'rounded-lg border border-border bg-card text-card-foreground shadow-sm';
 
-export const stayvoCardGlassClass = 'glass rounded-2xl';
+/** @deprecated Prefer stayvoHostCardClass; kept as alias for incremental migration */
+export const stayvoCardClass = stayvoHostCardClass;
 
-/** Collapsible CMS / property form sections */
-export const stayvoFormSectionClass =
-  'stayvo-form-section';
+/** Host surfaces use opaque cards — not glass */
+export const stayvoCardGlassClass = stayvoHostCardClass;
 
-export const stayvoFormSectionElevatedClass =
-  'stayvo-form-section stayvo-form-section--elevated';
+export const stayvoFormSectionClass = 'stayvo-form-section';
 
+export const stayvoFormSectionElevatedClass = 'stayvo-form-section stayvo-form-section--elevated';
+
+/** Core-compatible control height and radius (h-10, rounded-md) */
 export const stayvoInputClass =
-  'stayvo-input';
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:[color-scheme:dark]';
 
-export const stayvoInputPillClass =
-  'stayvo-input stayvo-input--pill';
+/** Pill inputs removed from host direction — same as standard input */
+export const stayvoInputPillClass = stayvoInputClass;
 
 export const stayvoTextareaClass =
-  'stayvo-textarea';
+  'flex min-h-[80px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+
+export const stayvoLabelClass = 'text-sm font-medium leading-none text-foreground';
 
 export const stayvoBtnPrimaryClass =
-  'inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
+  'inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
 
 export const stayvoBtnSecondaryClass =
-  'inline-flex items-center justify-center rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50';
+  'inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
 
+export const stayvoBtnGhostClass =
+  'inline-flex h-10 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+
+export const stayvoBtnIconClass =
+  'inline-flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+
+/** Major host headings — Cormorant editorial */
 export const stayvoPageTitleClass =
-  'text-lg font-semibold tracking-tight text-foreground md:text-2xl';
+  'font-serif text-2xl font-light tracking-tight text-foreground md:text-3xl';
 
 export const stayvoSectionTitleClass =
-  'text-base font-semibold tracking-tight text-foreground';
+  'font-serif text-xl font-light tracking-tight text-foreground md:text-2xl';
 
 export const stayvoMutedTextClass = 'text-sm text-muted-foreground';
 
+export const stayvoKickerClass =
+  'text-xs font-medium uppercase tracking-wider text-muted-foreground';
+
+/** Guest portal card — warm rounded marketing surface */
 export const stayvoGuestCardClass = 'stayvo-guest-card';
 
 export const stayvoAuthPanelClass = 'stayvo-auth-panel';
 
+/** Core-like host chrome */
+export const stayvoHostHeaderClass =
+  'sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/80';
+
+export const stayvoHostMainClass = 'mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 sm:p-6 lg:p-8';
+
 export const stayvoSidebarClass =
-  'sticky top-0 z-40 hidden h-screen min-h-[100dvh] w-[220px] shrink-0 flex-col border-r border-border bg-sidebar backdrop-blur-xl md:flex';
+  'sticky top-0 z-40 hidden h-screen min-h-[100dvh] w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex';
 
 export const stayvoNavLinkActiveClass =
-  'bg-primary font-bold text-primary-foreground shadow-sm';
+  'bg-sidebar-accent font-medium text-sidebar-accent-foreground';
 
 export const stayvoNavLinkClass =
-  'text-foreground/85 hover:bg-muted/80 dark:hover:bg-muted/40';
+  'text-sidebar-foreground/80 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground';
+
+/** Dialog / modal content shell (non-Radix fallback) */
+export const stayvoModalPanelClass =
+  'w-full max-w-lg rounded-lg border border-border bg-background p-6 text-foreground shadow-lg';

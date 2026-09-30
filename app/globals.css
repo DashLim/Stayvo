@@ -9,23 +9,39 @@
   --bg-glow: rgba(224, 162, 77, 0.12);
   --text-base: #0f172a;
 
-  /* Semantic tokens (Stayvo ecosystem — primary stays amber/gold) */
-  --background: #fdf6ec;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --muted: #f4ede4;
-  --muted-foreground: #64748b;
-  --border: rgba(15, 23, 42, 0.1);
-  --input: rgba(15, 23, 42, 0.12);
-  --ring: #E0A24D;
-  --primary: #E0A24D;
-  --primary-foreground: #422006;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --success: #059669;
-  --success-foreground: #ffffff;
-  --sidebar: rgba(253, 246, 236, 0.94);
+  /* Semantic tokens — HSL components for Tailwind (guest/marketing defaults stay warm) */
+  --background: 36 85% 96%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --muted: 36 30% 93%;
+  --muted-foreground: 215 16% 47%;
+  --secondary: 36 25% 92%;
+  --secondary-foreground: 222 47% 11%;
+  --accent: 37 70% 59%;
+  --accent-foreground: 25 83% 14%;
+  --border: 36 20% 88%;
+  --input: 36 18% 85%;
+  --ring: 37 70% 59%;
+  --primary: 37 70% 59%;
+  --primary-foreground: 25 83% 14%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+  --radius: 0.25rem;
+
+  --sidebar-background: 36 85% 96%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 222 47% 11%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 36 30% 93%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 36 20% 88%;
+  --sidebar-ring: 37 70% 59%;
+
   --guest-surface-from: #fdf6ec;
   --guest-surface-to: #faf0dc;
 
@@ -53,24 +69,104 @@ html.stayvo-guest-cookie-open .guest-portal-legal-footer--no-quick-nav {
   --bg-glow: rgba(224, 162, 77, 0.07);
   --text-base: #f1efe9;
 
-  --background: #111014;
-  --foreground: #f1efe9;
-  --card: #1c1d21;
-  --card-foreground: #f1efe9;
-  --muted: #252329;
-  --muted-foreground: #94a3b8;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.14);
-  --ring: #E0A24D;
-  --primary: #E0A24D;
-  --primary-foreground: #fef3c7;
-  --destructive: #f87171;
-  --destructive-foreground: #1c1917;
-  --success: #34d399;
-  --success-foreground: #022c22;
-  --sidebar: rgba(17, 16, 20, 0.94);
+  --background: 240 6% 7%;
+  --foreground: 40 14% 93%;
+  --card: 220 8% 12%;
+  --card-foreground: 40 14% 93%;
+  --popover: 220 8% 12%;
+  --popover-foreground: 40 14% 93%;
+  --muted: 240 5% 16%;
+  --muted-foreground: 215 20% 65%;
+  --secondary: 240 5% 18%;
+  --secondary-foreground: 40 14% 93%;
+  --accent: 37 70% 59%;
+  --accent-foreground: 48 96% 89%;
+  --border: 240 4% 22%;
+  --input: 240 4% 26%;
+  --ring: 37 70% 59%;
+  --primary: 37 70% 59%;
+  --primary-foreground: 48 96% 89%;
+  --destructive: 0 91% 71%;
+  --destructive-foreground: 24 10% 10%;
+  --success: 160 84% 39%;
+  --success-foreground: 166 76% 9%;
+
+  --sidebar-background: 240 6% 7%;
+  --sidebar-foreground: 40 14% 93%;
+  --sidebar-primary: 40 14% 93%;
+  --sidebar-primary-foreground: 240 6% 7%;
+  --sidebar-accent: 240 5% 16%;
+  --sidebar-accent-foreground: 40 14% 93%;
+  --sidebar-border: 240 4% 22%;
+  --sidebar-ring: 37 70% 59%;
+
   --guest-surface-from: #1a1812;
   --guest-surface-to: #14120f;
+}
+
+/**
+ * Host/admin shell — Core-compatible neutral surface + Check-in primary (#E0A24D).
+ * Scoped via HostShell (.stayvo-host); guest routes keep :root warm tokens.
+ */
+.stayvo-host {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 21%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 21%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 21%;
+  --muted: 30 12% 94%;
+  --muted-foreground: 0 0% 40%;
+  --secondary: 30 12% 94%;
+  --secondary-foreground: 0 0% 21%;
+  --accent: 37 70% 59%;
+  --accent-foreground: 0 0% 100%;
+  --border: 30 10% 88%;
+  --input: 30 10% 88%;
+  --ring: 37 70% 59%;
+  --primary: 37 70% 59%;
+  --primary-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 0 0% 21%;
+  --sidebar-primary: 0 0% 21%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 30 12% 94%;
+  --sidebar-accent-foreground: 0 0% 21%;
+  --sidebar-border: 30 10% 88%;
+  --sidebar-ring: 37 70% 59%;
+
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.dark .stayvo-host {
+  --background: 0 0% 20.8%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 24%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 24%;
+  --popover-foreground: 0 0% 100%;
+  --muted: 0 0% 28%;
+  --muted-foreground: 0 0% 75%;
+  --secondary: 0 0% 28%;
+  --secondary-foreground: 0 0% 100%;
+  --accent: 37 70% 59%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 30%;
+  --input: 0 0% 30%;
+  --ring: 37 70% 59%;
+  --primary: 37 70% 59%;
+  --primary-foreground: 0 0% 100%;
+
+  --sidebar-background: 0 0% 24%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 28%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 0 0% 30%;
+  --sidebar-ring: 37 70% 59%;
 }
 
 html {
@@ -191,15 +287,15 @@ body {
   }
 
   .glass-header {
-    background: color-mix(in srgb, var(--sidebar) 88%, transparent);
+    background: color-mix(in srgb, hsl(var(--sidebar-background)) 88%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+    border-bottom: 1px solid color-mix(in srgb, hsl(var(--primary)) 18%, hsl(var(--border)));
   }
 
   .dark .glass-header {
-    background: color-mix(in srgb, var(--sidebar) 92%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+    background: color-mix(in srgb, hsl(var(--sidebar-background)) 92%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, hsl(var(--primary)) 14%, hsl(var(--border)));
   }
 }
 
@@ -214,23 +310,19 @@ body {
 
 @layer components {
   .stayvo-form-section {
-    @apply rounded-[20px] border border-border bg-card/95 p-4 backdrop-blur-sm md:rounded-2xl md:p-6 md:shadow-sm;
+    @apply rounded-lg border border-border bg-card p-4 shadow-sm md:p-6;
   }
 
   .stayvo-form-section--elevated {
-    @apply md:ring-1 md:ring-border/60;
+    @apply ring-1 ring-border/60;
   }
 
   .stayvo-input {
-    @apply w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/45 disabled:opacity-50 dark:[color-scheme:dark];
-  }
-
-  .stayvo-input--pill {
-    @apply rounded-full;
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:[color-scheme:dark];
   }
 
   .stayvo-textarea {
-    @apply w-full resize-y rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/45;
+    @apply flex min-h-[80px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .stayvo-guest-card {

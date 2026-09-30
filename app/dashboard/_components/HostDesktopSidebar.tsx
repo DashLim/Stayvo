@@ -74,11 +74,13 @@ export default function HostDesktopSidebar({
                 href={tab.href}
                 prefetch
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active ? stayvoNavLinkActiveClass : stayvoNavLinkClass
                 }`}
               >
-                <span className={active ? 'text-primary-foreground' : 'text-muted-foreground'}>{tab.icon}</span>
+                <span className={active ? 'text-sidebar-accent-foreground' : 'text-muted-foreground'}>
+                  {tab.icon}
+                </span>
                 {tab.label}
               </Link>
             );

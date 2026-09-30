@@ -1,5 +1,7 @@
+import HostShell from '@/app/_components/HostShell';
+
 export default function PropertiesLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-base)]">{children}</div>
+    <HostShell className="min-h-screen w-full bg-muted/20">{children}</HostShell>
   );
 }
