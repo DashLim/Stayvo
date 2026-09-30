@@ -45,6 +45,12 @@ export default async function DashboardProfilePage({
   if (checkoutParam === 'success') checkoutBanner = 'success';
   else if (checkoutParam === 'canceled') checkoutBanner = 'canceled';
 
+  const showLegacyBilling =
+    billingTier === 'pro' ||
+    paymentPastDue ||
+    canManageSubscription ||
+    checkoutBanner != null;
+
   return (
     <main className="py-10">
       <ProfileClient
@@ -52,6 +58,7 @@ export default async function DashboardProfilePage({
         initialHostName={(meta?.host_display_name as string | undefined) ?? ''}
         checkInAccess={checkInAccess}
         billingTier={billingTier}
+        showLegacyBilling={showLegacyBilling}
         checkoutBanner={checkoutBanner}
         canManageSubscription={canManageSubscription}
         paymentPastDue={paymentPastDue}

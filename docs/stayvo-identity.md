@@ -15,7 +15,7 @@ Stayvo Check-in
 - **Check-in product access** is modeled separately from billing: any signed-in Supabase user with a non-empty `auth.users.id` has full Check-in features (`lib/check-in-access.ts`).
 - Host-facing data (properties, locations, guest links, media, iCal) is scoped by **`user_id` = `auth.uid()`** in Postgres RLS.
 - Optional profile hint **`host_display_name`** is stored on **`auth.users` user metadata** (not a separate profiles table).
-- **Legacy billing** (optional, wind-down phase): `host_plan` + Stripe reflect a **Free/Pro subscription record**, not Check-in feature gates. See `lib/host-plan.ts` and Profile → Plan.
+- **Legacy billing** (wind-down): `host_plan` + Stripe record old subscriptions only. **Not** a Check-in product tier. Profile shows a **Legacy billing** section only for existing subscribers. See `lib/host-plan.ts`.
 
 ```
 Stayvo Core (separate product — not in this repo)
@@ -45,7 +45,7 @@ This layer will decide when a Core user receives Check-in access and how their h
 | Billing tier (Stripe UI only) | `lib/host-plan.ts`, `host_plan` table |
 | Check-in entitlements (limits) | `lib/host-tier.ts` |
 | Dashboard host context | `app/dashboard/_components/CheckInHostProvider.tsx` |
-| Profile / Plan (legacy billing) | `app/dashboard/profile/*` |
+| Profile / legacy billing | `app/dashboard/profile/*` |
 | Guest portal access | Token-based `/stay/[token]` — **unchanged**; not Supabase host auth |
 
 ## Coupling that affects future identity mapping

@@ -16,7 +16,6 @@ import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/gues
 import type { HostTier } from '@/lib/host-tier';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 import {
-  stayvoBtnPrimaryClass,
   stayvoCardGlassClass,
   stayvoInputPillClass,
   stayvoMutedTextClass,
@@ -28,6 +27,7 @@ export default function ProfileClient({
   initialHostName,
   checkInAccess,
   billingTier,
+  showLegacyBilling,
   checkoutBanner,
   canManageSubscription = false,
   paymentPastDue = false,
@@ -36,6 +36,7 @@ export default function ProfileClient({
   initialHostName: string;
   checkInAccess: boolean;
   billingTier: HostTier;
+  showLegacyBilling: boolean;
   checkoutBanner?: null | 'success' | 'canceled';
   canManageSubscription?: boolean;
   paymentPastDue?: boolean;
@@ -72,28 +73,6 @@ export default function ProfileClient({
       window.location.assign(url);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not open billing portal.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function startProCheckout(interval: 'monthly' | 'annual') {
-    setError(null);
-    setInfo(null);
-    setBusy(true);
-    try {
-      const res = await fetch('/api/stripe/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interval }),
-      });
-      const data = (await res.json()) as { error?: string; url?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Could not start checkout.');
-      const url = data.url;
-      if (!url) throw new Error('No checkout URL returned.');
-      window.location.assign(url);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Checkout failed.');
     } finally {
       setBusy(false);
     }
@@ -211,44 +190,6 @@ export default function ProfileClient({
           {info}
         </div>
       ) : null}
-      {checkoutBanner === 'success' ? (
-        <div
-          className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400"
-          role="status"
-        >
-          Payment received. Stripe is updating your account — refresh in a moment if you still show
-          as Free (usually a few seconds).
-        </div>
-      ) : null}
-      {checkoutBanner === 'canceled' ? (
-        <div
-          className="rounded-2xl border border-slate-200 bg-slate-50/90 p-3 text-sm text-slate-700 backdrop-blur-sm dark:border-white/15 dark:bg-white/8 dark:text-slate-200"
-          role="status"
-        >
-          Checkout was canceled. Nothing was charged.
-        </div>
-      ) : null}
-      {paymentPastDue ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 backdrop-blur-sm dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100"
-          role="alert"
-        >
-          <p className="font-semibold">Payment failed</p>
-          <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-100/90">
-            We couldn&apos;t charge your card for your legacy Stayvo Pro subscription. Stripe will
-            retry automatically — update your payment method to keep billing in good standing.
-            Stayvo Check-in features remain available regardless.
-          </p>
-          <PressButton
-            type="button"
-            disabled={busy}
-            onClick={() => void openBillingPortal()}
-            className="mt-3 w-full rounded-full bg-amber-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-900 disabled:opacity-60 dark:bg-amber-600 dark:hover:bg-amber-500 sm:w-auto"
-          >
-            Update payment method
-          </PressButton>
-        </div>
-      ) : null}
-
       <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Current email
@@ -257,7 +198,7 @@ export default function ProfileClient({
       </section>
 
       <section
-        id="plan"
+        id="check-in-access"
         className={`${stayvoCardGlassClass} scroll-mt-24 p-4 md:p-6`}
       >
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Stayvo Check-in access</h2>
@@ -268,93 +209,102 @@ export default function ProfileClient({
               <span className="font-semibold text-slate-800 dark:text-slate-200">
                 full Stayvo Check-in access
               </span>{' '}
-              (properties, guest links, guest portal content, iCal, and related host tools).
+              at no cost — properties, guest links, guest portal content, iCal, and related host
+              tools.
             </>
           ) : (
             <>Sign in to use Stayvo Check-in.</>
           )}
         </p>
-        <h3 className={`${stayvoSectionTitleClass} mt-6 text-sm md:text-base`}>
-          Legacy billing (Stripe)
-        </h3>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          {billingTier === 'pro' ? (
-            <>
-              You have an active{' '}
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
-                legacy Stayvo Pro
-              </span>{' '}
-              subscription (billing).
-            </>
-          ) : (
-            <>
-              Your account includes{' '}
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
-                Stayvo Check-in
-              </span>{' '}
-              at no cost.
-            </>
-          )}
+        <p className={`mt-3 ${stayvoMutedTextClass} text-xs leading-relaxed`}>
+          Includes unlimited properties, multiple locations, FAQ, guest video uploads, up to 15 custom
+          blocks per property, guest links, and OTA iCal sync.
         </p>
-        <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-          Stayvo Check-in includes unlimited properties, multiple locations, guest FAQ, video uploads
-          in guest portals, up to 15 custom blocks per property, guest links, and iCal sync. A paid
-          plan is not required for these features.
-        </p>
-        {billingTier === 'free' ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-            Optional legacy Stayvo Pro checkout below is for billing compatibility only — not required
-            for Check-in.
-          </p>
-        ) : null}
-        {billingTier === 'free' ? (
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <PressButton
-              type="button"
-              disabled={busy}
-              onClick={() => void startProCheckout('monthly')}
-              className="w-full rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md disabled:opacity-60 sm:w-auto sm:min-w-[200px]"
-            >
-              Pro — $9/month
-            </PressButton>
-            <PressButton
-              type="button"
-              disabled={busy}
-              onClick={() => void startProCheckout('annual')}
-              className="w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 disabled:opacity-60 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 sm:w-auto sm:min-w-[200px]"
-            >
-              Pro — $90/year
-            </PressButton>
-          </div>
-        ) : null}
-        {canManageSubscription ? (
-          <>
-            <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-              Update your card, view invoices, or cancel your subscription in Stripe&apos;s secure
-              billing portal.
-            </p>
-            <PressButton
-              type="button"
-              disabled={busy}
-              onClick={() => void openBillingPortal()}
-              className="mt-4 w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 md:w-auto md:min-w-[200px]"
-            >
-              Manage subscription
-            </PressButton>
-          </>
-        ) : billingTier === 'pro' ? (
-          <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-            Billing was set up outside Stripe checkout. Contact{' '}
-            <a
-              className="font-medium text-brand underline-offset-2 hover:underline"
-              href={SUPPORT_MAILTO}
-            >
-              {SUPPORT_EMAIL}
-            </a>{' '}
-            to change your plan.
-          </p>
-        ) : null}
       </section>
+
+      {showLegacyBilling ? (
+        <section
+          id="billing"
+          className={`${stayvoCardGlassClass} scroll-mt-24 p-4 md:p-6`}
+        >
+          <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
+            Legacy billing (Stripe)
+          </h2>
+          <p className={`mt-2 ${stayvoMutedTextClass}`}>
+            This section applies only if you still have a pre–Check-in-free legacy subscription. It
+            does not affect Stayvo Check-in features.
+          </p>
+          {checkoutBanner === 'success' ? (
+            <div
+              className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400"
+              role="status"
+            >
+              Payment received. Stripe is updating your billing record — refresh in a moment if
+              details look outdated.
+            </div>
+          ) : null}
+          {checkoutBanner === 'canceled' ? (
+            <div
+              className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 text-sm text-slate-700 backdrop-blur-sm dark:border-white/15 dark:bg-white/8 dark:text-slate-200"
+              role="status"
+            >
+              Checkout was canceled. Nothing was charged.
+            </div>
+          ) : null}
+          {paymentPastDue ? (
+            <div
+              className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 backdrop-blur-sm dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100"
+              role="alert"
+            >
+              <p className="font-semibold">Payment failed</p>
+              <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-100/90">
+                We couldn&apos;t charge your card for your legacy subscription. Stripe will retry
+                automatically — update your payment method in the billing portal. Stayvo Check-in
+                features remain available.
+              </p>
+              <PressButton
+                type="button"
+                disabled={busy}
+                onClick={() => void openBillingPortal()}
+                className="mt-3 w-full rounded-full bg-amber-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-900 disabled:opacity-60 dark:bg-amber-600 dark:hover:bg-amber-500 sm:w-auto"
+              >
+                Update payment method
+              </PressButton>
+            </div>
+          ) : null}
+          {billingTier === 'pro' ? (
+            <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+              You have an active legacy subscription on file with Stripe.
+            </p>
+          ) : null}
+          {canManageSubscription ? (
+            <>
+              <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+                Update your card, view invoices, or cancel in Stripe&apos;s secure billing portal.
+              </p>
+              <PressButton
+                type="button"
+                disabled={busy}
+                onClick={() => void openBillingPortal()}
+                className="mt-4 w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 md:w-auto md:min-w-[200px]"
+              >
+                Manage subscription
+              </PressButton>
+            </>
+          ) : billingTier === 'pro' ? (
+            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+              Billing was set up outside Stripe checkout. Contact{' '}
+              <a
+                className="font-medium text-brand underline-offset-2 hover:underline"
+                href={SUPPORT_MAILTO}
+              >
+                {SUPPORT_EMAIL}
+              </a>{' '}
+              for billing changes.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <form
         onSubmit={onSaveHostName}

@@ -2,7 +2,6 @@ import DashboardChrome from '@/app/dashboard/_components/DashboardChrome';
 import HostDesktopSidebar from '@/app/dashboard/_components/HostDesktopSidebar';
 import { CheckInHostProvider } from '@/app/dashboard/_components/CheckInHostProvider';
 import { hasCheckInAccessForAuthUser } from '@/lib/check-in-access';
-import { getHostTier } from '@/lib/host-plan';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,7 +10,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     data: { user },
   } = await supabase.auth.getUser();
 
-  const billingTier = user ? await getHostTier(supabase, user.id) : 'free';
   const checkInAccess = hasCheckInAccessForAuthUser(user?.id);
 
   const [{ count: propertyCount }, { count: locationCount }] = user
@@ -38,7 +36,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <CheckInHostProvider
       value={{
         checkInAccess,
-        billingTier,
         propertyCount: propertyCount ?? 0,
         locationCount: locationCount ?? 0,
       }}

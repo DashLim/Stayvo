@@ -2,14 +2,10 @@
 
 import { createContext, useContext } from 'react';
 
-import type { HostTier } from '@/lib/host-tier';
-
-/** Dashboard session: Check-in product access + legacy billing tier + usage counts. */
+/** Dashboard session: Check-in product access + usage counts (not billing tier). */
 export type CheckInHostContext = {
   /** Full Stayvo Check-in host features (not Stripe tier). */
   checkInAccess: boolean;
-  /** Legacy `host_plan.tier` for Profile / Stripe UI only. */
-  billingTier: HostTier;
   propertyCount: number;
   locationCount: number;
 };
@@ -33,7 +29,6 @@ export function useCheckInHostContext(): CheckInHostContext {
   if (!ctx) {
     return {
       checkInAccess: false,
-      billingTier: 'free',
       propertyCount: 0,
       locationCount: 0,
     };

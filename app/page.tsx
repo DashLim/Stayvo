@@ -484,8 +484,8 @@ const FAQS = [
     a: 'No. Those features are included with Stayvo Check-in at no cost.',
   },
   {
-    q: 'I have a legacy Stayvo Pro subscription — can I cancel it?',
-    a: 'Yes. Open Profile → Manage subscription in Stripe to cancel legacy billing. Stayvo Check-in features remain available after cancellation.',
+    q: 'I still pay for an old Stayvo subscription — can I cancel it?',
+    a: 'Yes. If you see Legacy billing on Profile, use Manage subscription in Stripe to cancel. Stayvo Check-in stays free and fully available after cancellation.',
   },
   {
     q: 'Can I use my own name in the guest link?',
