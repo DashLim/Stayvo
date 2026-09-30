@@ -38,7 +38,7 @@ Set the same environment variables in Vercel:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_APP_URL` (your deployed domain, e.g. `https://app.stayvo.io`)
-- Stripe (legacy Pro billing / wind-down): `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_MONTHLY`, `STRIPE_PRICE_ID_ANNUAL`, `STRIPE_WEBHOOK_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` (webhook updates `host_plan`). Apply migration `supabase/migrations/0020_host_plan_stripe.sql`. Stayvo Check-in features do not require Stripe.
+- Stripe (legacy wind-down only): `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` for webhook/portal. **`POST /api/stripe/checkout` is disabled (410)** — Check-in is free; new Pro checkout is not offered. Price ID env vars are unused by checkout until routes are removed. Stayvo Check-in features do not require Stripe.
 
 ## Legal pages
 
