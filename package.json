@@ -1,5 +1,6 @@
 {
   "name": "stayvo",
+  "description": "Stayvo Check-in — digital guest portal for short-term rental hosts",
   "private": true,
   "version": "0.1.0",
   "engines": {

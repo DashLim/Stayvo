@@ -342,7 +342,7 @@ export default function GuestPortalView({
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block rounded-md outline-none ring-brand/40 transition-opacity hover:opacity-90 focus-visible:ring-2"
-              aria-label="Stayvo — opens in a new tab"
+              aria-label="Stayvo Check-in — opens in a new tab"
             >
               <Image
                 src="/brand/stayvo-guest-logo-lockup.png"

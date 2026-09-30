@@ -99,7 +99,7 @@ export default function ResetPasswordClient() {
         <div className="mb-4">
           <Image
             src="/brand/stayvo-logo-lockup.png"
-            alt="Stayvo"
+            alt="Stayvo Check-in"
             width={1024}
             height={449}
             priority

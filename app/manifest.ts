@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Stayvo',
-    short_name: 'Stayvo',
-    description: 'Digital guest portal for short-term rentals',
+    name: 'Stayvo Check-in',
+    short_name: 'Check-in',
+    description: 'Stayvo Check-in — digital guest portal for short-term rentals',
     start_url: '/dashboard',
     display: 'standalone',
     orientation: 'portrait',

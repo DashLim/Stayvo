@@ -49,7 +49,7 @@ export default function ForgotPasswordClient() {
         <div className="mb-4">
           <Image
             src="/brand/stayvo-logo-lockup.png"
-            alt="Stayvo"
+            alt="Stayvo Check-in"
             width={1024}
             height={449}
             priority
@@ -65,7 +65,7 @@ export default function ForgotPasswordClient() {
               password reset link. Check your inbox and spam folder.
             </div>
             <p className="text-sm text-slate-600">
-              The link opens Stayvo so you can choose a new password, then takes you to the
+              The link opens Stayvo Check-in so you can choose a new password, then takes you to the
               dashboard.
             </p>
             <Link

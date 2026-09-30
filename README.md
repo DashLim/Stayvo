@@ -1,6 +1,6 @@
-# Stayvo (Phase 1 + Phase 2)
+# Stayvo Check-in
 
-Stayvo is a digital guest portal for short-term rental (STR) hosts.
+Stayvo Check-in is the digital guest portal product from **Stayvo** for short-term rental (STR) hosts.
 
 Phase 1 includes:
 - Host authentication (Supabase Auth: email/password)
@@ -43,4 +43,3 @@ Set the same environment variables in Vercel:
 ## Legal pages
 
 Terms and Privacy: `app/terms/page.tsx`, `app/privacy/page.tsx`. When you change billing, pricing, data collection, or support contact, follow **`docs/legal-pages-checklist.md`** and bump each page’s `LAST_UPDATED` date.
-

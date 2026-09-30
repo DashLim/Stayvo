@@ -38,7 +38,7 @@ export default function GuestStayvoBrandLink({
       target="_blank"
       rel="noopener noreferrer"
       className={linkClass}
-      aria-label="Stayvo — opens in a new tab"
+      aria-label="Stayvo Check-in — opens in a new tab"
     >
       <Image
         src={LOGO_SRC}

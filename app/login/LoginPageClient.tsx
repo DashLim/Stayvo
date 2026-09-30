@@ -108,13 +108,13 @@ export default function LoginPageClient() {
         <div className="mb-4">
           <Image
             src="/brand/stayvo-logo-lockup.png"
-            alt="Stayvo"
+            alt="Stayvo Check-in"
             width={1024}
             height={449}
             priority
             className="h-14 w-auto sm:h-16"
           />
-          <div className="mt-1 text-sm text-slate-600">Host portal login</div>
+          <div className="mt-1 text-sm text-slate-600">Sign in to Stayvo Check-in</div>
         </div>
 
         {accountDeleted ? (

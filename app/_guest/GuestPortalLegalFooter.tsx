@@ -19,7 +19,7 @@ export default function GuestPortalLegalFooter({
     >
       {variant === 'guest' ? (
         <p className="max-w-sm px-4 text-center text-[11px] leading-relaxed text-slate-500">
-          This guide is provided by your host via Stayvo.
+          This guide is provided by your host via Stayvo Check-in.
         </p>
       ) : null}
       <p className="text-center text-[11px] text-slate-500">
@@ -44,7 +44,7 @@ export default function GuestPortalLegalFooter({
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block rounded-md opacity-90 outline-none ring-brand/40 transition-opacity hover:opacity-100 focus-visible:ring-2"
-          aria-label="Stayvo — opens in a new tab"
+          aria-label="Stayvo Check-in — opens in a new tab"
         >
           <Image
             src="/brand/stayvo-guest-logo-lockup.png"

@@ -42,11 +42,11 @@ export default function HostDesktopSidebar({
         <Link
           href="/dashboard"
           className="mb-6 block px-2 outline-none ring-brand/30 focus-visible:ring-2 rounded-lg"
-          aria-label="Stayvo home"
+          aria-label="Stayvo Check-in home"
         >
           <Image
             src="/brand/stayvo-wordmark.png"
-            alt="Stayvo"
+            alt="Stayvo Check-in"
             width={512}
             height={200}
             className="h-8 w-auto max-w-[180px] dark:hidden"
@@ -54,7 +54,7 @@ export default function HostDesktopSidebar({
           />
           <Image
             src="/brand/stayvo-logo-lockup-darkmode-transparent.png"
-            alt="Stayvo"
+            alt="Stayvo Check-in"
             width={512}
             height={200}
             className="hidden h-8 w-auto max-w-[180px] dark:block"

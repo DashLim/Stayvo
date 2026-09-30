@@ -15,14 +15,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Stayvo',
-  description: 'Digital guest portal for short-term rentals',
+  title: 'Stayvo Check-in',
+  description: 'Stayvo Check-in — digital guest portal for short-term rentals',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     // default: solid bar on white; avoids dark band when launching PWA
     statusBarStyle: 'default',
-    title: 'Stayvo',
+    title: 'Stayvo Check-in',
   },
   formatDetection: { telephone: false },
 };

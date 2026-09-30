@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 26, 2026';
+const LAST_UPDATED = 'September 30, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -19,7 +19,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">1. Scope</h2>
             <p className="mt-2">
               This Privacy Policy explains how Stayvo collects, uses, stores, and shares
-              information when hosts use the Stayvo dashboard and when guests open Stayvo guest
+              information when hosts use Stayvo Check-in and when guests open Stayvo Check-in guest
               links.
             </p>
           </section>
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">2. Who we are</h2>
             <p className="mt-2">
-              Stayvo is operated by Tiny Land Management, based in Malaysia. Contact:{' '}
+              Stayvo Check-in is a product of Stayvo, operated by Tiny Land Management, based in Malaysia. Contact:{' '}
               <a
                 href={SUPPORT_MAILTO}
                 className="font-medium text-brand underline-offset-2 hover:underline"
@@ -77,7 +77,7 @@ export default function PrivacyPolicyPage() {
               4. How we use information
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li>Provide and maintain the Stayvo service.</li>
+              <li>Provide and maintain Stayvo Check-in.</li>
               <li>Generate and deliver guest portal links and hosted media.</li>
               <li>Support account security, fraud prevention, and abuse detection.</li>
               <li>Provide analytics and operational reporting to hosts.</li>
@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
               6. Sharing and processors
             </h2>
             <p className="mt-2">
-              We use trusted infrastructure providers to operate Stayvo, including hosting,
+              We use trusted infrastructure providers to operate Stayvo Check-in, including hosting,
               database, authentication, and object storage providers (for example Vercel,
               Supabase, and Cloudflare R2). These providers process data on our behalf as needed
               to provide the service.
@@ -140,18 +140,18 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              8. Guests opening a host link (no Stayvo account)
+              8. Guests opening a host link (no Stayvo Check-in account)
             </h2>
             <p className="mt-2">
-              If you open a guest portal link, you do not create a Stayvo account. We process limited
+              If you open a guest portal link, you do not create a Stayvo Check-in account. We process limited
               data to display the guide your host published and to operate the link (including
               essential storage and open analytics for the host, as described above).
             </p>
             <p className="mt-2">
               Buttons or links on the guest page (for example Google Maps, Waze, or WhatsApp) open
               third-party services governed by those providers&apos; policies. Stayvo does not require
-              guests to accept Stayvo Terms before viewing property information; hosts agree to Terms
-              when they use the dashboard.
+              guests to accept Stayvo Check-in Terms before viewing property information; hosts agree to Terms
+              when they use Stayvo Check-in.
             </p>
           </section>
 
@@ -161,7 +161,7 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p className="mt-2">
               Hosts are responsible for ensuring they have an appropriate legal basis and any
-              required permissions to enter and share guest information through Stayvo.
+              required permissions to enter and share guest information through Stayvo Check-in.
             </p>
           </section>
 
@@ -213,12 +213,12 @@ export default function PrivacyPolicyPage() {
               12. Cookies and local storage
             </h2>
             <p className="mt-2">
-              Stayvo uses browser local storage for essential service functions, including a random
+              Stayvo Check-in uses browser local storage for essential service functions, including a random
               visitor identifier on guest portal links so hosts can count unique link opens. This
               storage is not used for advertising.
             </p>
             <p className="mt-2">
-              Stayvo does not use advertising cookies or third-party ad tracking on the guest portal
+              Stayvo Check-in does not use advertising cookies or third-party ad tracking on the guest portal
               or host dashboard for behavioral advertising.
             </p>
             <p className="mt-2">

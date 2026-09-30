@@ -1,4 +1,4 @@
-# Legal pages maintenance (Stayvo)
+# Legal pages maintenance (Stayvo Check-in)
 
 Public legal copy lives in:
 

@@ -100,7 +100,7 @@ export default function DesktopGuestLeftColumn({
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block max-w-[160px] rounded-md opacity-85 outline-none ring-brand/40 transition-opacity hover:opacity-100 focus-visible:ring-2"
-          aria-label="Stayvo — opens in a new tab"
+          aria-label="Stayvo Check-in — opens in a new tab"
         >
           <Image
             src="/brand/stayvo-guest-logo-lockup.png"

@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When these Terms change, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'May 18, 2026';
+const LAST_UPDATED = 'September 30, 2026';
 
 export default function TermsOfServicePage() {
   return (
@@ -18,18 +18,18 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">1. Agreement</h2>
             <p className="mt-2">
-              By creating or using a Stayvo account, you agree to these Terms. If you do not
+              By creating or using a Stayvo Check-in account, you agree to these Terms. If you do not
               agree, do not use the service.
             </p>
             <p className="mt-2">
-              Stayvo is operated by Tiny Land Management, based in Malaysia.
+              Stayvo Check-in is a product of Stayvo, operated by Tiny Land Management, based in Malaysia.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">2. Service description</h2>
             <p className="mt-2">
-              Stayvo provides tools for hosts to create property guest pages, generate guest links,
+              Stayvo Check-in provides tools for hosts to create property guest pages, generate guest links,
               and manage related content and media.
             </p>
           </section>
@@ -57,7 +57,7 @@ export default function TermsOfServicePage() {
               </li>
               <li>
                 You are responsible for obtaining any permissions required for guest data you enter
-                into Stayvo.
+                into Stayvo Check-in.
               </li>
             </ul>
           </section>
@@ -65,7 +65,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">5. Prohibited use</h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
-              <li>Do not use Stayvo for illegal, infringing, abusive, or fraudulent activities.</li>
+              <li>Do not use Stayvo Check-in for illegal, infringing, abusive, or fraudulent activities.</li>
               <li>Do not upload malicious code or attempt to disrupt the service.</li>
               <li>Do not attempt unauthorized access to other accounts or systems.</li>
             </ul>
@@ -86,7 +86,7 @@ export default function TermsOfServicePage() {
               7. Service availability
             </h2>
             <p className="mt-2">
-              We strive to keep Stayvo available, but we do not guarantee uninterrupted or
+              We strive to keep Stayvo Check-in available, but we do not guarantee uninterrupted or
               error-free operation.
             </p>
           </section>
@@ -94,7 +94,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">8. Disclaimers</h2>
             <p className="mt-2">
-              Stayvo is provided “as is” and “as available,” to the fullest extent allowed by law.
+              Stayvo Check-in is provided “as is” and “as available,” to the fullest extent allowed by law.
             </p>
           </section>
 
@@ -125,7 +125,7 @@ export default function TermsOfServicePage() {
               11. Paid subscriptions, billing, and cancellation
             </h2>
             <p className="mt-2">
-              Stayvo offers subscription tiers (for example Free and Pro) with different feature
+              Stayvo Check-in offers subscription tiers (for example Free and Pro) with different feature
               limits. What is included in each tier may change over time; the product will reflect
               what is available on your account.
             </p>
@@ -150,7 +150,7 @@ export default function TermsOfServicePage() {
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">How to cancel.</span> You
-              may cancel from your Stayvo Profile using{' '}
+              may cancel from your Stayvo Check-in Profile using{' '}
               <span className="font-medium">Manage subscription</span>, which opens Stripe&apos;s secure
               billing portal. You can also contact us at{' '}
               <a
@@ -209,7 +209,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">13. Age requirement</h2>
             <p className="mt-2">
-              You must be at least 18 years old to create a Stayvo account. By using Stayvo, you
+              You must be at least 18 years old to create a Stayvo Check-in account. By using Stayvo Check-in, you
               confirm you meet this requirement.
             </p>
           </section>

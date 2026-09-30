@@ -91,12 +91,12 @@ function Nav() {
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            aria-label="Stayvo home"
+            aria-label="Stayvo Check-in home"
             className="inline-flex items-center leading-none -translate-y-0.5 sm:-translate-y-2"
           >
             <Image
               src="/brand/stayvo-logo-lockup.png"
-              alt="Stayvo"
+              alt="Stayvo Check-in"
               width={1536}
               height={1024}
               priority
@@ -327,7 +327,7 @@ function Features() {
             Everything your guests need, in one link
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-slate-500">
-            Stayvo turns your property information into a clean, mobile-first guest portal — like a
+            Stayvo Check-in turns your property information into a clean, mobile-first guest portal — like a
             5-star hotel concierge, without the price tag.
           </p>
         </div>
@@ -509,14 +509,14 @@ function Pricing() {
 const FAQS = [
   {
     q: 'Do my guests need to download an app?',
-    a: 'No. Stayvo guest portals are standard web pages. Guests just tap the link on any device — no app download, no sign-up, no friction.',
+    a: 'No. Stayvo Check-in guest portals are standard web pages. Guests just tap the link on any device — no app download, no sign-up, no friction.',
   },
   {
     q: 'How do guest links work?',
     a: 'You generate a unique link for each stay. It stays active throughout the trip and expires automatically 2 days after checkout. You can also create permanent links for returning guests.',
   },
   {
-    q: 'Can I try Stayvo for free?',
+    q: 'Can I try Stayvo Check-in for free?',
     a: 'Yes! The Free plan is free forever — no credit card required. Create up to 3 properties and start sharing guest portals today.',
   },
   {
@@ -582,7 +582,7 @@ function CtaBanner() {
           Start welcoming guests the smart way
         </h2>
         <p className="mt-4 text-lg text-white/80">
-          Join STR hosts who use Stayvo to create professional guest portals in minutes.
+          Join STR hosts who use Stayvo Check-in to create professional guest portals in minutes.
         </p>
         <Link
           href="/login"
@@ -604,12 +604,12 @@ function Footer() {
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <Link
             href="/"
-            aria-label="Stayvo home"
+            aria-label="Stayvo Check-in home"
             className="inline-flex items-center leading-none transition hover:opacity-90"
           >
             <Image
               src="/brand/stayvo-logo-lockup-transparent.png"
-              alt="Stayvo"
+              alt="Stayvo Check-in"
               width={1481}
               height={691}
               className="block h-11 w-auto sm:h-12"

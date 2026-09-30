@@ -287,7 +287,7 @@ export default function IcalFeedPanel({
         OTA calendar sync
       </h2>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-        Paste your Airbnb, Booking.com, or VRBO iCal export URL. Stayvo checks for new bookings
+        Paste your Airbnb, Booking.com, or VRBO iCal export URL. Stayvo Check-in checks for new bookings
         about every hour and creates or extends guest links from checkout dates. Links appear in
         your dashboard for you to send to guests.
       </p>

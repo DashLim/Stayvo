@@ -1649,7 +1649,7 @@ export default function PropertyForm({
           <CollapsibleFormSection
             id="ical-sync"
             title="OTA calendar sync"
-            description="Paste your Airbnb, Booking.com, or VRBO iCal export URL. Stayvo checks for new bookings about every hour and creates or extends guest links from checkout dates."
+            description="Paste your Airbnb, Booking.com, or VRBO iCal export URL. Stayvo Check-in checks for new bookings about every hour and creates or extends guest links from checkout dates."
             open={isSectionOpen('ical-sync')}
             onToggle={toggleSection}
             className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
