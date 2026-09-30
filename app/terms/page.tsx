@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When these Terms change, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'October 1, 2026';
+const LAST_UPDATED = 'September 30, 2026';
 
 export default function TermsOfServicePage() {
   return (
@@ -116,13 +116,14 @@ export default function TermsOfServicePage() {
             <p className="mt-2">
               Stayvo reserves the right to review accounts with excessive storage or bandwidth usage
               that may impact platform stability or operating costs, and to contact the account owner
-              or take reasonable action to protect the service, regardless of subscription tier.
+              or take reasonable action to protect the service, whether or not the account had
+              legacy billing.
             </p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              11. Paid subscriptions, billing, and cancellation
+              11. Pricing, legacy billing, and cancellation
             </h2>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Stayvo Check-in.</span>{' '}
@@ -132,30 +133,37 @@ export default function TermsOfServicePage() {
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">
+                New paid subscriptions.
+              </span>{' '}
+              New Stayvo Pro or other paid Stayvo Check-in subscriptions are not offered. In-app
+              subscription checkout for new paid plans has been discontinued.
+            </p>
+            <p className="mt-2">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
                 Legacy Stayvo Pro billing.
               </span>{' '}
-              Some accounts may still have an optional legacy Stayvo Pro subscription processed through
-              Stripe. That subscription is for billing compatibility and is{' '}
-              <span className="font-medium">not</span> required to use Stayvo Check-in features. Where
-              checkout remains available, monthly billing was previously USD $9 per month and annual
-              billing was previously USD $90 per year; prices and availability may change. New Check-in
-              hosts do not need Pro to access Check-in functionality.
+              Some accounts previously had an optional paid &quot;Stayvo Pro&quot; subscription processed
+              through Stripe. That billing was separate from Check-in features and was{' '}
+              <span className="font-medium">not</span> required to use Stayvo Check-in. Historically,
+              monthly billing was USD $9 per month and annual billing was USD $90 per year where those
+              plans were offered. If legacy billing still applies to your account, you may manage it as
+              described below.
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Payment processing.</span>{' '}
-              Payments are processed by Stripe, Inc. (or its affiliates). By subscribing, you authorize
-              Stripe to charge your payment method on a recurring basis until you cancel. Stayvo does
-              not store full payment card numbers; Stripe handles card data according to its own terms
-              and privacy policy.
+              Legacy paid subscriptions were processed by Stripe, Inc. (or its affiliates). If you had
+              or maintain a legacy subscription, you authorized Stripe to charge your payment method on
+              a recurring basis until you cancel. Stayvo does not store full payment card numbers; Stripe
+              handles card data according to its own terms and privacy policy.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">Renewal.</span> Subscriptions
-              renew automatically at the end of each billing period (monthly or annual) unless you
-              cancel before the renewal date.
+              <span className="font-medium text-slate-900 dark:text-slate-100">Renewal.</span> Legacy
+              subscriptions that remain on file renew automatically at the end of each billing period
+              (monthly or annual) unless you cancel before the renewal date.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">How to cancel.</span> You
-              may cancel from your Stayvo Check-in Profile using{' '}
+              <span className="font-medium text-slate-900 dark:text-slate-100">How to cancel.</span> If
+              your Profile shows legacy billing, you may cancel from your Stayvo Check-in Profile using{' '}
               <span className="font-medium">Manage subscription</span>, which opens Stripe&apos;s secure
               billing portal. You can also contact us at{' '}
               <a
@@ -197,9 +205,9 @@ export default function TermsOfServicePage() {
               lapsed.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">Plan changes.</span> You
-              may switch between monthly and annual billing where offered in the Stripe billing portal,
-              subject to Stripe&apos;s rules and any proration Stripe applies.
+              <span className="font-medium text-slate-900 dark:text-slate-100">Plan changes.</span> If
+              legacy billing applies, you may switch between monthly and annual billing where offered in
+              the Stripe billing portal, subject to Stripe&apos;s rules and any proration Stripe applies.
             </p>
           </section>
 

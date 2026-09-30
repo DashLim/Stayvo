@@ -480,12 +480,16 @@ const FAQS = [
     a: 'Yes. Stayvo Check-in is free — no credit card required. You get unlimited properties, multiple locations, FAQ, video uploads, guest links, iCal sync, and the full guest portal.',
   },
   {
-    q: 'Do I need a paid plan for video, FAQ, or multiple properties?',
-    a: 'No. Those features are included with Stayvo Check-in at no cost.',
+    q: 'Do I need a paid plan or Pro upgrade for video, FAQ, or multiple properties?',
+    a: 'No. Stayvo Check-in is free, and there is no current paid Pro upgrade. All Check-in features are included at no cost.',
+  },
+  {
+    q: 'Can I subscribe to Stayvo Pro?',
+    a: 'No. New paid Stayvo Pro subscriptions are not offered. Stayvo Check-in is free for all hosts.',
   },
   {
     q: 'I still pay for an old Stayvo subscription — can I cancel it?',
-    a: 'Yes. If you see Legacy billing on Profile, use Manage subscription in Stripe to cancel. Stayvo Check-in stays free and fully available after cancellation.',
+    a: 'If you see Legacy billing on Profile, you can use Manage subscription in Stripe to cancel. Stayvo Check-in stays free and fully available after cancellation.',
   },
   {
     q: 'Can I use my own name in the guest link?',

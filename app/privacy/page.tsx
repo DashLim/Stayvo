@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'October 1, 2026';
+const LAST_UPDATED = 'September 30, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -50,9 +50,10 @@ export default function PrivacyPolicyPage() {
                 <span className="font-medium text-slate-900 dark:text-slate-100">
                   Subscription and billing data:
                 </span>{' '}
-                plan tier and legacy subscription status (if any), billing period end date, Stripe customer
-                and subscription identifiers, and billing interval (monthly or annual). Payment card
-                numbers and card security codes are collected and stored by Stripe, not on Stayvo
+                Stayvo Check-in does not require a paid subscription. For accounts with legacy billing
+                on file, we may store plan tier and subscription status, billing period end date, Stripe
+                customer and subscription identifiers, and billing interval (monthly or annual). Payment
+                card numbers and card security codes are collected and stored by Stripe, not on Stayvo
                 servers.
               </li>
               <li>
@@ -81,7 +82,10 @@ export default function PrivacyPolicyPage() {
               <li>Generate and deliver guest portal links and hosted media.</li>
               <li>Support account security, fraud prevention, and abuse detection.</li>
               <li>Provide analytics and operational reporting to hosts.</li>
-              <li>Process subscriptions, payments, renewals, and cancellations through our payment provider.</li>
+              <li>
+                Process legacy subscription billing, payments, renewals, and cancellations through our
+                payment provider where applicable.
+              </li>
               <li>Comply with legal obligations and enforce our terms.</li>
             </ul>
           </section>
@@ -107,9 +111,10 @@ export default function PrivacyPolicyPage() {
               to provide the service.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">Payments:</span> Paid
-              subscriptions are processed by Stripe, Inc. Stripe receives payment method details,
-              billing address where provided, and transaction information. Stripe&apos;s use of your
+              <span className="font-medium text-slate-900 dark:text-slate-100">Payments:</span> Legacy
+              paid subscriptions were processed by Stripe, Inc. Stripe may still receive payment method
+              details, billing address where provided, and transaction information for accounts with
+              billing on file. Stripe&apos;s use of your
               data is also governed by{' '}
               <a
                 href="https://stripe.com/privacy"
@@ -131,10 +136,9 @@ export default function PrivacyPolicyPage() {
               deletion from the Profile page.
             </p>
             <p className="mt-2">
-              Billing-related records (such as subscription status and Stripe identifiers) are kept
-              while you have an active or recently ended subscription, and as needed for tax,
-              accounting, fraud prevention, and legal compliance. Stripe may retain payment records
-              according to its own policies.
+              Billing-related records (such as legacy subscription status and Stripe identifiers) may be
+              kept while relevant to an account and as needed for tax, accounting, fraud prevention,
+              and legal compliance. Stripe may retain payment records according to its own policies.
             </p>
           </section>
 

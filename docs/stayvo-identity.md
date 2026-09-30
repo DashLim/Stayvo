@@ -12,10 +12,16 @@ Stayvo Check-in
 
 - Hosts sign up, sign in, confirm email, and reset passwords through **Supabase Auth** only.
 - Protected routes (`/dashboard`, `/properties`) require a valid Supabase session (see `lib/supabase/middleware.ts` and `proxy.ts`).
+- **Stayvo Check-in is a free product** — no active subscription is required for host features.
 - **Check-in product access** is modeled separately from billing: any signed-in Supabase user with a non-empty `auth.users.id` has full Check-in features (`lib/check-in-access.ts`).
 - Host-facing data (properties, locations, guest links, media, iCal) is scoped by **`user_id` = `auth.uid()`** in Postgres RLS.
 - Optional profile hint **`host_display_name`** is stored on **`auth.users` user metadata** (not a separate profiles table).
-- **Legacy billing** (wind-down): `host_plan` + Stripe record old subscriptions only. **Not** a Check-in product tier. Profile shows a **Legacy billing** section only for existing subscribers. See `lib/host-plan.ts`.
+
+**Legacy Stripe (transitional — cleanup pending)**
+
+- **`POST /api/stripe/checkout`** — disabled (410); new Pro checkout is not offered (`lib/stripe-legacy-billing.ts`).
+- **`POST /api/stripe/portal`** and **`POST /api/webhooks/stripe`** — retained temporarily for legacy billing records and Stripe sync.
+- **`host_plan`** table and signup trigger — retained temporarily; not used for Check-in feature gates. Profile may show **Legacy billing** for accounts with legacy Stripe data. See `lib/host-plan.ts`.
 
 ```
 Stayvo Core (separate product — not in this repo)
@@ -69,5 +75,6 @@ These are intentional today but will need design when Core provisioning exists:
 
 ## Phase boundaries
 
-- **Phase 4 (this doc + access foundation):** Clarify Check-in access vs billing; keep Supabase Auth; no Firebase, no Core API, no new profiles table, no RLS changes unless tier-only.
-- **Later:** Billing wind-down, Core ↔ Check-in provisioning, optional identity mapping tables.
+- **Check-in access foundation:** Supabase Auth; Check-in access separate from billing; no Firebase in this repo.
+- **Billing wind-down (in progress):** Checkout disabled; portal/webhook/`host_plan` retained until infrastructure removal is approved.
+- **Not implemented:** Stayvo Core (Firebase Auth, separate database, provisioning/identity mapping API).
