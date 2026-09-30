@@ -7,8 +7,8 @@ globs:
   - lib/stripe-server.ts
   - app/api/stripe/**
   - lib/stripe-*.ts
-  - lib/host-plan.ts
   - lib/host-tier.ts
+  - docs/legacy-billing-wind-down.md
 ---
 
 # Legal pages
