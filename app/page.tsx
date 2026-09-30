@@ -489,7 +489,7 @@ const FAQS = [
   },
   {
     q: 'I still pay for an old Stayvo subscription — can I cancel it?',
-    a: 'If you see Legacy billing on Profile, you can use Manage subscription in Stripe to cancel. Stayvo Check-in stays free and fully available after cancellation.',
+    a: 'Contact support if you need help with a historical Stayvo billing record. Stayvo Check-in is free and fully available regardless.',
   },
   {
     q: 'Can I use my own name in the guest link?',

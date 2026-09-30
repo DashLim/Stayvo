@@ -17,7 +17,7 @@ After any material product or billing change, update the relevant page(s) and se
 | You changed… | Terms (`app/terms/page.tsx`) | Privacy (`app/privacy/page.tsx`) | Also check |
 |--------------|------------------------------|----------------------------------|--------------|
 | **Check-in pricing** (free vs paid) | §11 Pricing, legacy billing | §3 Subscription and billing data | Landing FAQ (`app/page.tsx`) |
-| **Legacy Pro pricing** ($9/mo, $90/yr, historical) | §11 Legacy Stayvo Pro billing | §3 (historical amounts if listed) | Profile legacy billing UI only |
+| **Legacy Pro pricing** ($9/mo, $90/yr, historical) | §11 Legacy Stayvo Pro billing | §3 (historical amounts if listed) | Support / Stripe portal API (no in-app billing UI) |
 | **New subscription checkout** (disabled) | §11 New paid subscriptions | — | `POST /api/stripe/checkout` (410), no checkout UI |
 | **Billing interval** (legacy monthly/annual) | §11 Renewal, Plan changes | §3 billing interval | Stripe Customer Portal (legacy only) |
 | **Cancellation / refund rules** | §11 Access after cancellation, Refunds | §7 retention (if policy changes) | Stripe Customer Portal settings |

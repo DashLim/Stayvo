@@ -162,17 +162,15 @@ export default function TermsOfServicePage() {
               (monthly or annual) unless you cancel before the renewal date.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">How to cancel.</span> If
-              your Profile shows legacy billing, you may cancel from your Stayvo Check-in Profile using{' '}
-              <span className="font-medium">Manage subscription</span>, which opens Stripe&apos;s secure
-              billing portal. You can also contact us at{' '}
+              <span className="font-medium text-slate-900 dark:text-slate-100">How to cancel.</span>{' '}
+              For legacy billing questions or cancellation requests, contact us at{' '}
               <a
                 href={SUPPORT_MAILTO}
                 className="font-medium text-brand underline-offset-2 hover:underline"
               >
                 {SUPPORT_EMAIL}
-              </a>{' '}
-              for help.
+              </a>
+              .
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">

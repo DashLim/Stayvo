@@ -33,7 +33,6 @@ import {
   setPropertyLocation,
 } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
-import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
 
 type LocRow = { id: string; name: string };
@@ -769,7 +768,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
 
       {error ? (
         <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400">
-          <StayvoProMessage text={error} />
+          {error}
         </p>
       ) : null}
 

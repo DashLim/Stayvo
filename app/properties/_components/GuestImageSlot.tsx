@@ -1,6 +1,5 @@
 'use client';
 
-import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import { removeGuestPropertyMedia, uploadGuestPropertyMedia } from '@/app/actions/guest-property-media';
 import PressButton from '@/app/_components/PressButton';
 import {
@@ -339,7 +338,7 @@ export default function GuestImageSlot({
 
       {error ? (
         <p className="mt-2 text-sm font-medium text-rose-600 dark:text-rose-400" role="alert">
-          <StayvoProMessage text={error} />
+          {error}
         </p>
       ) : null}
     </div>

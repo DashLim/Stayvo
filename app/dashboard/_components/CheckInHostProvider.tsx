@@ -35,13 +35,3 @@ export function useCheckInHostContext(): CheckInHostContext {
   }
   return ctx;
 }
-
-/** @deprecated Use {@link CheckInHostProvider} and {@link useCheckInHostContext}. */
-export const HostTierProvider = CheckInHostProvider;
-
-/** @deprecated Use {@link useCheckInHostContext}. */
-export function useHostDashboardLimits(): CheckInHostContext {
-  return useCheckInHostContext();
-}
-
-export type HostDashboardLimits = CheckInHostContext;

@@ -44,7 +44,6 @@ import {
 } from '@/app/actions/properties';
 import { updateLocationName } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
-import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 import IcalFeedPanel from '@/app/properties/_components/IcalFeedPanel';
 import CollapsibleFormSection from '@/app/properties/_components/CollapsibleFormSection';
@@ -785,7 +784,7 @@ export default function PropertyForm({
       >
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
-            <StayvoProMessage text={error} />
+            {error}
           </div>
         ) : null}
         {success ? (

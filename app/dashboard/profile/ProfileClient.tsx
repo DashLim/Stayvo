@@ -13,7 +13,6 @@ import {
 import PressButton from '@/app/_components/PressButton';
 import ThemeToggle from '@/app/_components/ThemeToggle';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
-import type { HostTier } from '@/lib/host-tier';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 import {
   stayvoCardGlassClass,
@@ -26,20 +25,10 @@ export default function ProfileClient({
   email,
   initialHostName,
   checkInAccess,
-  billingTier,
-  showLegacyBilling,
-  checkoutBanner,
-  canManageSubscription = false,
-  paymentPastDue = false,
 }: {
   email: string;
   initialHostName: string;
   checkInAccess: boolean;
-  billingTier: HostTier;
-  showLegacyBilling: boolean;
-  checkoutBanner?: null | 'success' | 'canceled';
-  canManageSubscription?: boolean;
-  paymentPastDue?: boolean;
 }) {
   const router = useRouter();
   const [hostName, setHostName] = useState(() =>
@@ -56,27 +45,6 @@ export default function ProfileClient({
     () => guestPortalAbsoluteUrl(hostName, 'a3Kf9x'),
     [hostName]
   );
-
-  async function openBillingPortal() {
-    setError(null);
-    setInfo(null);
-    setBusy(true);
-    try {
-      const res = await fetch('/api/stripe/portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const data = (await res.json()) as { error?: string; url?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Could not open billing portal.');
-      const url = data.url;
-      if (!url) throw new Error('No portal URL returned.');
-      window.location.assign(url);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not open billing portal.');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function onSaveHostName(e: React.FormEvent) {
     e.preventDefault();
@@ -221,90 +189,6 @@ export default function ProfileClient({
           blocks per property, guest links, and OTA iCal sync.
         </p>
       </section>
-
-      {showLegacyBilling ? (
-        <section
-          id="billing"
-          className={`${stayvoCardGlassClass} scroll-mt-24 p-4 md:p-6`}
-        >
-          <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
-            Legacy billing (Stripe)
-          </h2>
-          <p className={`mt-2 ${stayvoMutedTextClass}`}>
-            This section applies only if you still have a pre–Check-in-free legacy subscription. It
-            does not affect Stayvo Check-in features.
-          </p>
-          {checkoutBanner === 'success' ? (
-            <div
-              className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400"
-              role="status"
-            >
-              Payment received. Stripe is updating your billing record — refresh in a moment if
-              details look outdated.
-            </div>
-          ) : null}
-          {checkoutBanner === 'canceled' ? (
-            <div
-              className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 text-sm text-slate-700 backdrop-blur-sm dark:border-white/15 dark:bg-white/8 dark:text-slate-200"
-              role="status"
-            >
-              Checkout was canceled. Nothing was charged.
-            </div>
-          ) : null}
-          {paymentPastDue ? (
-            <div
-              className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 p-4 text-sm text-amber-950 backdrop-blur-sm dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-100"
-              role="alert"
-            >
-              <p className="font-semibold">Payment failed</p>
-              <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-100/90">
-                We couldn&apos;t charge your card for your legacy subscription. Stripe will retry
-                automatically — update your payment method in the billing portal. Stayvo Check-in
-                features remain available.
-              </p>
-              <PressButton
-                type="button"
-                disabled={busy}
-                onClick={() => void openBillingPortal()}
-                className="mt-3 w-full rounded-full bg-amber-800 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-900 disabled:opacity-60 dark:bg-amber-600 dark:hover:bg-amber-500 sm:w-auto"
-              >
-                Update payment method
-              </PressButton>
-            </div>
-          ) : null}
-          {billingTier === 'pro' ? (
-            <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-              You have an active legacy subscription on file with Stripe.
-            </p>
-          ) : null}
-          {canManageSubscription ? (
-            <>
-              <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-                Update your card, view invoices, or cancel in Stripe&apos;s secure billing portal.
-              </p>
-              <PressButton
-                type="button"
-                disabled={busy}
-                onClick={() => void openBillingPortal()}
-                className="mt-4 w-full rounded-full border border-slate-200 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/90 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 md:w-auto md:min-w-[200px]"
-              >
-                Manage subscription
-              </PressButton>
-            </>
-          ) : billingTier === 'pro' ? (
-            <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-              Billing was set up outside Stripe checkout. Contact{' '}
-              <a
-                className="font-medium text-brand underline-offset-2 hover:underline"
-                href={SUPPORT_MAILTO}
-              >
-                {SUPPORT_EMAIL}
-              </a>{' '}
-              for billing changes.
-            </p>
-          ) : null}
-        </section>
-      ) : null}
 
       <form
         onSubmit={onSaveHostName}

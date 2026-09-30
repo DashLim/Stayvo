@@ -21,7 +21,7 @@ Stayvo Check-in
 
 - **`POST /api/stripe/checkout`** — disabled (410); new Pro checkout is not offered (`lib/stripe-legacy-billing.ts`).
 - **`POST /api/stripe/portal`** and **`POST /api/webhooks/stripe`** — retained temporarily for legacy billing records and Stripe sync.
-- **`host_plan`** table and signup trigger — retained temporarily; not used for Check-in feature gates. Profile may show **Legacy billing** for accounts with legacy Stripe data. See `lib/host-plan.ts`.
+- **`host_plan`** table and signup trigger — retained temporarily; not used for Check-in feature gates. The app UI no longer exposes Pro/tier or legacy billing controls; see `lib/host-plan.ts` for server-side reads used by Stripe routes only.
 
 ```
 Stayvo Core (separate product — not in this repo)
@@ -48,10 +48,10 @@ This layer will decide when a Core user receives Check-in access and how their h
 | Session refresh & route protection | `lib/supabase/middleware.ts`, `proxy.ts` |
 | Server Supabase client | `lib/supabase/server.ts` |
 | Check-in product access | `lib/check-in-access.ts` |
-| Billing tier (Stripe UI only) | `lib/host-plan.ts`, `host_plan` table |
+| Legacy billing tier (server/Stripe only) | `lib/host-plan.ts`, `host_plan` table |
 | Check-in entitlements (limits) | `lib/host-tier.ts` |
 | Dashboard host context | `app/dashboard/_components/CheckInHostProvider.tsx` |
-| Profile / legacy billing | `app/dashboard/profile/*` |
+| Profile (Check-in access only) | `app/dashboard/profile/*` |
 | Legacy checkout (disabled) | `POST /api/stripe/checkout` → 410; see `lib/stripe-legacy-billing.ts` |
 | Legacy portal (temporary) | `POST /api/stripe/portal` |
 | Legacy Stripe webhooks (temporary) | `POST /api/webhooks/stripe` |
