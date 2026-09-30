@@ -35,9 +35,6 @@ import {
 import PressButton from '@/app/_components/PressButton';
 import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
-import { STAYVO_PRO_PROFILE_HREF } from '@/lib/stayvo-pro';
-import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
-import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
 
 type LocRow = { id: string; name: string };
 type PropRow = {
@@ -305,7 +302,6 @@ type LocationGroupPanelProps = {
   flatLocations: LocRow[];
   pending: boolean;
   editMode: boolean;
-  canAddProperty: boolean;
   openMenuPropertyId: string | null;
   setOpenMenuPropertyId: Dispatch<SetStateAction<string | null>>;
   onMoveProperty: (id: string, locId: string) => void;
@@ -327,7 +323,6 @@ function LocationGroupPanel({
   flatLocations,
   pending,
   editMode,
-  canAddProperty,
   openMenuPropertyId,
   setOpenMenuPropertyId,
   onMoveProperty,
@@ -342,7 +337,6 @@ function LocationGroupPanel({
   locationDragAttributes,
   enableLocationDrag = false,
 }: LocationGroupPanelProps) {
-  const router = useRouter();
   const { loc, properties } = { loc: group.location, properties: group.properties };
   const propertySensors = useManageDragSensors();
 
@@ -368,43 +362,23 @@ function LocationGroupPanel({
         </div>
         <div className="flex items-center gap-2">
           {!editMode ? (
-            canAddProperty ? (
-              <Link
-                href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
-                prefetch={false}
-                className={`inline-flex h-7 w-7 items-center justify-center gap-2 rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
-                aria-label={`Add property under ${loc.name}`}
-                title={`Add property under ${loc.name}`}
-              >
-                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
-                  <path
-                    d="M10 5v10M5 10h10"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="hidden text-sm font-semibold md:inline">Add Property</span>
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => router.push(STAYVO_PRO_PROFILE_HREF)}
-                className={`inline-flex h-7 w-7 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand/45 text-sm font-bold text-white shadow-sm md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
-                aria-label="Property limit reached"
-                title="Property limit reached"
-              >
-                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
-                  <path
-                    d="M10 5v10M5 10h10"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span className="hidden text-sm font-semibold md:inline">Add Property</span>
-              </button>
-            )
+            <Link
+              href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
+              prefetch={false}
+              className={`inline-flex h-7 w-7 items-center justify-center gap-2 rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
+              aria-label={`Add property under ${loc.name}`}
+              title={`Add property under ${loc.name}`}
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
+                <path
+                  d="M10 5v10M5 10h10"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="hidden text-sm font-semibold md:inline">Add Property</span>
+            </Link>
           ) : null}
           {editMode ? (
             <PressButton
@@ -481,7 +455,6 @@ function SortableLocationCard({
   flatLocations,
   pending,
   editMode,
-  canAddProperty,
   openMenuPropertyId,
   setOpenMenuPropertyId,
   onMoveProperty,
@@ -513,7 +486,6 @@ function SortableLocationCard({
       flatLocations={flatLocations}
       pending={pending}
       editMode={editMode}
-      canAddProperty={canAddProperty}
       openMenuPropertyId={openMenuPropertyId}
       setOpenMenuPropertyId={setOpenMenuPropertyId}
       onMoveProperty={onMoveProperty}
@@ -533,9 +505,6 @@ function SortableLocationCard({
 
 export default function ManageDashboardClient({ locationGroups }: { locationGroups: Group[] }) {
   const router = useRouter();
-  const limits = useHostDashboardLimits();
-  const canAddProperty =
-    limits.tier === 'pro' || limits.propertyCount < FREE_TIER_MAX_PROPERTIES;
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState(locationGroups);
@@ -577,10 +546,6 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       setEditMode((v) => !v);
     }
     function onAddLocation() {
-      if (limits.tier !== 'pro') {
-        router.push(STAYVO_PRO_PROFILE_HREF);
-        return;
-      }
       setNewLocName('');
       setAddLocOpen(true);
     }
@@ -590,7 +555,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       window.removeEventListener('stayvo:manage-toggle-edit', onToggleEdit);
       window.removeEventListener('stayvo:manage-add-location', onAddLocation);
     };
-  }, [limits.tier, router]);
+  }, [router]);
 
   useEffect(() => {
     window.dispatchEvent(new Event(addLocOpen ? 'stayvo:add-location-open' : 'stayvo:add-location-close'));
@@ -809,10 +774,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       ) : null}
 
       {!hasAnyProperty && !editMode ? (
-        <NoPropertiesEmptyState
-          returnTo="/dashboard/manage"
-          canAddProperty={canAddProperty}
-        />
+        <NoPropertiesEmptyState returnTo="/dashboard/manage" />
       ) : null}
 
       <div className={hasAnyProperty || editMode ? (editMode ? '' : 'md:hidden') : 'hidden'}>
@@ -835,7 +797,6 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                   flatLocations={flatLocations}
                   pending={pending}
                   editMode={editMode}
-                  canAddProperty={canAddProperty}
                   openMenuPropertyId={openMenuPropertyId}
                   setOpenMenuPropertyId={setOpenMenuPropertyId}
                   onMoveProperty={onMoveProperty}
@@ -901,7 +862,6 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 flatLocations={flatLocations}
                 pending={pending}
                 editMode={editMode}
-                canAddProperty={canAddProperty}
                 openMenuPropertyId={openMenuPropertyId}
                 setOpenMenuPropertyId={setOpenMenuPropertyId}
                 onMoveProperty={onMoveProperty}

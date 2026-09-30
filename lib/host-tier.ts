@@ -1,18 +1,38 @@
 export type HostTier = 'free' | 'pro';
 
-/** Free plan: max properties per account. */
+/**
+ * Stayvo Check-in entitlements (Phase 2): all authenticated hosts get full product features.
+ * {@link getHostTier} in lib/host-plan.ts remains for billing/profile/Stripe only.
+ */
+
+/** Max custom blocks per property for every Check-in user (former Pro cap). */
+export const CHECKIN_MAX_CUSTOM_BLOCKS = 15;
+
+/** All Check-in users may upload guest videos (size/MIME rules still apply). */
+export const CHECKIN_ALLOW_GUEST_VIDEO = true;
+
+/** @deprecated Legacy Free tier cap — not used for Check-in feature access. */
 export const FREE_TIER_MAX_PROPERTIES = 3;
 
-/** Free plan: max custom blocks (non-empty rows) per property. */
+/** @deprecated Legacy Free tier cap — not used for Check-in feature access. */
 export const FREE_TIER_MAX_CUSTOM_BLOCKS = 3;
 
-/** Pro plan: max custom blocks per property (existing app cap). */
-export const PRO_TIER_MAX_CUSTOM_BLOCKS = 15;
+/** @deprecated Alias of {@link CHECKIN_MAX_CUSTOM_BLOCKS}. */
+export const PRO_TIER_MAX_CUSTOM_BLOCKS = CHECKIN_MAX_CUSTOM_BLOCKS;
 
+/** Billing tier helper — not for Check-in feature gates. */
 export function isProTier(tier: HostTier): boolean {
   return tier === 'pro';
 }
 
-export function maxCustomBlocksForTier(tier: HostTier): number {
-  return tier === 'pro' ? PRO_TIER_MAX_CUSTOM_BLOCKS : FREE_TIER_MAX_CUSTOM_BLOCKS;
+/** Custom block limit for property CMS and server validation. */
+export function maxCustomBlocksForCheckIn(): number {
+  return CHECKIN_MAX_CUSTOM_BLOCKS;
+}
+
+/**
+ * @deprecated Tier no longer affects Check-in entitlements; use {@link maxCustomBlocksForCheckIn}.
+ */
+export function maxCustomBlocksForTier(_tier?: HostTier): number {
+  return CHECKIN_MAX_CUSTOM_BLOCKS;
 }

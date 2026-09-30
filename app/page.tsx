@@ -279,7 +279,7 @@ const FEATURES = [
   },
   {
     title: 'Photos & videos',
-    desc: 'Add photos to check-in steps, tips, and custom blocks. Pro users can upload walkthrough videos for even clearer instructions.',
+    desc: 'Add photos and walkthrough videos to check-in steps, tips, and custom blocks for clearer instructions.',
     svg: (
       <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" aria-hidden>
         <rect x="3" y="3" width="18" height="18" rx="2" stroke="#E0A24D" strokeWidth="2" />
@@ -400,21 +400,16 @@ function HowItWorks() {
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
 
-const FREE_FEATURES = [
-  'Up to 3 properties',
-  'Guest portal with check-in, WiFi, rules & tips',
-  '3 custom blocks per property',
-  'Image uploads',
-  'Unique guest links with auto-expiry',
-  'Host contact page',
-];
-
-const PRO_EXTRAS = [
+const CHECKIN_FEATURES = [
   'Unlimited properties',
   'Multiple location groups',
-  'Video uploads in guest portals',
+  'Guest portal with check-in, WiFi, rules & tips',
   'FAQ section per property',
   'Up to 15 custom blocks per property',
+  'Photo and video uploads in guest portals',
+  'Unique guest links with auto-expiry',
+  'OTA iCal sync for guest links',
+  'Host contact page',
 ];
 
 function Pricing() {
@@ -423,26 +418,29 @@ function Pricing() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Simple, honest pricing
+            Stayvo Check-in is free
           </h2>
           <p className="mt-4 text-lg text-slate-500">
-            Start for free. Upgrade when you&apos;re ready to grow.
+            Full guest portal and host tools — no subscription required.
           </p>
         </div>
 
-        <div className="mx-auto mt-14 grid max-w-3xl gap-6 sm:grid-cols-2">
-          {/* Free */}
-          <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-8">
+        <div className="mx-auto mt-14 max-w-lg">
+          <div className="flex flex-col rounded-2xl border-2 border-brand bg-white p-8 shadow-[0_8px_40px_rgba(224,162,77,0.18)]">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-400">Free</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-amber-600">
+                Stayvo Check-in
+              </p>
               <div className="mt-2 flex items-end gap-1">
                 <span className="text-4xl font-extrabold text-slate-900">$0</span>
-                <span className="mb-1 text-slate-400">/month</span>
+                <span className="mb-1 text-slate-500">/month</span>
               </div>
-              <p className="mt-2 text-sm text-slate-500">Perfect for getting started.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                Create an account and start sharing guest portals in minutes.
+              </p>
             </div>
             <ul className="mt-6 flex-1 space-y-3">
-              {FREE_FEATURES.map((f) => (
+              {CHECKIN_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
                   <CheckIcon />
                   {f}
@@ -451,53 +449,15 @@ function Pricing() {
             </ul>
             <Link
               href="/login"
-              className="mt-8 block w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-            >
-              Get started free
-            </Link>
-          </div>
-
-          {/* Pro */}
-          <div className="relative flex flex-col rounded-2xl border-2 border-brand bg-white p-8 shadow-[0_8px_40px_rgba(224,162,77,0.18)]">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-brand px-4 py-1 text-xs font-bold text-white shadow-md">
-              MOST POPULAR
-            </div>
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-amber-600">Pro</p>
-              <div className="mt-2 flex items-end gap-1">
-                <span className="text-4xl font-extrabold text-slate-900">$9</span>
-                <span className="mb-1 text-slate-500">/month</span>
-              </div>
-              <p className="mt-1 text-sm font-medium text-amber-600">
-                or $90/year{' '}
-                <span className="font-normal text-slate-400">(save $18)</span>
-              </p>
-              <p className="mt-1 text-sm text-slate-500">For serious STR hosts.</p>
-            </div>
-            <div className="mt-6 flex-1">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Everything in Free, plus:
-              </p>
-              <ul className="space-y-3">
-                {PRO_EXTRAS.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckIcon />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <Link
-              href="/login"
               className="mt-8 block w-full rounded-full bg-brand px-4 py-2.5 text-center text-sm font-semibold text-white shadow-md transition hover:opacity-90"
             >
-              Start with Pro →
+              Get started free →
             </Link>
           </div>
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-400">
-          All plans include unlimited guest links · No credit card required for Free
+          No credit card required · Unlimited guest links included
         </p>
       </div>
     </section>
@@ -516,16 +476,16 @@ const FAQS = [
     a: 'You generate a unique link for each stay. It stays active throughout the trip and expires automatically 2 days after checkout. You can also create permanent links for returning guests.',
   },
   {
-    q: 'Can I try Stayvo Check-in for free?',
-    a: 'Yes! The Free plan is free forever — no credit card required. Create up to 3 properties and start sharing guest portals today.',
+    q: 'Is Stayvo Check-in really free?',
+    a: 'Yes. Stayvo Check-in is free — no credit card required. You get unlimited properties, multiple locations, FAQ, video uploads, guest links, iCal sync, and the full guest portal.',
   },
   {
-    q: 'When should I upgrade to Pro?',
-    a: 'Upgrade to Pro if you manage more than 3 properties, want to add video walkthroughs, create FAQ sections for guests, or organise properties across multiple locations.',
+    q: 'Do I need a paid plan for video, FAQ, or multiple properties?',
+    a: 'No. Those features are included with Stayvo Check-in at no cost.',
   },
   {
-    q: 'Can I cancel my Pro subscription?',
-    a: 'Yes, you can cancel at any time. Your Pro features stay active until the end of your current billing period.',
+    q: 'I have a legacy Stayvo Pro subscription — can I cancel it?',
+    a: 'Yes. Open Profile → Manage subscription in Stripe to cancel legacy billing. Stayvo Check-in features remain available after cancellation.',
   },
   {
     q: 'Can I use my own name in the guest link?',

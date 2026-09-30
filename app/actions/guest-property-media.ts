@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto';
 
-import { getHostTier } from '@/lib/host-plan';
+import { CHECKIN_ALLOW_GUEST_VIDEO } from '@/lib/host-tier';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   r2DeleteGuestMedia,
@@ -185,9 +185,6 @@ export async function uploadGuestImageDeduped(formData: FormData) {
     return { ok: false as const, error: 'Unauthorized' };
   }
 
-  const tier = await getHostTier(supabase, user.id);
-  const allowVideo = tier === 'pro';
-
   const file = formData.get('file');
   if (!(file instanceof File)) {
     return { ok: false as const, error: 'No file uploaded.' };
@@ -195,8 +192,8 @@ export async function uploadGuestImageDeduped(formData: FormData) {
   const validation = validateMediaFile(file);
   if (!validation.ok) return { ok: false as const, error: validation.error };
   const mime = validation.mime;
-  if (!allowVideo && mime.startsWith('video/')) {
-    return { ok: false as const, error: 'Video uploads are available on Stayvo Pro.' };
+  if (!CHECKIN_ALLOW_GUEST_VIDEO && mime.startsWith('video/')) {
+    return { ok: false as const, error: 'Video uploads are not available.' };
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -308,7 +305,7 @@ async function uploadGuestPropertyMediaDeduped(
   const mime = validation.mime;
   const allowVideo = Boolean(options?.allowVideo);
   if (!allowVideo && mime.startsWith('video/')) {
-    return { ok: false, error: 'Video uploads are available on Stayvo Pro.' };
+    return { ok: false, error: 'Video uploads are not available.' };
   }
   const buffer = Buffer.from(await file.arrayBuffer());
   const hash = sha256Hex(buffer);
@@ -403,16 +400,13 @@ export async function uploadGuestPropertyMedia(
     return { ok: false as const, error: 'Property not found.' };
   }
 
-  const tier = await getHostTier(supabase, user.id);
-  const allowVideo = tier === 'pro';
-
   const file = formData.get('file');
   if (!(file instanceof File)) {
     return { ok: false as const, error: 'No file uploaded.' };
   }
 
   const uploaded = await uploadGuestPropertyMediaDeduped(supabase, user.id, file, {
-    allowVideo,
+    allowVideo: CHECKIN_ALLOW_GUEST_VIDEO,
   });
   if (!uploaded.ok) return { ok: false as const, error: uploaded.error };
   return { ok: true as const, path: uploaded.path, reused: uploaded.reused };

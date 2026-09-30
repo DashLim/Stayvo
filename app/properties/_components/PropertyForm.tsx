@@ -44,14 +44,12 @@ import {
 } from '@/app/actions/properties';
 import { updateLocationName } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
-import StayvoProLink from '@/app/_components/StayvoProLink';
 import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import GuestImageSlot from '@/app/properties/_components/GuestImageSlot';
 import IcalFeedPanel from '@/app/properties/_components/IcalFeedPanel';
 import CollapsibleFormSection from '@/app/properties/_components/CollapsibleFormSection';
 import { usePropertyFormSections } from '@/app/properties/_components/usePropertyFormSections';
-import type { HostTier } from '@/lib/host-tier';
-import { isProTier, maxCustomBlocksForTier } from '@/lib/host-tier';
+import { CHECKIN_ALLOW_GUEST_VIDEO, maxCustomBlocksForCheckIn } from '@/lib/host-tier';
 
 export type PropertyFormProps = {
   mode: 'create' | 'edit';
@@ -59,8 +57,6 @@ export type PropertyFormProps = {
   /** Host’s locations (for grouping on dashboard). */
   locations: Array<{ id: string; name: string }>;
   initialValues?: Partial<PropertyFormInput>;
-  /** Subscription tier; defaults to Free when omitted. */
-  hostTier?: HostTier;
   /** From guestPropertyMediaResolvedPublicBase() — correct preview URLs for R2-hosted media. */
   guestMediaPublicBase?: string | null;
 };
@@ -155,11 +151,10 @@ export default function PropertyForm({
   propertyId,
   locations,
   initialValues,
-  hostTier = 'free',
   guestMediaPublicBase,
 }: PropertyFormProps) {
-  const customBlocksCap = maxCustomBlocksForTier(hostTier);
-  const mediaAllowVideo = isProTier(hostTier);
+  const customBlocksCap = maxCustomBlocksForCheckIn();
+  const mediaAllowVideo = CHECKIN_ALLOW_GUEST_VIDEO;
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawReturnTo = (searchParams.get('returnTo') ?? '').trim();
@@ -521,8 +516,7 @@ export default function PropertyForm({
     setSubmitting(true);
 
     try {
-      const rawInput = getCurrentFormInput();
-      const input = isProTier(hostTier) ? rawInput : { ...rawInput, faqs: [] };
+      const input = getCurrentFormInput();
 
       if (locationId && locationName.trim()) {
         const nameRes = await updateLocationName(locationId, locationName);
@@ -897,7 +891,6 @@ export default function PropertyForm({
                 value={heroImagePath}
                 onChange={setHeroImagePath}
                 allowVideo={false}
-                showProVideoHint={false}
                 compressImages={false}
                 guestMediaPublicBase={guestMediaPublicBase}
               />
@@ -1274,109 +1267,88 @@ export default function PropertyForm({
           </div>
         </CollapsibleFormSection>
 
-        {isProTier(hostTier) ? (
-          <CollapsibleFormSection
-            id="faq"
-            title="FAQ"
-            description="Add common guest questions and answers. Leave empty to hide this section."
-            open={isSectionOpen('faq')}
-            onToggle={toggleSection}
-            className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
-          >
-            <div className="space-y-3">
-              {faqs.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-400">
-                  No FAQ entries yet.
-                </div>
-              ) : null}
+        <CollapsibleFormSection
+          id="faq"
+          title="FAQ"
+          description="Add common guest questions and answers. Leave empty to hide this section."
+          open={isSectionOpen('faq')}
+          onToggle={toggleSection}
+          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+        >
+          <div className="space-y-3">
+            {faqs.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 text-sm text-slate-600 dark:border-white/15 dark:bg-white/5 dark:text-slate-400">
+                No FAQ entries yet.
+              </div>
+            ) : null}
 
-              {faqs.map((f, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      FAQ {idx + 1}
-                    </div>
-                    <PressButton
-                      type="button"
-                      onClick={() => setFaqs((prev) => prev.filter((_, i) => i !== idx))}
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50"
-                    >
-                      Remove
-                    </PressButton>
-                  </div>
-
-                  <div className="mt-3 grid gap-3">
-                    <div>
-                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Question
-                      </label>
-                      <input
-                        value={f.question}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setFaqs((prev) =>
-                            prev.map((it, i) => (i === idx ? { ...it, question: v } : it))
-                          );
-                        }}
-                        placeholder="e.g. What time is check-in?"
-                        className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Answer
-                      </label>
-                      <textarea
-                        value={f.answer}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setFaqs((prev) =>
-                            prev.map((it, i) => (i === idx ? { ...it, answer: v } : it))
-                          );
-                        }}
-                        placeholder="e.g. Check-in starts at 3 PM. Self check-in instructions are in the Check-in section."
-                        className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-3">
-              <PressButton
-                type="button"
-                onClick={() =>
-                  setFaqs((prev) => [...prev, { question: '', answer: '' }])
-                }
-                className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition dark:border-white/15 dark:bg-white/10 dark:text-slate-200"
+            {faqs.map((f, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-white/50 bg-white/50 p-3 backdrop-blur-sm dark:border-white/8 dark:bg-white/5"
               >
-                + Add FAQ
-              </PressButton>
-            </div>
-          </CollapsibleFormSection>
-        ) : (
-          <CollapsibleFormSection
-            id="faq"
-            title="FAQ"
-            description={
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Guest FAQ is included with <StayvoProLink />.
-              </p>
-            }
-            open={isSectionOpen('faq')}
-            onToggle={toggleSection}
-            className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
-          >
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Upgrade to Pro to add frequently asked questions for guests.
-            </p>
-          </CollapsibleFormSection>
-        )}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    FAQ {idx + 1}
+                  </div>
+                  <PressButton
+                    type="button"
+                    onClick={() => setFaqs((prev) => prev.filter((_, i) => i !== idx))}
+                    className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50"
+                  >
+                    Remove
+                  </PressButton>
+                </div>
+
+                <div className="mt-3 grid gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      Question
+                    </label>
+                    <input
+                      value={f.question}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setFaqs((prev) =>
+                          prev.map((it, i) => (i === idx ? { ...it, question: v } : it))
+                        );
+                      }}
+                      placeholder="e.g. What time is check-in?"
+                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                      Answer
+                    </label>
+                    <textarea
+                      value={f.answer}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setFaqs((prev) =>
+                          prev.map((it, i) => (i === idx ? { ...it, answer: v } : it))
+                        );
+                      }}
+                      placeholder="e.g. Check-in starts at 3 PM. Self check-in instructions are in the Check-in section."
+                      className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3">
+            <PressButton
+              type="button"
+              onClick={() => setFaqs((prev) => [...prev, { question: '', answer: '' }])}
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm transition dark:border-white/15 dark:bg-white/10 dark:text-slate-200"
+            >
+              + Add FAQ
+            </PressButton>
+          </div>
+        </CollapsibleFormSection>
 
         <CollapsibleFormSection
           id="social-links"
@@ -1480,16 +1452,7 @@ export default function PropertyForm({
         <CollapsibleFormSection
           id="custom-blocks"
           title="Custom block"
-          description={
-            <>
-              Add custom sections shown on the guest page.
-              {hostTier === 'free' ? (
-                <span className="block pt-1 text-xs text-slate-500 dark:text-slate-500">
-                  Free includes up to {customBlocksCap} blocks; <StayvoProLink /> allows more.
-                </span>
-              ) : null}
-            </>
-          }
+          description="Add custom sections shown on the guest page."
           open={isSectionOpen('custom-blocks')}
           onToggle={toggleSection}
           className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"

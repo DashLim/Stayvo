@@ -3,13 +3,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { deleteGuestMediaFolderForProperty } from '@/app/actions/guest-property-media';
 import { deleteGuestMediaPathsIfUnreferenced } from '@/lib/guest-media-cleanup';
-import { getHostTier } from '@/lib/host-plan';
-import {
-  FREE_TIER_MAX_CUSTOM_BLOCKS,
-  FREE_TIER_MAX_PROPERTIES,
-  maxCustomBlocksForTier,
-  type HostTier,
-} from '@/lib/host-tier';
+import { validateCustomBlockCountForCheckIn } from '@/lib/check-in-property-limits';
 import {
   normalizeSectionOrder as normalizeGuestSectionOrder,
   type CustomDetail as GuestCustomDetailStub,
@@ -228,60 +222,11 @@ function normalizeCustomDetails(input: CustomDetailInput[] | null | undefined) {
     );
 }
 
-type TierPropertyFormMode = 'create' | 'update';
-
-async function enforceTierForPropertyInput(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  userId: string,
-  tier: HostTier,
-  input: PropertyFormInput,
-  mode: TierPropertyFormMode
-): Promise<{ ok: true } | { ok: false; error: string }> {
+function enforcePropertyFormLimits(
+  input: PropertyFormInput
+): { ok: true } | { ok: false; error: string } {
   const customDetails = normalizeCustomDetails(input.customDetails);
-  const cap = maxCustomBlocksForTier(tier);
-  if (customDetails.length > cap) {
-    return {
-      ok: false,
-      error:
-        tier === 'free'
-          ? `Free accounts can use up to ${FREE_TIER_MAX_CUSTOM_BLOCKS} custom blocks per property. Stayvo Pro allows more.`
-          : `You can have at most ${cap} custom blocks per property.`,
-    };
-  }
-
-  const faqRows = input.faqs
-    .map((f) => ({
-      question: normalizeString(f.question),
-      answer: normalizeString(f.answer),
-    }))
-    .filter((f) => f.question.length > 0 || f.answer.length > 0);
-
-  if (tier !== 'pro' && faqRows.length > 0) {
-    return {
-      ok: false,
-      error: 'FAQ is available on Stayvo Pro.',
-    };
-  }
-
-  if (mode === 'create' && tier === 'free') {
-    const { count, error } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId);
-
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-    if ((count ?? 0) >= FREE_TIER_MAX_PROPERTIES) {
-      return {
-        ok: false,
-        error:
-          'Free accounts can have up to 3 properties. Stayvo Pro includes unlimited properties.',
-      };
-    }
-  }
-
-  return { ok: true };
+  return validateCustomBlockCountForCheckIn(customDetails.length);
 }
 
 export async function createProperty(input: PropertyFormInput) {
@@ -296,10 +241,9 @@ export async function createProperty(input: PropertyFormInput) {
     return { ok: false as const, error: 'Unauthorized' };
   }
 
-  const tier = await getHostTier(supabase, user.id);
-  const tierGate = await enforceTierForPropertyInput(supabase, user.id, tier, input, 'create');
-  if (!tierGate.ok) {
-    return { ok: false as const, error: tierGate.error };
+  const limitsGate = enforcePropertyFormLimits(input);
+  if (!limitsGate.ok) {
+    return { ok: false as const, error: limitsGate.error };
   }
 
   const customDetails = normalizeCustomDetails(input.customDetails);
@@ -524,10 +468,9 @@ export async function updateProperty(propertyId: string, input: PropertyFormInpu
     return { ok: false as const, error: 'Unauthorized' };
   }
 
-  const tier = await getHostTier(supabase, user.id);
-  const tierGate = await enforceTierForPropertyInput(supabase, user.id, tier, input, 'update');
-  if (!tierGate.ok) {
-    return { ok: false as const, error: tierGate.error };
+  const limitsGate = enforcePropertyFormLimits(input);
+  if (!limitsGate.ok) {
+    return { ok: false as const, error: limitsGate.error };
   }
 
   const {
@@ -897,24 +840,6 @@ export async function cloneProperty(propertyId: string) {
     return { ok: false as const, error: 'Unauthorized' };
   }
 
-  const tier = await getHostTier(supabase, user.id);
-  if (tier === 'free') {
-    const { count, error: countError } = await supabase
-      .from('properties')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id);
-    if (countError) {
-      return { ok: false as const, error: countError.message };
-    }
-    if ((count ?? 0) >= FREE_TIER_MAX_PROPERTIES) {
-      return {
-        ok: false as const,
-        error:
-          'Free accounts can have up to 3 properties. Stayvo Pro includes unlimited properties.',
-      };
-    }
-  }
-
   const { data: source, error: sourceError } = await supabase
     .from('properties')
     .select('*')
@@ -962,14 +887,6 @@ export async function cloneProperty(propertyId: string) {
 
   if (stepsError || rulesError || tipsError || faqsError || customError) {
     return { ok: false as const, error: 'Unable to load property sections to clone.' };
-  }
-
-  if (tier === 'free' && (customDetails ?? []).length > FREE_TIER_MAX_CUSTOM_BLOCKS) {
-    return {
-      ok: false as const,
-      error:
-        'This property has more custom blocks than the Free plan allows, so it cannot be cloned.',
-    };
   }
 
   const locationId = source.location_id as string;
@@ -1068,7 +985,7 @@ export async function cloneProperty(propertyId: string) {
     }
   }
 
-  if (tier === 'pro' && (faqs ?? []).length > 0) {
+  if ((faqs ?? []).length > 0) {
     const rows = (faqs ?? []).map((row) => ({
       property_id: newPropertyId,
       faq_order: row.faq_order,

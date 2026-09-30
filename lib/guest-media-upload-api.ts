@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getHostTier } from '@/lib/host-plan';
+import { CHECKIN_ALLOW_GUEST_VIDEO } from '@/lib/host-tier';
 import { DEDUP_SEGMENT } from '@/lib/host-media-library';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
@@ -64,7 +64,7 @@ export function validateMediaUpload(
   }
   if (mime.startsWith('video/')) {
     if (!allowVideo) {
-      return { ok: false, error: 'Video uploads are available on Stayvo Pro.' };
+      return { ok: false, error: 'Video uploads are not available.' };
     }
     if (byteSize > GUEST_VIDEO_MAX_BYTES) {
       return { ok: false, error: 'Video must be 15 MB or smaller.' };
@@ -96,12 +96,11 @@ export async function assertGuestMediaUploadAuth(propertyId: string) {
     return { ok: false as const, error: 'Property not found.', status: 404 as const };
   }
 
-  const tier = await getHostTier(supabase, user.id);
   return {
     ok: true as const,
     supabase,
     userId: user.id,
-    allowVideo: tier === 'pro',
+    allowVideo: CHECKIN_ALLOW_GUEST_VIDEO,
   };
 }
 

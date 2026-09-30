@@ -1,7 +1,6 @@
 'use server';
 
 import { deleteProperty } from '@/app/actions/properties';
-import { getHostTier } from '@/lib/host-plan';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function ensureGeneralLocation(): Promise<{ ok: true; locationId: string } | { ok: false; error: string }> {
@@ -52,14 +51,6 @@ export async function createLocation(name: string) {
     error: userError,
   } = await supabase.auth.getUser();
   if (userError || !user) return { ok: false as const, error: 'Unauthorized' };
-
-  const tier = await getHostTier(supabase, user.id);
-  if (tier !== 'pro') {
-    return {
-      ok: false as const,
-      error: 'Additional locations are available on Stayvo Pro.',
-    };
-  }
 
   const { data: maxRow } = await supabase
     .from('locations')

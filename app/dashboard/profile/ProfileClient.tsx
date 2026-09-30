@@ -225,8 +225,9 @@ export default function ProfileClient({
         >
           <p className="font-semibold">Payment failed</p>
           <p className="mt-1 leading-relaxed text-amber-900/90 dark:text-amber-100/90">
-            We couldn&apos;t charge your card for Pro. Stripe will retry automatically — update your
-            payment method now to avoid losing Pro access when retries stop.
+            We couldn&apos;t charge your card for your legacy Stayvo Pro subscription. Stripe will
+            retry automatically — update your payment method to keep billing in good standing.
+            Stayvo Check-in features remain available regardless.
           </p>
           <PressButton
             type="button"
@@ -252,16 +253,33 @@ export default function ProfileClient({
       >
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Plan</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          You are on the{' '}
-          <span className="font-semibold text-slate-800 dark:text-slate-200">
-            {hostTier === 'pro' ? 'Pro' : 'Free'}
-          </span>{' '}
-          plan.
+          {hostTier === 'pro' ? (
+            <>
+              You have an active{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                legacy Stayvo Pro
+              </span>{' '}
+              subscription (billing).
+            </>
+          ) : (
+            <>
+              Your account includes{' '}
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                Stayvo Check-in
+              </span>{' '}
+              at no cost.
+            </>
+          )}
+        </p>
+        <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
+          Stayvo Check-in includes unlimited properties, multiple locations, guest FAQ, video uploads
+          in guest portals, up to 15 custom blocks per property, guest links, and iCal sync. A paid
+          plan is not required for these features.
         </p>
         {hostTier === 'free' ? (
           <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-500">
-            Upgrade to Pro for unlimited properties, multiple locations, video uploads, FAQ, and more
-            custom blocks.
+            Optional legacy Stayvo Pro checkout below is for billing compatibility only — not required
+            for Check-in.
           </p>
         ) : null}
         {hostTier === 'free' ? (

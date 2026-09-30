@@ -1,6 +1,5 @@
 'use client';
 
-import StayvoProLink from '@/app/_components/StayvoProLink';
 import StayvoProMessage from '@/app/_components/StayvoProMessage';
 import { removeGuestPropertyMedia, uploadGuestPropertyMedia } from '@/app/actions/guest-property-media';
 import PressButton from '@/app/_components/PressButton';
@@ -43,7 +42,7 @@ async function prepareMediaForGuestUpload(
 
   if (looksLikeVideoFile(file)) {
     if (!options.allowVideo) {
-      throw new Error('Video uploads are available on Stayvo Pro.');
+      throw new Error('Video uploads are not available.');
     }
     if (file.size > GUEST_VIDEO_MAX_BYTES) {
       throw new Error('Video must be 15 MB or smaller.');
@@ -51,7 +50,9 @@ async function prepareMediaForGuestUpload(
     return file;
   }
 
-  throw new Error(options.allowVideo ? 'Only image/video files are allowed.' : 'Only image files are allowed on your plan.');
+  throw new Error(
+    options.allowVideo ? 'Only image/video files are allowed.' : 'Only image files are allowed.'
+  );
 }
 
 function formatUploadError(err: unknown): string {
@@ -176,7 +177,6 @@ export default function GuestImageSlot({
   onChange,
   allowVideo = false,
   compressImages = true,
-  showProVideoHint = true,
   guestMediaPublicBase,
 }: {
   propertyId: string | undefined;
@@ -185,8 +185,6 @@ export default function GuestImageSlot({
   onChange: (nextPath: string) => void;
   allowVideo?: boolean;
   compressImages?: boolean;
-  /** When false (e.g. hero), hide “video on Pro” upsell — slot is images-only by design. */
-  showProVideoHint?: boolean;
   guestMediaPublicBase?: string | null;
 }) {
   const hasPath = (value ?? '').trim().length > 0;
@@ -272,11 +270,6 @@ export default function GuestImageSlot({
                 <>
                   {' '}
                   <span className="block sm:inline">Images only, max 5MB.</span>
-                  {showProVideoHint ? (
-                    <span className="mt-0.5 block text-slate-500 dark:text-slate-500">
-                      Video upload available on <StayvoProLink />.
-                    </span>
-                  ) : null}
                 </>
               )}
             </span>

@@ -3,8 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { HostTier } from '@/lib/host-tier';
 
 /**
- * Reads the host's subscription tier from `host_plan`.
+ * Reads the host's billing tier from `host_plan` (Stripe/profile UI).
  * Missing row (e.g. before migration backfill) is treated as Free.
+ *
+ * Stayvo Check-in feature access does not depend on this value; see lib/host-tier.ts.
  */
 export async function getHostTier(
   supabase: Pick<SupabaseClient, 'from'>,

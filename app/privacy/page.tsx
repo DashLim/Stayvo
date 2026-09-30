@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When this policy changes, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'September 30, 2026';
+const LAST_UPDATED = 'October 1, 2026';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -50,7 +50,7 @@ export default function PrivacyPolicyPage() {
                 <span className="font-medium text-slate-900 dark:text-slate-100">
                   Subscription and billing data:
                 </span>{' '}
-                plan tier (Free or Pro), subscription status, billing period end date, Stripe customer
+                plan tier and legacy subscription status (if any), billing period end date, Stripe customer
                 and subscription identifiers, and billing interval (monthly or annual). Payment card
                 numbers and card security codes are collected and stored by Stripe, not on Stayvo
                 servers.

@@ -2,7 +2,7 @@ import LegalBackButton from '@/app/_components/LegalBackButton';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 
 /** When these Terms change, update LAST_UPDATED and see docs/legal-pages-checklist.md */
-const LAST_UPDATED = 'September 30, 2026';
+const LAST_UPDATED = 'October 1, 2026';
 
 export default function TermsOfServicePage() {
   return (
@@ -125,16 +125,21 @@ export default function TermsOfServicePage() {
               11. Paid subscriptions, billing, and cancellation
             </h2>
             <p className="mt-2">
-              Stayvo Check-in offers subscription tiers (for example Free and Pro) with different feature
-              limits. What is included in each tier may change over time; the product will reflect
-              what is available on your account.
+              <span className="font-medium text-slate-900 dark:text-slate-100">Stayvo Check-in.</span>{' '}
+              Stayvo Check-in is provided at no charge. Host accounts include the Check-in features
+              shown in the app (including guest portals, properties, locations, FAQ, media uploads, guest
+              links, and related tools) without requiring a paid subscription.
             </p>
             <p className="mt-2">
-              <span className="font-medium text-slate-900 dark:text-slate-100">Plans and pricing.</span>{' '}
-              Stayvo Pro is a recurring paid subscription. At checkout you may choose monthly billing
-              (currently USD $9 per month) or annual billing (currently USD $90 per year). Prices,
-              currencies, and available plans may change; any change applies to new purchases and, where
-              required by law, to renewals after reasonable notice.
+              <span className="font-medium text-slate-900 dark:text-slate-100">
+                Legacy Stayvo Pro billing.
+              </span>{' '}
+              Some accounts may still have an optional legacy Stayvo Pro subscription processed through
+              Stripe. That subscription is for billing compatibility and is{' '}
+              <span className="font-medium">not</span> required to use Stayvo Check-in features. Where
+              checkout remains available, monthly billing was previously USD $9 per month and annual
+              billing was previously USD $90 per year; prices and availability may change. New Check-in
+              hosts do not need Pro to access Check-in functionality.
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Payment processing.</span>{' '}
@@ -165,11 +170,10 @@ export default function TermsOfServicePage() {
               <span className="font-medium text-slate-900 dark:text-slate-100">
                 Access after cancellation.
               </span>{' '}
-              If you cancel, your Pro features remain available until the end of your{' '}
-              <span className="font-medium">current paid billing period</span>—whether you are on a
-              monthly or annual plan. After that date, your account moves to the Free tier (or as
-              otherwise shown in the app). This is the same for monthly and annual subscribers unless
-              Stripe or your cancellation choice provides for immediate termination.
+              If you cancel a legacy Stayvo Pro subscription, billing stops at the end of your{' '}
+              <span className="font-medium">current paid billing period</span> unless Stripe or your
+              cancellation choice provides for immediate termination. Stayvo Check-in access
+              continues at no charge after cancellation.
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Refunds.</span> Fees are
@@ -187,9 +191,10 @@ export default function TermsOfServicePage() {
               <span className="font-medium text-slate-900 dark:text-slate-100">
                 Failed or disputed payments.
               </span>{' '}
-              If a payment fails or a subscription lapses, we may suspend or remove Pro features until
+              If a legacy Pro payment fails or a subscription lapses, we may follow up on billing until
               payment is resolved. Chargebacks or abuse of the billing system may result in account
-              suspension.
+              suspension. Stayvo Check-in features are not withheld solely because legacy Pro billing
+              lapsed.
             </p>
             <p className="mt-2">
               <span className="font-medium text-slate-900 dark:text-slate-100">Plan changes.</span> You

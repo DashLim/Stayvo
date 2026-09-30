@@ -2,11 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { STAYVO_PRO_PROFILE_HREF } from '@/lib/stayvo-pro';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
-import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (path) => path === '/dashboard', title: 'Dashboard' },
@@ -16,16 +13,12 @@ const headerByPath: Array<{ match: (path: string) => boolean; title: string }> =
 ];
 
 export default function DashboardStickyHeader() {
-  const router = useRouter();
   const pathname = usePathname() ?? '/dashboard';
   const normalizedPath = pathname.replace(/\/$/, '') || '/';
   const active = headerByPath.find((item) => item.match(normalizedPath));
   const title = active?.title ?? 'Dashboard';
   const isDashboard = normalizedPath === '/dashboard';
   const isManage = normalizedPath.startsWith('/dashboard/manage');
-  const { tier, propertyCount } = useHostDashboardLimits();
-  const atPropertyLimit = tier === 'free' && propertyCount >= FREE_TIER_MAX_PROPERTIES;
-  const canAddLocations = tier === 'pro';
 
   const [manageEditActive, setManageEditActive] = useState(false);
 
@@ -117,19 +110,12 @@ export default function DashboardStickyHeader() {
               type="button"
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              onClick={() => {
-                if (!canAddLocations) {
-                  router.push(STAYVO_PRO_PROFILE_HREF);
-                  return;
-                }
-                window.dispatchEvent(new Event('stayvo:manage-add-location'));
-              }}
+              onClick={() => window.dispatchEvent(new Event('stayvo:manage-add-location'))}
               className="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-full bg-brand text-white shadow-md transition hover:opacity-90 md:w-auto md:px-4"
-              title={canAddLocations ? 'Add location' : 'Additional locations (Pro)'}
+              title="Add location"
               aria-label="Add location"
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" fill="none" aria-hidden>
-                {/* Pin body */}
                 <path
                   d="M11 2a6.5 6.5 0 0 0-6.5 6.5C4.5 13 11 20 11 20s6.5-7 6.5-11.5A6.5 6.5 0 0 0 11 2Z"
                   stroke="currentColor"
@@ -137,9 +123,7 @@ export default function DashboardStickyHeader() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                {/* Inner ring */}
                 <circle cx="11" cy="8.5" r="2.4" stroke="currentColor" strokeWidth="2.2" />
-                {/* Plus cross badge */}
                 <path d="M18 13.5v6M15 16.5h6" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
               </svg>
               <span className="hidden text-sm font-semibold md:inline">Add Location</span>
@@ -148,43 +132,23 @@ export default function DashboardStickyHeader() {
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
             >
-              {atPropertyLimit ? (
-                <button
-                  type="button"
-                  onClick={() => router.push(STAYVO_PRO_PROFILE_HREF)}
-                  className="inline-flex h-10 w-10 cursor-not-allowed items-center justify-center gap-2 rounded-full bg-brand/45 text-base font-bold text-white shadow-md md:w-auto md:px-4"
-                  title="Property limit reached"
-                  aria-label="Add property unavailable"
-                >
-                  <svg viewBox="0 0 20 20" className="h-6 w-6 shrink-0" fill="none" aria-hidden>
-                    <path
-                      d="M10 4.5v11M4.5 10h11"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="hidden text-sm font-semibold md:inline">Add Property</span>
-                </button>
-              ) : (
-                <Link
-                  href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
-                  prefetch={false}
-                  className="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:opacity-90 md:w-auto md:px-4"
-                  title="Add property"
-                  aria-label="Add property"
-                >
-                  <svg viewBox="0 0 20 20" className="h-6 w-6 shrink-0" fill="none" aria-hidden>
-                    <path
-                      d="M10 4.5v11M4.5 10h11"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="hidden text-sm font-semibold md:inline">Add Property</span>
-                </Link>
-              )}
+              <Link
+                href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
+                prefetch={false}
+                className="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-full bg-brand text-base font-bold text-white shadow-md transition hover:opacity-90 md:w-auto md:px-4"
+                title="Add property"
+                aria-label="Add property"
+              >
+                <svg viewBox="0 0 20 20" className="h-6 w-6 shrink-0" fill="none" aria-hidden>
+                  <path
+                    d="M10 4.5v11M4.5 10h11"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className="hidden text-sm font-semibold md:inline">Add Property</span>
+              </Link>
             </motion.div>
           </div>
         ) : null}

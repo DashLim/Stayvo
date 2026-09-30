@@ -5,8 +5,6 @@ import dynamic from 'next/dynamic';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import PropertyCard from '@/app/dashboard/PropertyCard';
 import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
-import { useHostDashboardLimits } from '@/app/dashboard/_components/HostTierProvider';
-import { FREE_TIER_MAX_PROPERTIES } from '@/lib/host-tier';
 import type { IcalFeedSummary } from '@/lib/ical/types';
 
 export type { IcalFeedSummary };
@@ -105,9 +103,6 @@ export default function DashboardClient({
   /** Public origin for shared guest links (e.g. https://stayvo.io). Passed from server so it matches Vercel env at runtime. */
   guestLinkBaseUrl: string;
 }) {
-  const limits = useHostDashboardLimits();
-  const canAddProperty =
-    limits.tier === 'pro' || limits.propertyCount < FREE_TIER_MAX_PROPERTIES;
   const icalFeedByPropertyId = useMemo(() => {
     const m = new Map<string, IcalFeedSummary>();
     for (const f of icalFeeds) {
@@ -303,7 +298,7 @@ export default function DashboardClient({
 
       <section className="mt-6 md:mt-8">
         {!hasAnyProperty ? (
-          <NoPropertiesEmptyState returnTo="/dashboard" canAddProperty={canAddProperty} />
+          <NoPropertiesEmptyState returnTo="/dashboard" />
         ) : storageReady &&
         selectedIds !== null &&
         selectedIds.length === 0 &&

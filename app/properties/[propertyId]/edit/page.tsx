@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import PropertyFormClient from '@/app/properties/_components/PropertyFormClient';
-import { getHostTier } from '@/lib/host-plan';
 import { parseGuestSectionOrderFromDb } from '@/lib/guest-layout';
 import { guestPropertyMediaResolvedPublicBase } from '@/lib/guest-property-media';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -74,7 +73,6 @@ export default async function EditPropertyPage({
 
   if (stepsError || rulesError || faqsError || customDetailsError) redirect('/dashboard');
 
-  const hostTier = await getHostTier(supabase, user.id);
   const guestMediaPublicBase = guestPropertyMediaResolvedPublicBase();
 
   return (
@@ -82,7 +80,6 @@ export default async function EditPropertyPage({
       mode="edit"
       propertyId={propertyId}
       locations={locations ?? []}
-      hostTier={hostTier}
       guestMediaPublicBase={guestMediaPublicBase}
       initialValues={{
         isLive: Boolean(property.is_live),
