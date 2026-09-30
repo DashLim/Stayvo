@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PressButton from '@/app/_components/PressButton';
 import { tryCreateSupabaseBrowserClient } from '@/lib/supabase/client';
+import { stayvoAuthPanelClass, stayvoBtnPrimaryClass, stayvoInputClass } from '@/lib/stayvo-ui-classes';
 
 type AuthMode = 'login' | 'signup';
 
@@ -104,7 +105,7 @@ export default function LoginPageClient() {
 
   return (
     <main className="min-h-[70vh] flex items-center justify-center">
-      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className={stayvoAuthPanelClass}>
         <div className="mb-4">
           <Image
             src="/brand/stayvo-logo-lockup.png"
@@ -178,7 +179,7 @@ export default function LoginPageClient() {
               Email
             </label>
             <input
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2"
+              className={stayvoInputClass}
               type="email"
               name="email"
               required
@@ -201,7 +202,7 @@ export default function LoginPageClient() {
             </div>
             <div className="relative">
               <input
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-3 pr-11 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2"
+                className={`${stayvoInputClass} py-2.5 pl-3 pr-11`}
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 required
@@ -267,7 +268,7 @@ export default function LoginPageClient() {
 
           <PressButton
             disabled={submitting || !supabase || !agreedToLegal}
-            className="w-full rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-60"
+            className={`w-full rounded-xl ${stayvoBtnPrimaryClass} disabled:opacity-60`}
           >
             {submitting
               ? 'Please wait...'

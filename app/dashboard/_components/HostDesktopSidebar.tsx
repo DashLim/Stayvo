@@ -6,6 +6,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { signOutHost } from '@/app/actions/host-account';
 import { HOST_NAV_TABS } from '@/app/dashboard/_components/host-nav-config';
+import {
+  stayvoBtnSecondaryClass,
+  stayvoNavLinkActiveClass,
+  stayvoNavLinkClass,
+  stayvoSidebarClass,
+} from '@/lib/stayvo-ui-classes';
 
 export default function HostDesktopSidebar({
   displayName,
@@ -34,10 +40,7 @@ export default function HostDesktopSidebar({
   }
 
   return (
-    <aside
-      className="sticky top-0 z-40 hidden h-screen min-h-[100dvh] w-[220px] shrink-0 flex-col border-r border-black/[0.08] bg-[rgba(253,246,236,0.92)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgba(17,16,20,0.92)] md:flex"
-      aria-label="Host navigation"
-    >
+    <aside className={stayvoSidebarClass} aria-label="Host navigation">
       <div className="flex flex-1 flex-col px-3 pt-6">
         <Link
           href="/dashboard"
@@ -72,28 +75,26 @@ export default function HostDesktopSidebar({
                 prefetch
                 aria-current={active ? 'page' : undefined}
                 className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors ${
-                  active
-                    ? 'bg-brand font-bold text-amber-950 shadow-sm dark:text-amber-950'
-                    : 'text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10'
+                  active ? stayvoNavLinkActiveClass : stayvoNavLinkClass
                 }`}
               >
-                <span className={active ? 'text-amber-950' : 'text-slate-600 dark:text-slate-400'}>{tab.icon}</span>
+                <span className={active ? 'text-primary-foreground' : 'text-muted-foreground'}>{tab.icon}</span>
                 {tab.label}
               </Link>
             );
           })}
         </nav>
 
-        <div className="mt-auto border-t border-black/[0.08] px-2 py-4 dark:border-white/10">
-          <p className="truncate text-xs font-semibold text-slate-800 dark:text-slate-100">{displayName || 'Host'}</p>
+        <div className="mt-auto border-t border-border px-2 py-4">
+          <p className="truncate text-xs font-semibold text-foreground">{displayName || 'Host'}</p>
           {email ? (
-            <p className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400">{email}</p>
+            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{email}</p>
           ) : null}
           <button
             type="button"
             disabled={pending}
             onClick={() => onLogout()}
-            className="mt-3 w-full rounded-full border border-slate-200/90 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-white disabled:opacity-50 dark:border-white/15 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+            className={`mt-3 w-full py-2 text-xs ${stayvoBtnSecondaryClass}`}
           >
             {pending ? 'Signing out…' : 'Log out'}
           </button>

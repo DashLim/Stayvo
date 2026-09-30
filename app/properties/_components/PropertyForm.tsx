@@ -50,6 +50,13 @@ import IcalFeedPanel from '@/app/properties/_components/IcalFeedPanel';
 import CollapsibleFormSection from '@/app/properties/_components/CollapsibleFormSection';
 import { usePropertyFormSections } from '@/app/properties/_components/usePropertyFormSections';
 import { CHECKIN_ALLOW_GUEST_VIDEO, maxCustomBlocksForCheckIn } from '@/lib/host-tier';
+import {
+  stayvoFormSectionClass,
+  stayvoFormSectionElevatedClass,
+  stayvoInputClass,
+  stayvoInputPillClass,
+  stayvoTextareaClass,
+} from '@/lib/stayvo-ui-classes';
 
 export type PropertyFormProps = {
   mode: 'create' | 'edit';
@@ -817,7 +824,7 @@ export default function PropertyForm({
                 inputMode="url"
                 autoComplete="off"
                 disabled={airbnbImporting}
-                className="w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2.5 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 disabled:opacity-60 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`${stayvoInputPillClass} px-4 py-2.5 disabled:opacity-60`}
               />
               <PressButton
                 type="button"
@@ -883,7 +890,7 @@ export default function PropertyForm({
               description="Shown at the top of the guest portal (same place as the live preview)."
               open={isSectionOpen('hero')}
               onToggle={toggleSection}
-              className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-200/70 md:bg-white/85 md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] md:ring-1 md:ring-white/60 md:backdrop-blur-sm dark:md:border-white/10 dark:md:bg-[#1c1d21] dark:md:ring-white/10"
+              className={stayvoFormSectionElevatedClass}
             >
               <GuestImageSlot
                 propertyId={propertyId}
@@ -906,7 +913,7 @@ export default function PropertyForm({
           description="What guests need before arrival."
           open={isSectionOpen('property-details')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="mb-4 flex items-center justify-between gap-4 rounded-2xl border border-white/50 bg-white/40 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/6">
             <div>
@@ -937,7 +944,7 @@ export default function PropertyForm({
                 <select
                   value={locationId}
                   onChange={(e) => setLocationId(e.target.value)}
-                  className="mt-2 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-medium text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:[color-scheme:dark]"
+                  className={`mt-2 ${stayvoInputPillClass} font-medium`}
                 >
                   {locations.length === 0 ? (
                     <option value="">Create a location from Property management first</option>
@@ -963,7 +970,7 @@ export default function PropertyForm({
                   onChange={(e) => setLocationName(e.target.value)}
                   disabled={!locationId}
                   placeholder="e.g. Miami, Florida"
-                  className="mt-2 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm font-medium text-slate-900 outline-none ring-brand/30 focus:ring-2 disabled:opacity-50 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                  className={`mt-2 ${stayvoInputPillClass} font-medium`}
                 />
               </div>
             </div>
@@ -984,7 +991,7 @@ export default function PropertyForm({
                 value={propertyName}
                 onChange={(e) => setPropertyName(capitalizeWordStarts(e.target.value))}
                 placeholder="Property name"
-                className="mt-1 min-h-[4.5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 min-h-[4.5rem] ${stayvoTextareaClass}`}
               />
             </div>
 
@@ -1000,7 +1007,7 @@ export default function PropertyForm({
                 autoCapitalize="words"
                 value={internalName}
                 onChange={(e) => setInternalName(capitalizeWordStarts(e.target.value))}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
 
@@ -1012,7 +1019,7 @@ export default function PropertyForm({
                 rows={3}
                 value={fullAddress}
                 onChange={(e) => setFullAddress(e.target.value)}
-                className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 resize-none ${stayvoTextareaClass}`}
               />
             </div>
 
@@ -1023,7 +1030,7 @@ export default function PropertyForm({
               <input
                 value={googleMapsUrl}
                 onChange={(e) => setGoogleMapsUrl(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1033,7 +1040,7 @@ export default function PropertyForm({
               <input
                 value={wazeUrl}
                 onChange={(e) => setWazeUrl(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
 
@@ -1045,7 +1052,7 @@ export default function PropertyForm({
                 rows={4}
                 value={parkingDetails}
                 onChange={(e) => setParkingDetails(e.target.value)}
-                className="mt-1 min-h-[5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 min-h-[5rem] ${stayvoTextareaClass}`}
               />
             </div>
           </div>
@@ -1060,7 +1067,7 @@ export default function PropertyForm({
                 value={wifiNetworkName}
                 onChange={(e) => setWifiNetworkName(e.target.value)}
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1071,7 +1078,7 @@ export default function PropertyForm({
                 name="stayvo_wifi_passphrase"
                 value={wifiPassword}
                 onChange={(e) => setWifiPassword(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
                 type="text"
                 inputMode="text"
                 autoComplete="off"
@@ -1089,7 +1096,7 @@ export default function PropertyForm({
           description="Add step-by-step instructions for guests."
           open={isSectionOpen('checkin')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="space-y-3">
             {checkInInstructions.length === 0 ? (
@@ -1148,7 +1155,7 @@ export default function PropertyForm({
                     );
                   }}
                   placeholder="Step instructions (optional if you only add media)"
-                  className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                  className={`mt-2 resize-none ${stayvoTextareaClass}`}
                 />
                 <GuestImageSlot
                   propertyId={propertyId}
@@ -1191,7 +1198,7 @@ export default function PropertyForm({
           description="Add rules guests must follow."
           open={isSectionOpen('house-rules')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="space-y-3">
             {houseRules.length === 0 ? (
@@ -1248,7 +1255,7 @@ export default function PropertyForm({
                       )
                     );
                   }}
-                  className="w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                  className={stayvoInputPillClass}
                 />
               </div>
             ))}
@@ -1273,7 +1280,7 @@ export default function PropertyForm({
           description="Add common guest questions and answers. Leave empty to hide this section."
           open={isSectionOpen('faq')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="space-y-3">
             {faqs.length === 0 ? (
@@ -1314,7 +1321,7 @@ export default function PropertyForm({
                         );
                       }}
                       placeholder="e.g. What time is check-in?"
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      className={`mt-1 ${stayvoInputPillClass}`}
                     />
                   </div>
                   <div>
@@ -1330,7 +1337,7 @@ export default function PropertyForm({
                         );
                       }}
                       placeholder="e.g. Check-in starts at 3 PM. Self check-in instructions are in the Check-in section."
-                      className="mt-1 w-full resize-none rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      className={`mt-1 resize-none ${stayvoTextareaClass}`}
                       rows={3}
                     />
                   </div>
@@ -1356,7 +1363,7 @@ export default function PropertyForm({
           description="Optional. Shown as icons at the bottom of the guest page. Leave blank to hide a platform."
           open={isSectionOpen('social-links')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
@@ -1369,7 +1376,7 @@ export default function PropertyForm({
                 placeholder="https://your-site.com/book"
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
               <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
                 Shown as a &quot;Booking Website&quot; button in the Your host block (hidden when blank).
@@ -1385,7 +1392,7 @@ export default function PropertyForm({
                 placeholder="https://www.airbnb.com/rooms/..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
               <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
                 Optional. Stored for reference and future imports.
@@ -1399,7 +1406,7 @@ export default function PropertyForm({
                 placeholder="https://instagram.com/yourhandle"
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1410,7 +1417,7 @@ export default function PropertyForm({
                 placeholder="https://facebook.com/..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1421,7 +1428,7 @@ export default function PropertyForm({
                 placeholder="https://tiktok.com/@..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1432,7 +1439,7 @@ export default function PropertyForm({
                 placeholder="https://youtube.com/@..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1443,7 +1450,7 @@ export default function PropertyForm({
                 placeholder="https://x.com/..."
                 inputMode="url"
                 autoComplete="off"
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
           </div>
@@ -1455,7 +1462,7 @@ export default function PropertyForm({
           description="Add custom sections shown on the guest page."
           open={isSectionOpen('custom-blocks')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="space-y-3">
             {customDetails.length === 0 ? (
@@ -1511,7 +1518,7 @@ export default function PropertyForm({
                           prev.map((it, i) => (i === idx ? { ...it, title: v } : it))
                         );
                       }}
-                      className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      className={`mt-1 ${stayvoInputPillClass}`}
                     />
                   </div>
                   <div>
@@ -1529,7 +1536,7 @@ export default function PropertyForm({
                           )
                         );
                       }}
-                      className="mt-1 min-h-[7.5rem] w-full resize-y rounded-2xl border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      className={`mt-1 min-h-[7.5rem] ${stayvoTextareaClass}`}
                     />
                   </div>
                 </div>
@@ -1574,7 +1581,7 @@ export default function PropertyForm({
           description="How guests reach you."
           open={isSectionOpen('host-contact')}
           onToggle={toggleSection}
-          className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+          className={stayvoFormSectionClass}
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -1584,7 +1591,7 @@ export default function PropertyForm({
               <input
                 value={hostName}
                 onChange={(e) => setHostName(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
               />
             </div>
             <div>
@@ -1592,7 +1599,7 @@ export default function PropertyForm({
               <input
                 value={hostWhatsappNumber}
                 onChange={(e) => setHostWhatsappNumber(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
                 placeholder="+1 555 123 4567"
               />
             </div>
@@ -1601,7 +1608,7 @@ export default function PropertyForm({
               <input
                 value={hostWhatsappChatNumber}
                 onChange={(e) => setHostWhatsappChatNumber(e.target.value)}
-                className="mt-1 w-full rounded-full border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/15 dark:bg-white/8 dark:text-slate-100 dark:placeholder:text-slate-500"
+                className={`mt-1 ${stayvoInputPillClass}`}
                 placeholder="+1 555 987 6543"
               />
             </div>
@@ -1615,7 +1622,7 @@ export default function PropertyForm({
             description="Paste your Airbnb, Booking.com, or VRBO iCal export URL. Stayvo Check-in checks for new bookings about every hour and creates or extends guest links from checkout dates."
             open={isSectionOpen('ical-sync')}
             onToggle={toggleSection}
-            className="rounded-[20px] border border-white/30 bg-white/60 p-4 backdrop-blur-sm dark:border-white/8 dark:bg-white/5 md:rounded-2xl md:border-slate-100/80 md:bg-white md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:md:border-white/10 dark:md:bg-[#1c1d21]"
+            className={stayvoFormSectionClass}
           >
             <IcalFeedPanel propertyId={propertyId} embedded />
           </CollapsibleFormSection>

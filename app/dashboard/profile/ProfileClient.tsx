@@ -15,6 +15,13 @@ import ThemeToggle from '@/app/_components/ThemeToggle';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
 import type { HostTier } from '@/lib/host-tier';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
+import {
+  stayvoBtnPrimaryClass,
+  stayvoCardGlassClass,
+  stayvoInputPillClass,
+  stayvoMutedTextClass,
+  stayvoSectionTitleClass,
+} from '@/lib/stayvo-ui-classes';
 
 export default function ProfileClient({
   email,
@@ -240,8 +247,8 @@ export default function ProfileClient({
         </div>
       ) : null}
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+      <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Current email
         </h2>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{email || '—'}</p>
@@ -249,9 +256,9 @@ export default function ProfileClient({
 
       <section
         id="plan"
-        className="glass scroll-mt-24 rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
+        className={`${stayvoCardGlassClass} scroll-mt-24 p-4 md:p-6`}
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Plan</h2>
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Plan</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           {hostTier === 'pro' ? (
             <>
@@ -333,9 +340,9 @@ export default function ProfileClient({
 
       <form
         onSubmit={onSaveHostName}
-        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
+        className={`${stayvoCardGlassClass} p-4 md:p-6`}
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Host display name
         </h2>
         <input
@@ -343,7 +350,7 @@ export default function ProfileClient({
           onChange={(e) => setHostName(sanitizeHostDisplayNameInput(e.target.value))}
           placeholder="Your name"
           autoComplete="nickname"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
+          className={`mt-3 ${stayvoInputPillClass}`}
         />
         <p className="mt-2 break-all text-xs text-slate-500 dark:text-slate-500">
           <span className="font-semibold text-slate-600 dark:text-slate-400">Guest link example:</span>{' '}
@@ -358,10 +365,10 @@ export default function ProfileClient({
         </PressButton>
       </form>
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+      <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+            <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
               Appearance
             </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -374,9 +381,9 @@ export default function ProfileClient({
 
       <form
         onSubmit={onChangeEmail}
-        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
+        className={`${stayvoCardGlassClass} p-4 md:p-6`}
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Change email</h2>
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Change email</h2>
         <input
           type="email"
           required
@@ -384,7 +391,7 @@ export default function ProfileClient({
           onChange={(e) => setNewEmail(e.target.value)}
           placeholder="New email address"
           autoComplete="email"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
+          className={`mt-3 ${stayvoInputPillClass}`}
         />
         <PressButton
           type="submit"
@@ -397,9 +404,9 @@ export default function ProfileClient({
 
       <form
         onSubmit={onChangePassword}
-        className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6"
+        className={`${stayvoCardGlassClass} p-4 md:p-6`}
       >
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Change password
         </h2>
         <input
@@ -409,7 +416,7 @@ export default function ProfileClient({
           onChange={(e) => setPassword(e.target.value)}
           placeholder="New password (min 8 characters)"
           autoComplete="new-password"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
+          className={`mt-3 ${stayvoInputPillClass}`}
         />
         <input
           type="password"
@@ -418,7 +425,7 @@ export default function ProfileClient({
           onChange={(e) => setPassword2(e.target.value)}
           placeholder="Confirm new password"
           autoComplete="new-password"
-          className="mt-3 w-full rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
+          className={`mt-3 ${stayvoInputPillClass}`}
         />
         <PressButton
           type="submit"
@@ -429,7 +436,7 @@ export default function ProfileClient({
         </PressButton>
       </form>
 
-      <div className="glass flex flex-col gap-3 rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
+      <div className={`${stayvoCardGlassClass} flex flex-col gap-3 p-4 md:p-6`}>
         <PressButton
           type="button"
           disabled={busy}
@@ -448,8 +455,8 @@ export default function ProfileClient({
         </PressButton>
       </div>
 
-      <section className="glass rounded-[20px] p-4 dark:bg-[#1a1b1f] dark:border-white/12 md:p-6">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 md:text-base">Legal</h2>
+      <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
+        <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Legal</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
           Review the latest Privacy Policy and Terms of Service.
         </p>

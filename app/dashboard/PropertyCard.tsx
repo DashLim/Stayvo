@@ -16,6 +16,7 @@ import { guestPortalAbsoluteUrl } from '@/lib/guest-portal-url';
 import { icalFeedDisplayName } from '@/lib/ical/feed-source-label';
 import { sortGuestLinksByCheckoutAsc } from '@/lib/guest-link-sort';
 import type { IcalFeedSummary } from '@/lib/ical/types';
+import { stayvoCardGlassClass } from '@/lib/stayvo-ui-classes';
 
 function displayGuestName(name: string | null | undefined) {
   const t = (name ?? '').trim();
@@ -530,7 +531,7 @@ export default function PropertyCard({
     <motion.div
       whileTap={linksPanel ? undefined : { scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="glass flex min-h-0 w-full min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-visible rounded-[20px] p-5 dark:border-white/12 dark:bg-[#1a1b1f] md:p-4"
+      className={`${stayvoCardGlassClass} flex min-h-0 w-full min-w-0 max-w-full flex-col overflow-x-hidden overflow-y-visible p-5 md:p-4`}
     >
       <div>
         <div className="flex flex-wrap items-center gap-2">

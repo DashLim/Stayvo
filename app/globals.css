@@ -4,10 +4,31 @@
 
 :root {
   --brand: #E0A24D;
-  --bg-base:   #fdf6ec;
+  --bg-base: #fdf6ec;
   --bg-base-2: #faf0dc;
-  --bg-glow:   rgba(224, 162, 77, 0.12);
+  --bg-glow: rgba(224, 162, 77, 0.12);
   --text-base: #0f172a;
+
+  /* Semantic tokens (Stayvo ecosystem — primary stays amber/gold) */
+  --background: #fdf6ec;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f4ede4;
+  --muted-foreground: #64748b;
+  --border: rgba(15, 23, 42, 0.1);
+  --input: rgba(15, 23, 42, 0.12);
+  --ring: #E0A24D;
+  --primary: #E0A24D;
+  --primary-foreground: #422006;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --sidebar: rgba(253, 246, 236, 0.94);
+  --guest-surface-from: #fdf6ec;
+  --guest-surface-to: #faf0dc;
+
   /* Guest portal fixed bottom chrome (quick nav + optional cookie banner) */
   --stayvo-guest-quick-nav-offset: calc(3.75rem + env(safe-area-inset-bottom, 0px));
   --stayvo-guest-footer-pad: calc(5.75rem + env(safe-area-inset-bottom, 0px));
@@ -27,10 +48,29 @@ html.stayvo-guest-cookie-open .guest-portal-legal-footer--no-quick-nav {
 }
 
 .dark {
-  --bg-base:   #111014;
+  --bg-base: #111014;
   --bg-base-2: #1a1812;
-  --bg-glow:   rgba(224, 162, 77, 0.07);
+  --bg-glow: rgba(224, 162, 77, 0.07);
   --text-base: #f1efe9;
+
+  --background: #111014;
+  --foreground: #f1efe9;
+  --card: #1c1d21;
+  --card-foreground: #f1efe9;
+  --muted: #252329;
+  --muted-foreground: #94a3b8;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #E0A24D;
+  --primary: #E0A24D;
+  --primary-foreground: #fef3c7;
+  --destructive: #f87171;
+  --destructive-foreground: #1c1917;
+  --success: #34d399;
+  --success-foreground: #022c22;
+  --sidebar: rgba(17, 16, 20, 0.94);
+  --guest-surface-from: #1a1812;
+  --guest-surface-to: #14120f;
 }
 
 html {
@@ -151,15 +191,54 @@ body {
   }
 
   .glass-header {
-    background: rgba(253, 246, 236, 0.82);
+    background: color-mix(in srgb, var(--sidebar) 88%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(224, 162, 77, 0.15);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
   }
 
   .dark .glass-header {
-    background: rgba(17, 16, 20, 0.88);
-    border-bottom: 1px solid rgba(224, 162, 77, 0.12);
+    background: color-mix(in srgb, var(--sidebar) 92%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+  }
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+  }
+}
+
+@layer components {
+  .stayvo-form-section {
+    @apply rounded-[20px] border border-border bg-card/95 p-4 backdrop-blur-sm md:rounded-2xl md:p-6 md:shadow-sm;
+  }
+
+  .stayvo-form-section--elevated {
+    @apply md:ring-1 md:ring-border/60;
+  }
+
+  .stayvo-input {
+    @apply w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/45 disabled:opacity-50 dark:[color-scheme:dark];
+  }
+
+  .stayvo-input--pill {
+    @apply rounded-full;
+  }
+
+  .stayvo-textarea {
+    @apply w-full resize-y rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/45;
+  }
+
+  .stayvo-guest-card {
+    @apply overflow-hidden rounded-2xl border border-border bg-card shadow-sm md:shadow-[0_2px_12px_rgba(0,0,0,0.06)];
+  }
+
+  .stayvo-auth-panel {
+    @apply w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-sm;
   }
 }
 

@@ -10,6 +10,7 @@ import {
   type IcalFeedStatus,
 } from '@/app/actions/ical-feeds';
 import { icalFeedDisplayName } from '@/lib/ical/feed-source-label';
+import { stayvoInputClass } from '@/lib/stayvo-ui-classes';
 
 function formatSyncedAt(iso: string | null) {
   if (!iso) return 'Never';
@@ -49,7 +50,7 @@ function CalendarFields({
           onChange={(e) => onCalendarNameChange(e.target.value)}
           required
           placeholder="e.g. Airbnb"
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-white/88"
+          className={`mt-1 ${stayvoInputClass}`}
         />
       </div>
       <div>
@@ -60,7 +61,7 @@ function CalendarFields({
           onChange={(e) => onFeedUrlChange(e.target.value)}
           required
           placeholder="https://…"
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm dark:border-white/20 dark:bg-white/88"
+          className={`mt-1 ${stayvoInputClass}`}
         />
       </div>
     </div>

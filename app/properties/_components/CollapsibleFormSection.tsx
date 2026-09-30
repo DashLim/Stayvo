@@ -23,8 +23,8 @@ export default function CollapsibleFormSection({
   onToggle,
   children,
   className = '',
-  titleClassName = 'text-base font-semibold text-slate-900 dark:text-slate-100',
-  descriptionClassName = 'mt-1 text-sm text-slate-600 dark:text-slate-400',
+  titleClassName = 'text-base font-semibold text-foreground',
+  descriptionClassName = 'mt-1 text-sm text-muted-foreground',
 }: CollapsibleFormSectionProps) {
   const panelId = `property-section-panel-${id}`;
   const headerId = `property-section-header-${id}`;
@@ -37,14 +37,14 @@ export default function CollapsibleFormSection({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => onToggle(id)}
-        className="flex w-full items-start justify-between gap-3 rounded-xl text-left transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+        className="flex w-full items-start justify-between gap-3 rounded-xl text-left transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/45"
       >
         <div className="min-w-0 flex-1">
           <h2 className={titleClassName}>{title}</h2>
           {description ? <div className={descriptionClassName}>{description}</div> : null}
         </div>
         <span
-          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/60 text-slate-500 transition-transform duration-200 dark:border-white/15 dark:bg-white/10 dark:text-slate-400 ${
+          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-muted/80 text-muted-foreground transition-transform duration-200 ${
             open ? 'rotate-180' : 'rotate-0'
           }`}
           aria-hidden

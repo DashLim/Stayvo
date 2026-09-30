@@ -21,6 +21,7 @@ import {
 } from '@/app/_guest/guest-portal-utils';
 import { normalizeSectionOrder, type CustomDetail } from '@/lib/guest-layout';
 import { guestPropertyMediaPublicUrl } from '@/lib/guest-property-media';
+import { stayvoGuestCardClass } from '@/lib/stayvo-ui-classes';
 
 export type GuestPortalViewData = {
   property_name: string;
@@ -208,7 +209,7 @@ export default function GuestPortalView({
 
   const heroGuestIntroDesktop = (
     <div className="px-1 md:px-0">
-      <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-900 md:text-3xl">
+      <h1 className="text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
         {data.property_name}
       </h1>
       {isPreview ? (
@@ -219,7 +220,7 @@ export default function GuestPortalView({
         <p className="mt-2 text-base font-medium text-slate-600">Welcome 👋</p>
       )}
       {!isPreview && data.checkout_date ? (
-        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#E0A24D]/35 bg-[#E0A24D]/12 px-3 py-1.5 text-xs font-semibold text-slate-800">
+        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-primary/35 bg-primary/12 px-3 py-1.5 text-xs font-semibold text-foreground">
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-brand" fill="currentColor" aria-hidden>
             <path d="M5 2.5a.5.5 0 0 0-1 0V4H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 14h10a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13 4h-1V2.5a.5.5 0 0 0-1 0V4H5V2.5ZM2.5 7.5h11v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" />
           </svg>
@@ -332,7 +333,7 @@ export default function GuestPortalView({
 
         {/* ── Content card slides over hero ────────────────────────────── */}
         <div
-          className="relative z-10 max-md:left-1/2 max-md:right-1/2 max-md:-mt-10 max-md:w-screen max-md:-translate-x-1/2 max-md:rounded-t-[32px] max-md:bg-gradient-to-br max-md:from-[#FDF6EC] max-md:to-[#FAF0DC] md:z-auto md:mt-0 md:flex-1 md:min-w-0 md:max-w-none md:translate-x-0 md:rounded-none md:bg-transparent"
+          className="relative z-10 max-md:left-1/2 max-md:right-1/2 max-md:-mt-10 max-md:w-screen max-md:-translate-x-1/2 max-md:rounded-t-[32px] max-md:bg-gradient-to-br max-md:from-[var(--guest-surface-from)] max-md:to-[var(--guest-surface-to)] md:z-auto md:mt-0 md:flex-1 md:min-w-0 md:max-w-none md:translate-x-0 md:rounded-none md:bg-transparent"
         >
           <div className="space-y-6 pt-4 pb-12 sm:space-y-8 sm:pt-5 md:space-y-8 md:pt-1 md:pb-14 lg:space-y-10">
           {/* Lockup below hero, above first content section (usually Address) */}
@@ -363,7 +364,7 @@ export default function GuestPortalView({
               return (
                 <section
                   key={sectionKey}
-                  className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={stayvoGuestCardClass}
                 >
                   <div className="px-4 pt-4 pb-3 md:px-6 md:pt-6 md:pb-4">
                     <GuestSectionHeading
@@ -389,7 +390,7 @@ export default function GuestPortalView({
                         <Link
                           href={data.google_maps_url}
                           target="_blank"
-                          className="flex items-center justify-center gap-2 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 md:flex-1 md:rounded-full md:border-2 md:border-[#E0A24D] md:bg-white md:py-2.5 md:shadow-sm"
+                          className="flex items-center justify-center gap-2 bg-card py-3.5 text-[13px] font-semibold text-foreground transition hover:bg-muted/60 active:bg-muted md:flex-1 md:rounded-full md:border-2 md:border-primary md:bg-card md:py-2.5 md:shadow-sm"
                         >
                           <svg viewBox="0 0 20 20" className="h-4 w-4 text-brand" fill="currentColor" aria-hidden>
                             <path d="M10 1.75A5.75 5.75 0 0 0 4.25 7.5c0 4.13 4.37 9.4 5.03 10.18a.94.94 0 0 0 1.44 0c.66-.78 5.03-6.05 5.03-10.18A5.75 5.75 0 0 0 10 1.75Zm0 8a2.25 2.25 0 1 1 0-4.5 2.25 2.25 0 0 1 0 4.5Z" />
@@ -401,7 +402,7 @@ export default function GuestPortalView({
                         <Link
                           href={data.waze_url}
                           target="_blank"
-                          className="flex items-center justify-center gap-2 bg-white py-3.5 text-[13px] font-semibold text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 md:flex-1 md:rounded-full md:border-2 md:border-[#E0A24D] md:bg-white md:py-2.5 md:shadow-sm"
+                          className="flex items-center justify-center gap-2 bg-card py-3.5 text-[13px] font-semibold text-foreground transition hover:bg-muted/60 active:bg-muted md:flex-1 md:rounded-full md:border-2 md:border-primary md:bg-card md:py-2.5 md:shadow-sm"
                         >
                           <svg viewBox="0 0 20 20" className="h-4 w-4 text-brand" fill="currentColor" aria-hidden>
                             <path d="M10 2a6 6 0 0 1 4.33 10.1l-2.93 3.74a.75.75 0 0 1-1.2 0L7.27 12.1a6 6 0 0 1-1.02-1.35A6 6 0 0 1 10 2Zm0 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z" />
@@ -421,7 +422,7 @@ export default function GuestPortalView({
                 <section
                   id="parking-section"
                   key={sectionKey}
-                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={`${stayvoGuestCardClass} scroll-mt-20 px-4 py-4 md:p-6`}
                 >
                   <GuestSectionHeading
                     label="Parking"
@@ -449,7 +450,7 @@ export default function GuestPortalView({
                 <section
                   id="checkin-section"
                   key={sectionKey}
-                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white shadow-sm md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={`${stayvoGuestCardClass} scroll-mt-20`}
                 >
                   <div className="px-4 pt-4 pb-3 md:px-6 md:pt-6 md:pb-4">
                     <GuestSectionHeading
@@ -503,7 +504,7 @@ export default function GuestPortalView({
                 <section
                   id="wifi-section"
                   key={sectionKey}
-                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={`${stayvoGuestCardClass} scroll-mt-20 px-4 py-4 md:p-6`}
                 >
                   <GuestSectionHeading
                     label="Wi-Fi"
@@ -563,7 +564,7 @@ export default function GuestPortalView({
                         text={data.wifi_password || ''}
                         idleLabel="Tap to copy password"
                         copiedLabel="Copied!"
-                        className="mt-4 flex w-full items-center justify-center rounded-xl border-2 border-[#E0A24D] bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 active:opacity-80"
+                        className="mt-4 flex w-full items-center justify-center rounded-xl border-2 border-primary bg-card px-4 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/50 active:opacity-80"
                       />
                     ) : null}
                   </div>
@@ -577,7 +578,7 @@ export default function GuestPortalView({
                 <section
                   id="rules-section"
                   key={sectionKey}
-                  className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={`${stayvoGuestCardClass} scroll-mt-20 px-4 py-4 md:p-6`}
                 >
                   <GuestSectionHeading
                     label="House rules"
@@ -609,7 +610,7 @@ export default function GuestPortalView({
               return (
                 <section
                   key={sectionKey}
-                  className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={`${stayvoGuestCardClass} px-4 py-4 md:p-6`}
                 >
                   <GuestSectionHeading
                     label="FAQ"
@@ -630,7 +631,7 @@ export default function GuestPortalView({
                 <section
                   id="host-section"
                   key={sectionKey}
-                  className={`scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]${
+                  className={`${stayvoGuestCardClass} scroll-mt-20 px-4 py-4 md:p-6${
                     showDesktopHostSidebar ? ' md:hidden' : ''
                   }`}
                 >
@@ -713,7 +714,7 @@ export default function GuestPortalView({
               return (
                 <section
                   key={sectionKey}
-                  className="rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                  className={`${stayvoGuestCardClass} px-4 py-4 md:p-6`}
                 >
                   {hasText(detail.title) ? (
                     <GuestSectionHeading
@@ -741,7 +742,7 @@ export default function GuestPortalView({
           })}
 
           {visibleGuidebookTips.length > 0 ? (
-            <section className="scroll-mt-20 rounded-2xl border border-slate-100 bg-white px-4 py-4 shadow-sm md:p-6 md:shadow-[0_2px_12px_rgba(0,0,0,0.06)] md:[&_img]:max-h-[240px] md:[&_img]:rounded-xl md:[&_img]:object-cover">
+            <section className={`${stayvoGuestCardClass} scroll-mt-20 px-4 py-4 md:p-6 md:[&_img]:max-h-[240px] md:[&_img]:rounded-xl md:[&_img]:object-cover`}>
               <GuestSectionHeading
                 label="Guidebook tips"
                 icon={

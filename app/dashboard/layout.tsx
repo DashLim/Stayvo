@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         locationCount: locationCount ?? 0,
       }}
     >
-      <div className="flex min-h-screen w-full max-w-none flex-col md:flex-row md:bg-gradient-to-b md:from-[#fdf9f3] md:via-[#faf2e6] md:to-[#f3e5d4] dark:md:from-[#0e0d11] dark:md:via-[#16141c] dark:md:to-[#121118]">
+      <div className="flex min-h-screen w-full max-w-none flex-col bg-background md:flex-row md:bg-gradient-to-b md:from-background md:via-[color-mix(in_srgb,var(--background)_70%,var(--muted))] md:to-[color-mix(in_srgb,var(--background)_55%,var(--primary)_8%)]">
         <HostDesktopSidebar displayName={displayName} email={email} />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
           <div className="mx-auto w-full max-w-2xl flex-1 px-4 md:max-w-none md:px-8">

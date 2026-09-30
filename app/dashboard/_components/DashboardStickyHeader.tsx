@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { stayvoPageTitleClass } from '@/lib/stayvo-ui-classes';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (path) => path === '/dashboard', title: 'Dashboard' },
@@ -36,9 +37,9 @@ export default function DashboardStickyHeader() {
   }, [isManage]);
 
   return (
-    <header className="glass-header sticky top-0 z-30 -mx-4 border-b !border-b-black/[0.08] px-4 pt-[env(safe-area-inset-top)] dark:!border-b-white/10 md:-mx-8 md:px-8">
+    <header className="glass-header sticky top-0 z-30 -mx-4 border-b border-border px-4 pt-[env(safe-area-inset-top)] md:-mx-8 md:px-8">
       <div className="mx-auto flex h-[52px] w-full max-w-2xl items-center justify-between gap-3 md:h-14 md:max-w-none">
-        <h1 className="text-left text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100 md:text-2xl">
+        <h1 className={`text-left ${stayvoPageTitleClass}`}>
           {title}
         </h1>
 
