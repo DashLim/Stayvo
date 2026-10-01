@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { GuestLinkOpenStats } from '@/lib/guest-link-open-stats';
 import { sortGuestLinksByCheckoutAsc } from '@/lib/guest-link-sort';
+import {
+  stayvoHostCardClass,
+  stayvoHostNavItemActiveClass,
+  stayvoHostNavItemClass,
+  stayvoSectionTitleClass,
+} from '@/lib/stayvo-ui-classes';
+import { cn } from '@/lib/utils';
 
 type GuestLinkItem = {
   id: string;
@@ -281,7 +288,7 @@ function TrackPropertyCard({
     'Untitled';
 
   return (
-    <div className="glass flex min-h-0 w-full min-w-0 max-w-full flex-col rounded-[20px] p-5 dark:border-white/12 dark:bg-[#1a1b1f] md:p-4">
+    <div className={`${stayvoHostCardClass} flex min-h-0 w-full min-w-0 max-w-full flex-col p-5 md:p-4`}>
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="min-w-0 flex-1 text-left text-base font-semibold leading-tight text-slate-900 dark:text-slate-100">
@@ -369,7 +376,7 @@ export default function TrackGuestLinksClient({
             <section key={section.locationId}>
               {/* Location header */}
               <div className="mb-4 flex items-center gap-2">
-                <span className="rounded-full bg-brand/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-brand dark:bg-brand/15">
+                <span className="rounded-md border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
                   {section.locationName}
                 </span>
                 <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
@@ -402,17 +409,16 @@ export default function TrackGuestLinksClient({
                 key={s.locationId}
                 type="button"
                 onClick={() => setDesktopLocationId(s.locationId)}
-                className={`flex w-full flex-col items-start rounded-full px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
-                  selected
-                    ? 'bg-brand font-bold text-amber-950 shadow-sm dark:text-amber-950'
-                    : 'text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10'
-                }`}
+                className={cn(
+                  selected ? stayvoHostNavItemActiveClass : stayvoHostNavItemClass,
+                )}
               >
                 <span className="w-full truncate">{s.locationName}</span>
                 <span
-                  className={`mt-0.5 text-xs font-medium ${
-                    selected ? 'text-amber-950/80' : 'text-slate-500 dark:text-slate-400'
-                  }`}
+                  className={cn(
+                    'mt-0.5 text-xs font-medium',
+                    selected ? 'text-primary/80' : 'text-muted-foreground',
+                  )}
                 >
                   {s.properties.length} {s.properties.length === 1 ? 'property' : 'properties'}
                 </span>
@@ -423,8 +429,8 @@ export default function TrackGuestLinksClient({
         <div className="min-w-0 flex-1">
           {desktopSelectedSection ? (
             <>
-              <div className="mb-4 border-b border-amber-200/50 pb-3 dark:border-amber-900/40">
-                <h2 className="text-lg font-semibold text-brand md:text-xl">
+              <div className="mb-4 border-b border-border pb-3">
+                <h2 className={stayvoSectionTitleClass}>
                   {desktopSelectedSection.locationName}
                 </h2>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">

@@ -15,8 +15,10 @@ import ThemeToggle from '@/app/_components/ThemeToggle';
 import { guestPortalAbsoluteUrl, sanitizeHostDisplayNameInput } from '@/lib/guest-portal-url';
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/support-email';
 import {
-  stayvoCardGlassClass,
-  stayvoInputPillClass,
+  stayvoBtnPrimaryClass,
+  stayvoBtnSecondaryClass,
+  stayvoHostCardClass,
+  stayvoInputClass,
   stayvoMutedTextClass,
   stayvoSectionTitleClass,
 } from '@/lib/stayvo-ui-classes';
@@ -149,16 +151,16 @@ export default function ProfileClient({
   return (
     <div className="mx-auto mt-8 w-full max-w-[600px] space-y-4 md:space-y-5">
       {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-3 text-sm text-rose-800 backdrop-blur-sm dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400" role="alert">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive" role="alert">
           {error}
         </div>
       ) : null}
       {info ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400">
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800 dark:text-emerald-200">
           {info}
         </div>
       ) : null}
-      <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
+      <section className={`${stayvoHostCardClass} p-4 md:p-6`}>
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Current email
         </h2>
@@ -167,7 +169,7 @@ export default function ProfileClient({
 
       <section
         id="check-in-access"
-        className={`${stayvoCardGlassClass} scroll-mt-24 p-4 md:p-6`}
+        className={`${stayvoHostCardClass} scroll-mt-24 p-4 md:p-6`}
       >
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Stayvo Check-in access</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -192,7 +194,7 @@ export default function ProfileClient({
 
       <form
         onSubmit={onSaveHostName}
-        className={`${stayvoCardGlassClass} p-4 md:p-6`}
+        className={`${stayvoHostCardClass} p-4 md:p-6`}
       >
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Host display name
@@ -202,7 +204,7 @@ export default function ProfileClient({
           onChange={(e) => setHostName(sanitizeHostDisplayNameInput(e.target.value))}
           placeholder="Your name"
           autoComplete="nickname"
-          className={`mt-3 ${stayvoInputPillClass}`}
+          className={`mt-3 ${stayvoInputClass}`}
         />
         <p className="mt-2 break-all text-xs text-slate-500 dark:text-slate-500">
           <span className="font-semibold text-slate-600 dark:text-slate-400">Guest link example:</span>{' '}
@@ -211,13 +213,13 @@ export default function ProfileClient({
         <PressButton
           type="submit"
           disabled={busy}
-          className="mt-3 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60"
+          className={`mt-3 ${stayvoBtnPrimaryClass} disabled:opacity-60`}
         >
           Save name
         </PressButton>
       </form>
 
-      <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
+      <section className={`${stayvoHostCardClass} p-4 md:p-6`}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
@@ -233,7 +235,7 @@ export default function ProfileClient({
 
       <form
         onSubmit={onChangeEmail}
-        className={`${stayvoCardGlassClass} p-4 md:p-6`}
+        className={`${stayvoHostCardClass} p-4 md:p-6`}
       >
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Change email</h2>
         <input
@@ -243,12 +245,12 @@ export default function ProfileClient({
           onChange={(e) => setNewEmail(e.target.value)}
           placeholder="New email address"
           autoComplete="email"
-          className={`mt-3 ${stayvoInputPillClass}`}
+          className={`mt-3 ${stayvoInputClass}`}
         />
         <PressButton
           type="submit"
           disabled={busy}
-          className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60 dark:bg-brand"
+          className={`mt-3 ${stayvoBtnPrimaryClass} disabled:opacity-60`}
         >
           Update email
         </PressButton>
@@ -256,7 +258,7 @@ export default function ProfileClient({
 
       <form
         onSubmit={onChangePassword}
-        className={`${stayvoCardGlassClass} p-4 md:p-6`}
+        className={`${stayvoHostCardClass} p-4 md:p-6`}
       >
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>
           Change password
@@ -268,7 +270,7 @@ export default function ProfileClient({
           onChange={(e) => setPassword(e.target.value)}
           placeholder="New password (min 8 characters)"
           autoComplete="new-password"
-          className={`mt-3 ${stayvoInputPillClass}`}
+          className={`mt-3 ${stayvoInputClass}`}
         />
         <input
           type="password"
@@ -277,23 +279,23 @@ export default function ProfileClient({
           onChange={(e) => setPassword2(e.target.value)}
           placeholder="Confirm new password"
           autoComplete="new-password"
-          className={`mt-3 ${stayvoInputPillClass}`}
+          className={`mt-3 ${stayvoInputClass}`}
         />
         <PressButton
           type="submit"
           disabled={busy}
-          className="mt-3 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-60 dark:bg-brand"
+          className={`mt-3 ${stayvoBtnPrimaryClass} disabled:opacity-60`}
         >
           Update password
         </PressButton>
       </form>
 
-      <div className={`${stayvoCardGlassClass} flex flex-col gap-3 p-4 md:p-6`}>
+      <div className={`${stayvoHostCardClass} flex flex-col gap-3 p-4 md:p-6`}>
         <PressButton
           type="button"
           disabled={busy}
           onClick={() => void onSignOut()}
-          className="rounded-full border border-slate-300 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 disabled:opacity-60 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
+          className={`${stayvoBtnSecondaryClass} disabled:opacity-60`}
         >
           Log out
         </PressButton>
@@ -301,13 +303,13 @@ export default function ProfileClient({
           type="button"
           disabled={busy}
           onClick={() => void onDeleteAccount()}
-          className="rounded-full border border-rose-300 bg-rose-50/70 px-4 py-2 text-sm font-semibold text-rose-800 disabled:opacity-60 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-400"
+          className="inline-flex h-10 items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 px-4 text-sm font-medium text-destructive disabled:opacity-60"
         >
           Delete account
         </PressButton>
       </div>
 
-      <section className={`${stayvoCardGlassClass} p-4 md:p-6`}>
+      <section className={`${stayvoHostCardClass} p-4 md:p-6`}>
         <h2 className={`${stayvoSectionTitleClass} text-sm md:text-base`}>Legal</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
           Review the latest Privacy Policy and Terms of Service.
@@ -315,13 +317,13 @@ export default function ProfileClient({
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href="/privacy"
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
+            className={stayvoBtnSecondaryClass}
           >
             Privacy Policy
           </Link>
           <Link
             href="/terms"
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-white dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950"
+            className={stayvoBtnSecondaryClass}
           >
             Terms of Service
           </Link>

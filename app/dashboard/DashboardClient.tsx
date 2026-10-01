@@ -6,6 +6,14 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import PropertyCard from '@/app/dashboard/PropertyCard';
 import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
 import type { IcalFeedSummary } from '@/lib/ical/types';
+import {
+  stayvoBtnPrimaryClass,
+  stayvoHostCardClass,
+  stayvoHostNavItemActiveClass,
+  stayvoHostNavItemClass,
+  stayvoSectionTitleClass,
+} from '@/lib/stayvo-ui-classes';
+import { cn } from '@/lib/utils';
 
 export type { IcalFeedSummary };
 
@@ -56,7 +64,7 @@ type LocationOption = { id: string; name: string };
 
 function EmptyLocationPlaceholder({ locationName }: { locationName: string }) {
   return (
-    <div className="glass rounded-[20px] border border-slate-200/80 bg-white/60 p-6 text-center dark:border-white/10 dark:bg-white/[0.04] md:p-8">
+    <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
       <p className="text-sm text-slate-600 dark:text-slate-400">
         No live properties in{' '}
         <span className="font-semibold text-slate-800 dark:text-slate-200">{locationName}</span> yet.
@@ -66,7 +74,7 @@ function EmptyLocationPlaceholder({ locationName }: { locationName: string }) {
       </p>
       <Link
         href="/dashboard/manage"
-        className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+        className={`mt-4 ${stayvoBtnPrimaryClass}`}
       >
         Open Manage
       </Link>
@@ -303,8 +311,8 @@ export default function DashboardClient({
         selectedIds !== null &&
         selectedIds.length === 0 &&
         locationOptions.length > 0 ? (
-          <div className="glass rounded-[20px] p-6 text-center md:p-8">
-            <h2 className="text-base font-semibold dark:text-slate-100">No locations selected</h2>
+          <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
+            <h2 className="text-base font-semibold text-foreground">No locations selected</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Choose one or more locations above to see properties here.
             </p>
@@ -377,17 +385,16 @@ export default function DashboardClient({
                       key={s.locationId}
                       type="button"
                       onClick={() => setDesktopLocationId(s.locationId)}
-                      className={`flex w-full flex-col items-start rounded-full px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
-                        selected
-                          ? 'bg-brand font-bold text-amber-950 shadow-sm dark:text-amber-950'
-                          : 'text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10'
-                      }`}
+                      className={cn(
+                        selected ? stayvoHostNavItemActiveClass : stayvoHostNavItemClass,
+                      )}
                     >
                       <span className="w-full truncate">{s.locationName}</span>
                       <span
-                        className={`mt-0.5 text-xs font-medium ${
-                          selected ? 'text-amber-950/80' : 'text-slate-500 dark:text-slate-400'
-                        }`}
+                        className={cn(
+                          'mt-0.5 text-xs font-medium',
+                          selected ? 'text-primary/80' : 'text-muted-foreground',
+                        )}
                       >
                         {s.properties.length}{' '}
                         {s.properties.length === 1 ? 'property' : 'properties'}
@@ -399,8 +406,8 @@ export default function DashboardClient({
               <div className="min-w-0 flex-1">
                 {desktopSelectedSection ? (
                   <>
-                    <div className="mb-4 border-b border-amber-200/50 pb-3 dark:border-amber-900/40">
-                      <h2 className="text-lg font-semibold text-brand md:text-xl">
+                    <div className="mb-4 border-b border-border pb-3">
+                      <h2 className={stayvoSectionTitleClass}>
                         {desktopSelectedSection.locationName}
                       </h2>
                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
@@ -455,8 +462,8 @@ export default function DashboardClient({
             </div>
           </div>
         ) : hasAnyLiveProperty ? (
-          <div className="glass rounded-[20px] p-6 text-center md:p-8">
-            <h2 className="text-base font-semibold dark:text-slate-100">No live properties in selection</h2>
+          <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
+            <h2 className="text-base font-semibold text-foreground">No live properties in selection</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               None of the locations you selected have live properties yet. Choose other locations in the
               filter, or add or publish a property from{' '}
@@ -470,8 +477,8 @@ export default function DashboardClient({
             </p>
           </div>
         ) : (
-          <div className="glass rounded-[20px] p-6 text-center md:p-8">
-            <h2 className="text-base font-semibold dark:text-slate-100">No live properties yet</h2>
+          <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
+            <h2 className="text-base font-semibold text-foreground">No live properties yet</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               You have properties saved as drafts. Open{' '}
               <Link

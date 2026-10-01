@@ -34,6 +34,16 @@ import {
 } from '@/app/actions/locations';
 import PressButton from '@/app/_components/PressButton';
 import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
+import {
+  stayvoBtnCompactPrimaryClass,
+  stayvoBtnCompactSecondaryClass,
+  stayvoBtnPrimaryClass,
+  stayvoBtnSecondaryClass,
+  stayvoHostCardClass,
+  stayvoHostNavItemActiveClass,
+  stayvoHostNavItemClass,
+} from '@/lib/stayvo-ui-classes';
+import { cn } from '@/lib/utils';
 
 type LocRow = { id: string; name: string };
 type PropRow = {
@@ -85,7 +95,7 @@ function DragHandle({
       type="button"
       {...attributes}
       {...listeners}
-      className={`touch-none select-none rounded-full glass p-2 text-slate-500 transition hover:text-brand [-webkit-touch-callout:none] dark:text-slate-300 dark:hover:text-brand ${trelloPressFx}`}
+      className={`touch-none select-none rounded-md border border-input bg-background p-2 text-muted-foreground shadow-xs transition hover:text-primary [-webkit-touch-callout:none] ${trelloPressFx}`}
       aria-label="Drag to reorder"
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
@@ -167,7 +177,7 @@ function SortablePropertyRow({
             <Link
               href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
               prefetch={false}
-              className={`hidden h-8 items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 text-sm font-semibold text-slate-700 backdrop-blur-sm transition hover:bg-slate-300/90 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/14 dark:hover:text-slate-950 md:inline-flex ${trelloPressFx}`}
+              className={`${stayvoBtnCompactSecondaryClass} hidden md:inline-flex ${trelloPressFx}`}
             >
               <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
                 <path
@@ -193,7 +203,7 @@ function SortablePropertyRow({
               onClick={() =>
                 setOpenMenuPropertyId((current) => (current === p.id ? null : p.id))
               }
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/70 text-slate-700 backdrop-blur-sm transition hover:bg-slate-300/90 hover:text-slate-900 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/14 dark:hover:text-slate-950 ${trelloPressFx}`}
+              className={`${stayvoBtnCompactSecondaryClass} w-8 px-0 ${trelloPressFx}`}
               title="Property actions"
               aria-label="Property actions"
             >
@@ -255,7 +265,7 @@ function SortablePropertyRow({
               type="button"
               disabled={pending}
               onClick={() => onDeleteProperty(p.id, p.property_name || 'Untitled')}
-              className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 text-destructive disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
               aria-label="Delete property"
               title="Delete property"
             >
@@ -282,7 +292,7 @@ function SortablePropertyRow({
             value={p.location_id}
             disabled={pending}
             onChange={(e) => onMoveProperty(p.id, e.target.value)}
-            className="w-full rounded-full border border-white/50 bg-white/60 px-4 py-1.5 text-xs font-medium text-slate-800 backdrop-blur-sm outline-none focus:border-brand/40 focus:ring-2 focus:ring-brand/20 disabled:opacity-50 dark:border-white/12 dark:bg-neutral-950/60 dark:text-slate-100 dark:[color-scheme:dark]"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:[color-scheme:dark]"
           >
             {flatLocations.map((l) => (
               <option key={l.id} value={l.id}>
@@ -343,7 +353,7 @@ function LocationGroupPanel({
     <section
       ref={sectionRef}
       style={sectionStyle}
-      className="glass rounded-[20px] border border-slate-200/80 bg-slate-50/65 p-4 dark:border-white/12 dark:bg-neutral-900/60 md:p-6"
+      className={`${stayvoHostCardClass} p-4 md:p-6`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/50 dark:border-white/10 pb-3">
         <div className="flex items-center gap-2">
@@ -364,7 +374,7 @@ function LocationGroupPanel({
             <Link
               href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
               prefetch={false}
-              className={`inline-flex h-7 w-7 items-center justify-center gap-2 rounded-full bg-brand text-sm font-bold text-white shadow-sm transition hover:opacity-90 md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
+              className={`${stayvoBtnCompactPrimaryClass} h-7 w-7 px-0 md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
               aria-label={`Add property under ${loc.name}`}
               title={`Add property under ${loc.name}`}
             >
@@ -384,7 +394,7 @@ function LocationGroupPanel({
               type="button"
               disabled={pending}
               onClick={() => onDeleteLocation(loc.id, loc.name, properties.length)}
-              className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full border border-rose-200 bg-rose-50/70 text-slate-500 disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 text-destructive disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
               aria-label="Delete location"
               title={
                 properties.length > 0
@@ -425,7 +435,7 @@ function LocationGroupPanel({
             items={properties.map((p) => p.id)}
             strategy={verticalListSortingStrategy}
           >
-            <ul className="mt-3 overflow-visible rounded-2xl border border-slate-200 bg-white/85 divide-y divide-slate-300/45 dark:border-white/10 dark:bg-white/[0.04] dark:divide-white/10">
+            <ul className="mt-3 overflow-visible rounded-lg border border-border bg-card divide-y divide-border">
               {properties.map((p) => (
                 <SortablePropertyRow
                   key={p.id}
@@ -716,7 +726,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
     <div className="mt-6 w-full space-y-6">
       {/* Edit mode banner */}
       {editMode ? (
-        <div className="flex items-center gap-2 rounded-full border border-amber-300/60 bg-amber-50/70 px-4 py-2 text-xs font-semibold text-amber-800 backdrop-blur-sm dark:border-amber-700/40 dark:bg-amber-950/50 dark:text-amber-400">
+        <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-medium text-primary">
           <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
             <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-.793.793-2.828-2.828.793-.793ZM11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828Z" />
           </svg>
@@ -729,11 +739,11 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <PressButton
             type="button"
-            className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${trelloPressFx}`}
+            className={`absolute inset-0 bg-black/50 ${trelloPressFx}`}
             aria-label="Cancel"
             onClick={() => setAddLocOpen(false)}
           />
-          <div className="glass relative w-[calc(100%-2rem)] max-w-sm rounded-[20px] p-5">
+          <div className="relative w-[calc(100%-2rem)] max-w-sm rounded-xl border border-border bg-card p-5 shadow-lg">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Add new location</h2>
             <input
               autoFocus
@@ -743,13 +753,13 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
               onChange={(e) => setNewLocName(capitalizeWordStarts(e.target.value))}
               onKeyDown={(e) => { if (e.key === 'Enter') void submitNewLocation(); }}
               placeholder="Location name"
-              className="mt-3 w-full rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
+              className="mt-3 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <div className="mt-4 flex justify-end gap-2">
               <PressButton
                 type="button"
                 onClick={() => setAddLocOpen(false)}
-                className={`rounded-full border border-slate-200 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-800 dark:border-white/18 dark:bg-white/18 dark:text-slate-900 dark:hover:bg-white/28 dark:hover:text-slate-950 ${trelloPressFx}`}
+                className={`${stayvoBtnSecondaryClass} ${trelloPressFx}`}
               >
                 Cancel
               </PressButton>
@@ -757,7 +767,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 type="button"
                 disabled={!newLocName.trim()}
                 onClick={() => void submitNewLocation()}
-                className={`rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50 hover:opacity-90 dark:bg-brand dark:text-white ${trelloPressFx}`}
+                className={`${stayvoBtnPrimaryClass} disabled:opacity-50 ${trelloPressFx}`}
               >
                 Add
               </PressButton>
@@ -811,7 +821,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
 
           <DragOverlay>
             {activeGroup && editMode ? (
-              <div className="glass rounded-[20px] p-4 shadow-2xl ring-1 ring-brand/30">
+              <div className="rounded-lg border border-border bg-card p-4 shadow-md">
                 <p className="font-semibold text-slate-900 dark:text-slate-100">{activeGroup.location.name}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {`${activeGroup.properties.length} propert${activeGroup.properties.length === 1 ? 'y' : 'ies'}`}
@@ -835,11 +845,9 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                     key={g.location.id}
                     type="button"
                     onClick={() => setDesktopLocationId(g.location.id)}
-                    className={`flex w-full flex-col items-start rounded-full px-3 py-2.5 text-left text-sm font-semibold transition-colors ${
-                      selected
-                        ? 'bg-brand font-bold text-amber-950 shadow-sm dark:text-amber-950'
-                        : 'text-slate-700 hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10'
-                    }`}
+                    className={cn(
+                      selected ? stayvoHostNavItemActiveClass : stayvoHostNavItemClass,
+                    )}
                   >
                     <span className="w-full truncate">{g.location.name}</span>
                     <span

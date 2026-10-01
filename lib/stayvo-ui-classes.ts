@@ -61,7 +61,32 @@ export const stayvoAuthPanelClass = 'stayvo-auth-panel';
 
 /** Core-like host chrome */
 export const stayvoHostHeaderClass =
-  'sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/80';
+  'sticky top-0 z-30 border-b border-border bg-card';
+
+/** Sidebar / dashboard location list item */
+export const stayvoHostNavItemClass =
+  'flex w-full flex-col items-start rounded-lg px-3 py-2 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
+
+export const stayvoHostNavItemActiveClass =
+  'flex w-full flex-col items-start rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-left text-sm font-medium text-primary';
+
+/** Compact admin actions (property cards, tables) */
+export const stayvoBtnCompactPrimaryClass =
+  'inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50';
+
+export const stayvoBtnCompactSecondaryClass =
+  'inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-xs transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50';
+
+export const stayvoHostPanelClass =
+  'rounded-lg border border-border bg-card p-4 shadow-sm';
+
+export const stayvoHostBottomNavShellClass =
+  'rounded-xl border border-border bg-card px-1.5 py-2 shadow-md';
+
+export const stayvoHostBottomNavLinkClass =
+  'relative flex w-[4.5rem] flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium transition-colors';
+
+export const stayvoHostBottomNavLinkActiveClass = 'bg-primary/15 text-primary';
 
 export const stayvoHostMainClass = 'mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 sm:p-6 lg:p-8';
 
