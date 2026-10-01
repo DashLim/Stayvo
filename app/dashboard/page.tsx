@@ -40,7 +40,7 @@ export default async function DashboardPage() {
 
   if (locationsError || propertiesError) {
     return (
-      <main className="py-10">
+      <main className="py-6 md:py-8">
         <h1 className="text-lg font-semibold">Dashboard</h1>
         <p className="mt-2 text-sm text-rose-700">
           Unable to load your properties.
@@ -106,7 +106,7 @@ export default async function DashboardPage() {
   const guestLinkBaseUrl = guestLinkPublicBaseUrl();
 
   return (
-    <main className="py-10">
+    <main className="py-6 md:py-8">
       <DashboardClient
         userId={user.id}
         nowIso={nowIso}

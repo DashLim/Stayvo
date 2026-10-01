@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import PressButton from '@/app/_components/PressButton';
+import { stayvoBtnGhostClass } from '@/lib/stayvo-ui-classes';
 
 type LocationOption = { id: string; name: string };
 
@@ -64,7 +65,7 @@ export default function DashboardLocationFilterSheet({
             onDragEnd={(_, info) => {
               if (info.offset.y > 100 || info.velocity.y > 400) closeFilter();
             }}
-            className="relative flex flex-col rounded-t-xl border border-border bg-card px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 text-foreground shadow-lg"
+            className="relative flex flex-col rounded-t-lg border border-border bg-card px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-4 text-foreground shadow-lg"
             style={{ height: '92dvh' }}
           >
             <div className="mx-auto mb-4 h-1 w-10 shrink-0 rounded-full bg-muted" />
@@ -93,7 +94,7 @@ export default function DashboardLocationFilterSheet({
                 type="button"
                 disabled={!storageReady}
                 onClick={selectAll}
-                className="text-xs font-semibold text-brand disabled:opacity-50"
+                className={`${stayvoBtnGhostClass} h-8 px-2 text-xs disabled:opacity-50`}
               >
                 Select all
               </PressButton>
@@ -104,7 +105,7 @@ export default function DashboardLocationFilterSheet({
                 type="button"
                 disabled={!storageReady}
                 onClick={selectNone}
-                className="text-xs font-medium text-muted-foreground disabled:opacity-50"
+                className={`${stayvoBtnGhostClass} h-8 px-2 text-xs text-muted-foreground disabled:opacity-50`}
               >
                 Clear
               </PressButton>

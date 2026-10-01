@@ -8,9 +8,11 @@ import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmpt
 import type { IcalFeedSummary } from '@/lib/ical/types';
 import {
   stayvoBtnPrimaryClass,
+  stayvoHintClass,
   stayvoHostCardClass,
   stayvoHostNavItemActiveClass,
   stayvoHostNavItemClass,
+  stayvoMutedTextClass,
   stayvoSectionTitleClass,
 } from '@/lib/stayvo-ui-classes';
 import { cn } from '@/lib/utils';
@@ -65,11 +67,11 @@ type LocationOption = { id: string; name: string };
 function EmptyLocationPlaceholder({ locationName }: { locationName: string }) {
   return (
     <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
+      <p className={stayvoMutedTextClass}>
         No live properties in{' '}
-        <span className="font-semibold text-slate-800 dark:text-slate-200">{locationName}</span> yet.
+        <span className="font-medium text-foreground">{locationName}</span> yet.
       </p>
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-500">
+      <p className={`mt-2 ${stayvoHintClass}`}>
         Use Manage to add a property or set a draft to live for this location.
       </p>
       <Link
@@ -304,7 +306,7 @@ export default function DashboardClient({
         hasLiveByLocation={hasLiveByLocation}
       />
 
-      <section className="mt-6 md:mt-8">
+      <section className="mt-4 md:mt-6">
         {!hasAnyProperty ? (
           <NoPropertiesEmptyState returnTo="/dashboard" />
         ) : storageReady &&
@@ -312,13 +314,13 @@ export default function DashboardClient({
         selectedIds.length === 0 &&
         locationOptions.length > 0 ? (
           <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
-            <h2 className="text-base font-semibold text-foreground">No locations selected</h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <h2 className={stayvoSectionTitleClass}>No locations selected</h2>
+            <p className={`mt-2 ${stayvoMutedTextClass}`}>
               Choose one or more locations above to see properties here.
             </p>
           </div>
         ) : visibleSections.length > 0 ? (
-          <div className="mx-auto w-full max-w-[1200px]">
+          <div className="mx-auto w-full max-w-6xl">
             <div className="flex flex-col gap-8 md:hidden">
               {visibleSections.map((section) => (
                 <div key={section.locationId}>
@@ -404,7 +406,7 @@ export default function DashboardClient({
                       <h2 className={stayvoSectionTitleClass}>
                         {desktopSelectedSection.locationName}
                       </h2>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      <p className={`mt-0.5 ${stayvoHintClass}`}>
                         {desktopSelectedSection.properties.length}{' '}
                         {desktopSelectedSection.properties.length === 1 ? 'property' : 'properties'}
                       </p>
@@ -450,20 +452,20 @@ export default function DashboardClient({
                     )}
                   </>
                 ) : (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Select a location.</p>
+                  <p className={stayvoMutedTextClass}>Select a location.</p>
                 )}
               </div>
             </div>
           </div>
         ) : hasAnyLiveProperty ? (
           <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
-            <h2 className="text-base font-semibold text-foreground">No live properties in selection</h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <h2 className={stayvoSectionTitleClass}>No live properties in selection</h2>
+            <p className={`mt-2 ${stayvoMutedTextClass}`}>
               None of the locations you selected have live properties yet. Choose other locations in the
               filter, or add or publish a property from{' '}
               <Link
                 href="/dashboard/manage"
-                className="font-semibold text-brand underline-offset-2 hover:underline"
+                className="font-medium text-primary underline-offset-2 hover:underline"
               >
                 Property management
               </Link>
@@ -472,12 +474,12 @@ export default function DashboardClient({
           </div>
         ) : (
           <div className={`${stayvoHostCardClass} p-6 text-center md:p-8`}>
-            <h2 className="text-base font-semibold text-foreground">No live properties yet</h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <h2 className={stayvoSectionTitleClass}>No live properties yet</h2>
+            <p className={`mt-2 ${stayvoMutedTextClass}`}>
               You have properties saved as drafts. Open{' '}
               <Link
                 href="/dashboard/manage"
-                className="font-semibold text-brand underline-offset-2 hover:underline"
+                className="font-medium text-primary underline-offset-2 hover:underline"
               >
                 Property management
               </Link>{' '}
@@ -486,7 +488,7 @@ export default function DashboardClient({
           </div>
         )}
         {guestLinksError ? (
-          <p className="mt-3 text-xs text-amber-700 dark:text-amber-500">
+          <p className={`mt-3 ${stayvoHintClass} text-destructive`}>
             Guest links are temporarily unavailable. Run Phase 2 migration (`supabase db
             push`) to enable link generation.
           </p>

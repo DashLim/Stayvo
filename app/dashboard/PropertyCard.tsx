@@ -1,9 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import type { ComponentProps } from 'react';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  ChevronDown,
+  Copy,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   deleteGuestLink,
@@ -19,9 +26,19 @@ import type { IcalFeedSummary } from '@/lib/ical/types';
 import {
   stayvoBtnCompactPrimaryClass,
   stayvoBtnCompactSecondaryClass,
+  stayvoHostBadgeAccentClass,
+  stayvoHostBadgeClass,
+  stayvoHostBadgeDestructiveClass,
+  stayvoHostCalloutClass,
+  stayvoHostCalloutDestructiveClass,
   stayvoHostCardClass,
   stayvoHostPanelClass,
+  stayvoHintClass,
+  stayvoInputClass,
+  stayvoLabelClass,
+  stayvoMutedTextClass,
 } from '@/lib/stayvo-ui-classes';
+import { cn } from '@/lib/utils';
 
 function displayGuestName(name: string | null | undefined) {
   const t = (name ?? '').trim();
@@ -81,11 +98,11 @@ function DateField({
 
   return (
     <div
-      className={`w-full min-w-0 max-w-full overflow-x-hidden overflow-y-visible rounded-lg border border-slate-200 px-3 py-2 focus-within:ring-2 focus-within:ring-brand/30 dark:border-white/20 ${
-        disabled
-          ? 'cursor-not-allowed bg-slate-100 dark:bg-white/25'
-          : 'bg-white dark:bg-white/88'
-      } ${className}`}
+      className={cn(
+        'flex h-10 w-full min-w-0 max-w-full items-center overflow-hidden rounded-md border border-input bg-background px-3 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
+        disabled && 'cursor-not-allowed opacity-50',
+        className,
+      )}
     >
       <input
         ref={inputRef}
@@ -97,9 +114,10 @@ function DateField({
           queueMicrotask(() => tryOpenPicker());
         }}
         onClick={onClick}
-        className={`block min-h-[2.25rem] w-full min-w-[10.5rem] max-w-full cursor-pointer bg-transparent py-0.5 text-sm text-slate-900 outline-none [color-scheme:light] dark:text-slate-950 dark:[color-scheme:dark] ${
-          disabled ? 'cursor-not-allowed text-slate-400 dark:text-slate-500' : ''
-        }`}
+        className={cn(
+          'block min-w-[10.5rem] w-full max-w-full cursor-pointer bg-transparent text-sm text-foreground outline-none dark:[color-scheme:dark]',
+          disabled && 'cursor-not-allowed',
+        )}
       />
     </div>
   );
@@ -134,19 +152,16 @@ function GuestLinkFormFields({
 
   return (
     <div className="space-y-3">
-      {/* Guest name */}
       <div>
-        <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+        <label className={stayvoLabelClass}>
           Guest name{' '}
-          <span className="font-normal text-slate-400 dark:text-slate-500">
-            (optional)
-          </span>
+          <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
         <input
           value={guestName}
           onChange={(e) => onGuestNameChange(e.target.value)}
           placeholder="e.g. Sarah"
-          className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-brand/30 focus:ring-2 dark:border-white/20 dark:bg-white/88 dark:text-slate-950 dark:placeholder-slate-500"
+          className={`mt-1.5 ${stayvoInputClass}`}
         />
       </div>
 
@@ -162,16 +177,14 @@ function GuestLinkFormFields({
             className="overflow-hidden"
           >
             <div>
-              <label className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                Checkout date
-              </label>
+              <label className={stayvoLabelClass}>Checkout date</label>
               <DateField
                 required
                 value={checkoutDate}
                 onChange={(e) => onCheckoutDateChange(e.target.value)}
-                className="mt-1"
+                className="mt-1.5"
               />
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
+              <p className={`mt-1.5 ${stayvoHintClass}`}>
                 Link expires 2 days after checkout (end of day).
               </p>
             </div>
@@ -179,22 +192,13 @@ function GuestLinkFormFields({
         ) : null}
       </AnimatePresence>
 
-      {/* Permanent toggle — pill style */}
       <label
         htmlFor={`perm-${idPrefix}`}
-        className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
-          isPermanent
-            ? 'border-brand/40 bg-brand/8 dark:border-brand/30 dark:bg-brand/12'
-            : 'border-slate-200 bg-white dark:border-white/15 dark:bg-white/8'
-        }`}
+        className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors hover:bg-muted/30"
       >
         <div>
-          <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-            Permanent link
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
-            Never expires — useful for long-term stays
-          </div>
+          <div className="text-sm font-medium text-foreground">Permanent link</div>
+          <div className={stayvoHintClass}>Never expires — useful for long-term stays</div>
         </div>
         <input
           id={`perm-${idPrefix}`}
@@ -204,32 +208,32 @@ function GuestLinkFormFields({
             onPermanentChange(e.target.checked);
             if (e.target.checked) onCheckoutDateChange('');
           }}
-          className="h-4 w-4 shrink-0 rounded border-slate-300 accent-brand dark:border-slate-500"
+          className="h-4 w-4 shrink-0 rounded border-input accent-primary"
         />
       </label>
 
       {/* Custom path — advanced/secondary */}
       <details className="group">
-        <summary className="cursor-pointer list-none text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 [&::-webkit-details-marker]:hidden">
+        <summary className="cursor-pointer list-none text-xs font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
           <span className="inline-flex items-center gap-1">
             <span className="transition-transform group-open:rotate-90">▶</span>
             Custom link path
-            <span className="font-normal text-slate-400">(optional)</span>
+            <span className="font-normal">(optional)</span>
           </span>
         </summary>
         <div className="mt-2">
-          <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 bg-white focus-within:ring-2 focus-within:ring-brand/30 dark:border-white/20 dark:bg-white/88">
-            <span className="shrink-0 select-none border-r border-slate-200 bg-slate-50 px-2 py-2 text-[11px] text-slate-400 dark:border-white/20 dark:bg-white/10 dark:text-slate-500">
+          <div className="flex h-10 items-center overflow-hidden rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+            <span className="shrink-0 select-none border-r border-input bg-muted/50 px-2 text-[11px] text-muted-foreground">
               {urlPrefix}
             </span>
             <input
               value={customSlug}
               onChange={(e) => onCustomSlugChange(e.target.value)}
               placeholder="random-if-blank"
-              className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-slate-900 outline-none dark:text-slate-950 dark:placeholder-slate-500"
+              className="min-w-0 flex-1 bg-transparent px-2 text-sm text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-500">
+          <p className={`mt-1.5 ${stayvoHintClass}`}>
             Lowercase, numbers, hyphens · 4–24 chars · must be unique
           </p>
         </div>
@@ -540,13 +544,11 @@ export default function PropertyCard({
     >
       <div>
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="min-w-0 flex-1 text-left text-base font-semibold text-slate-900 dark:text-slate-100">
-            {cardTitle}
-          </h2>
+          <h2 className="min-w-0 flex-1 text-left text-sm font-medium text-foreground">{cardTitle}</h2>
         </div>
-        <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{propertyName}</p>
+        <p className={`mt-1 ${stayvoHintClass}`}>{propertyName}</p>
         {icalFeed ? (
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+          <p className={`mt-1 ${stayvoHintClass}`}>
             Calendar: {icalFeedDisplayName(icalFeed)}
             {icalFeed.last_synced_at
               ? ` · Last sync ${formatDate(icalFeed.last_synced_at.slice(0, 10))}`
@@ -554,8 +556,8 @@ export default function PropertyCard({
           </p>
         ) : null}
         {icalFeed?.last_error ? (
-          <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-800/50 dark:bg-amber-950/40 dark:text-amber-200">
-            Calendar sync: {icalFeed.last_error}
+          <p className={`mt-2 ${stayvoHostCalloutClass}`}>
+            <span className="font-medium text-primary">Calendar sync:</span> {icalFeed.last_error}
           </p>
         ) : null}
       </div>
@@ -574,16 +576,20 @@ export default function PropertyCard({
           <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
             {activeLinks.length}
           </span>
-          <span>{linksPanel === 'active' ? '▴' : '▾'}</span>
+          <ChevronDown
+            className={cn('h-3.5 w-3.5 shrink-0 transition-transform', linksPanel === 'active' && 'rotate-180')}
+            aria-hidden
+          />
         </motion.button>
         {icalFeed ? (
           <PressButton
             type="button"
             disabled={syncingCalendar || submitting}
             onClick={() => void onSyncCalendar()}
-            className={`${stayvoBtnCompactSecondaryClass} max-w-full disabled:opacity-60`}
+            className={`${stayvoBtnCompactSecondaryClass} max-w-full gap-1.5 disabled:opacity-60`}
           >
-            {syncingCalendar ? 'Syncing…' : '↻ Sync'}
+            <RefreshCw className={cn('h-3.5 w-3.5 shrink-0', syncingCalendar && 'animate-spin')} aria-hidden />
+            {syncingCalendar ? 'Syncing…' : 'Sync'}
           </PressButton>
         ) : null}
         <motion.button
@@ -611,9 +617,7 @@ export default function PropertyCard({
               onSubmit={onGenerate}
               className={`mt-4 overflow-x-hidden overflow-y-visible ${stayvoHostPanelClass}`}
             >
-              <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Generate guest link
-              </div>
+              <div className="text-sm font-medium text-foreground">Generate guest link</div>
               <div className="mt-3">
                 <GuestLinkFormFields
                   idPrefix={property.id}
@@ -649,42 +653,38 @@ export default function PropertyCard({
       </AnimatePresence>
 
       {error ? (
-        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400">
-          {error}
-        </div>
+        <div className={`mt-3 ${stayvoHostCalloutDestructiveClass}`}>{error}</div>
       ) : null}
       {linkMessage ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400">
-          {linkMessage}
-        </div>
+        <div className={`mt-3 ${stayvoHostCalloutClass}`}>{linkMessage}</div>
       ) : null}
       {generatedLink ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/50 dark:text-emerald-400">
+        <div className={`mt-3 ${stayvoHostCalloutClass}`}>
           <div className="break-all">{generatedLink}</div>
-              <div className="mt-2">
-                <PressButton
-                  type="button"
-                  onClick={async () => {
-                    const copied = await copyToClipboard(generatedLink);
-                    if (copied) {
+          <div className="mt-2">
+            <PressButton
+              type="button"
+              onClick={async () => {
+                const copied = await copyToClipboard(generatedLink);
+                if (copied) {
+                  setGeneratedLinkCopied(true);
+                } else {
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    try {
+                      await navigator.share({ url: generatedLink });
                       setGeneratedLinkCopied(true);
-                    } else {
-                      // Mobile browsers may block clipboard on insecure origins; use share as fallback.
-                      if (typeof navigator !== 'undefined' && navigator.share) {
-                        try {
-                          await navigator.share({ url: generatedLink });
-                          setGeneratedLinkCopied(true);
-                          setLinkMessage('Link shared');
-                          return;
-                        } catch {
-                          // user dismissed share sheet; keep manual fallback message below
-                        }
-                      }
-                      setLinkMessage('Copy blocked here. Long press the link above to copy.');
+                      setLinkMessage('Link shared');
+                      return;
+                    } catch {
+                      /* user dismissed share sheet */
                     }
-                  }}
-                  className="rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-700/60 dark:bg-emerald-950/40 dark:text-emerald-400"
-                >
+                  }
+                  setLinkMessage('Copy blocked here. Long press the link above to copy.');
+                }
+              }}
+              className={`${stayvoBtnCompactSecondaryClass} gap-1.5`}
+            >
+              <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden />
               {generatedLinkCopied ? 'Copied' : 'Copy'}
             </PressButton>
           </div>
@@ -700,7 +700,7 @@ export default function PropertyCard({
           >
             <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
           {activeLinks.length === 0 ? (
-            <p className="text-sm text-slate-500">No active links yet.</p>
+            <p className={stayvoMutedTextClass}>No active links yet.</p>
           ) : (
             <motion.div
               className="space-y-2"
@@ -719,20 +719,18 @@ export default function PropertyCard({
                     className="rounded-lg border border-border bg-card p-3 shadow-xs"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <div className="text-sm font-medium text-foreground">
                         {displayGuestName(l.guest_name)}
                       </div>
                       {l.link_source === 'ical' ? (
-                        <span className="inline-flex rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-amber-900 dark:text-amber-200">
+                        <span className={stayvoHostBadgeAccentClass}>
                           From {icalFeedDisplayName(icalFeed ?? { source: 'other' })}
                         </span>
                       ) : null}
                     </div>
-                    <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                    <div className={`mt-1 ${stayvoHintClass}`}>
                       {l.is_permanent === true ? (
-                        <span className="font-medium text-slate-800 dark:text-slate-100">
-                          Permanent guest link
-                        </span>
+                        <span className="font-medium text-foreground">Permanent guest link</span>
                       ) : (
                         <span>Checkout: {formatDate(l.checkout_date)}</span>
                       )}
@@ -748,20 +746,31 @@ export default function PropertyCard({
                             setLinkMessage(`Copy blocked. Use this link: ${fullLink}`);
                           }
                         }}
-                        className={`${stayvoBtnCompactSecondaryClass} h-8 px-2.5`}
+                        className={`${stayvoBtnCompactSecondaryClass} h-8 gap-1.5 px-2.5`}
                       >
-                        {copiedLinkIds.has(l.id) ? '✓ Copied' : '⎘ Copy'}
+                        <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {copiedLinkIds.has(l.id) ? 'Copied' : 'Copy'}
                       </PressButton>
                       <PressButton
                         type="button"
                         onClick={() => openEditLink(l)}
-                        className={`h-8 rounded-md border px-2.5 text-xs font-medium transition-colors ${
-                          editingLinkId === l.id
-                            ? 'border-slate-300 bg-slate-100 text-slate-700 dark:border-white/20 dark:bg-white/20 dark:text-slate-200'
-                            : 'border-slate-200 bg-white/70 text-slate-900 hover:bg-white dark:border-white/25 dark:bg-white/90 dark:text-slate-950'
-                        }`}
+                        className={cn(
+                          stayvoBtnCompactSecondaryClass,
+                          'h-8 gap-1.5 px-2.5',
+                          editingLinkId === l.id && 'bg-muted',
+                        )}
                       >
-                        {editingLinkId === l.id ? '✕ Close' : '✎ Edit'}
+                        {editingLinkId === l.id ? (
+                          <>
+                            <X className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            Close
+                          </>
+                        ) : (
+                          <>
+                            <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            Edit
+                          </>
+                        )}
                       </PressButton>
                     </div>
 
@@ -774,12 +783,10 @@ export default function PropertyCard({
                         >
                           <form
                             onSubmit={onSaveEdit}
-                            className="rounded-xl border border-brand/25 bg-white shadow-sm dark:border-brand/20 dark:bg-white/8"
+                            className={`${stayvoHostCardClass} overflow-hidden shadow-sm`}
                           >
-                            <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5 dark:border-white/8 dark:bg-white/4">
-                              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                Edit guest link
-                              </span>
+                            <div className="border-b border-border px-4 py-2.5">
+                              <span className="text-xs font-medium text-foreground">Edit guest link</span>
                             </div>
                             <div className="p-4">
                               <GuestLinkFormFields
@@ -795,7 +802,7 @@ export default function PropertyCard({
                                 baseUrl={guestLinkBaseUrl}
                               />
                             </div>
-                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 px-4 py-3 dark:border-white/8 dark:bg-white/4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/20 px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <PressButton
                                   disabled={submitting}
@@ -815,9 +822,10 @@ export default function PropertyCard({
                                 type="button"
                                 onClick={() => onDeleteLink(l.id)}
                                 disabled={submitting}
-                                className="inline-flex h-8 items-center rounded-md border border-destructive/30 bg-destructive/10 px-2.5 text-xs font-medium text-destructive disabled:opacity-60"
+                                className={`${stayvoBtnCompactSecondaryClass} h-8 gap-1.5 border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15 disabled:opacity-60`}
                               >
-                                🗑 Delete
+                                <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                Delete
                               </PressButton>
                             </div>
                           </form>
@@ -831,18 +839,16 @@ export default function PropertyCard({
             )}
             {recentExpiredLinks.length > 0 ? (
               <details className="mt-3 rounded-lg border border-border bg-muted/20">
-                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 [&::-webkit-details-marker]:hidden">
+                <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
                   <span className="inline-flex items-center gap-2">
                     Show expired links
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700 dark:bg-white/15 dark:text-slate-300">
-                      {recentExpiredLinks.length}
-                    </span>
+                    <span className={stayvoHostBadgeClass}>{recentExpiredLinks.length}</span>
                   </span>
-                  <span className="mt-1 block font-normal text-[11px] text-slate-500 dark:text-slate-500">
+                  <span className={`mt-1 block font-normal ${stayvoHintClass}`}>
                     Links appear here for 14 days after they expire, then are hidden.
                   </span>
                 </summary>
-                <div className="space-y-2 border-t border-slate-200 dark:border-white/10 p-3 pt-2">
+                <div className="space-y-2 border-t border-border p-3 pt-2">
                   {recentExpiredLinks.map((l) => {
                     const fullLink = absoluteGuestPortalUrl(l.token);
                     return (
@@ -854,14 +860,12 @@ export default function PropertyCard({
                       >
                         <div className="opacity-50">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                            <div className="text-sm font-medium text-foreground">
                               {displayGuestName(l.guest_name)}
                             </div>
-                            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200 dark:bg-rose-950/50 dark:text-rose-400 dark:ring-rose-800/60">
-                              Expired
-                            </span>
+                            <span className={stayvoHostBadgeDestructiveClass}>Expired</span>
                           </div>
-                          <div className="mt-1 text-xs text-slate-500">
+                          <div className={`mt-1 ${stayvoHintClass}`}>
                             Checkout: {formatDate(l.checkout_date)}
                           </div>
                         </div>
@@ -876,20 +880,31 @@ export default function PropertyCard({
                                 setLinkMessage(`Copy blocked. Use this link: ${fullLink}`);
                               }
                             }}
-                            className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-white/25 dark:bg-white/90 dark:text-slate-950"
+                            className={`${stayvoBtnCompactSecondaryClass} h-8 gap-1.5 px-2.5`}
                           >
-                            {copiedLinkIds.has(l.id) ? '✓ Copied' : '⎘ Copy'}
+                            <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {copiedLinkIds.has(l.id) ? 'Copied' : 'Copy'}
                           </PressButton>
                           <PressButton
                             type="button"
                             onClick={() => openEditLink(l)}
-                            className={`h-8 rounded-md border px-2.5 text-xs font-medium transition-colors ${
-                              editingLinkId === l.id
-                                ? 'border-slate-300 bg-slate-100 text-slate-700 dark:border-white/20 dark:bg-white/20 dark:text-slate-200'
-                                : 'border-slate-200 bg-white/70 text-slate-900 dark:border-white/25 dark:bg-white/90 dark:text-slate-950'
-                            }`}
+                            className={cn(
+                              stayvoBtnCompactSecondaryClass,
+                              'h-8 gap-1.5 px-2.5',
+                              editingLinkId === l.id && 'bg-muted',
+                            )}
                           >
-                            {editingLinkId === l.id ? '✕ Close' : '✎ Edit'}
+                            {editingLinkId === l.id ? (
+                              <>
+                                <X className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                Close
+                              </>
+                            ) : (
+                              <>
+                                <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                Edit
+                              </>
+                            )}
                           </PressButton>
                         </div>
 
@@ -902,12 +917,10 @@ export default function PropertyCard({
                             >
                               <form
                                 onSubmit={onSaveEdit}
-                                className="rounded-xl border border-brand/25 bg-white shadow-sm dark:border-brand/20 dark:bg-white/8"
+                                className={`${stayvoHostCardClass} overflow-hidden shadow-sm`}
                               >
-                                <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5 dark:border-white/8 dark:bg-white/4">
-                                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                                    Edit guest link
-                                  </span>
+                                <div className="border-b border-border px-4 py-2.5">
+                                  <span className="text-xs font-medium text-foreground">Edit guest link</span>
                                 </div>
                                 <div className="p-4">
                                   <GuestLinkFormFields
@@ -923,7 +936,7 @@ export default function PropertyCard({
                                     baseUrl={guestLinkBaseUrl}
                                   />
                                 </div>
-                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/80 px-4 py-3 dark:border-white/8 dark:bg-white/4">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/20 px-4 py-3">
                                   <div className="flex items-center gap-2">
                                     <PressButton
                                       disabled={submitting}
@@ -943,9 +956,10 @@ export default function PropertyCard({
                                     type="button"
                                     onClick={() => onDeleteLink(l.id)}
                                     disabled={submitting}
-                                    className="inline-flex h-8 items-center rounded-md border border-destructive/30 bg-destructive/10 px-2.5 text-xs font-medium text-destructive disabled:opacity-60"
+                                    className={`${stayvoBtnCompactSecondaryClass} h-8 gap-1.5 border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15 disabled:opacity-60`}
                                   >
-                                    🗑 Delete
+                                    <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                    Delete
                                   </PressButton>
                                 </div>
                               </form>

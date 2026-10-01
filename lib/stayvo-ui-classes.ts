@@ -51,6 +51,25 @@ export const stayvoSectionTitleClass =
 
 export const stayvoMutedTextClass = 'text-sm text-muted-foreground';
 
+export const stayvoHintClass = 'text-xs text-muted-foreground';
+
+/** Compact status chip on host cards (rounded-md, not pill) */
+export const stayvoHostBadgeClass =
+  'inline-flex items-center rounded-md border border-border bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground';
+
+export const stayvoHostBadgeAccentClass =
+  'inline-flex items-center rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary';
+
+export const stayvoHostBadgeDestructiveClass =
+  'inline-flex items-center rounded-md border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive';
+
+/** Restrained host inline callout (alerts, notices) */
+export const stayvoHostCalloutClass =
+  'rounded-lg border border-border bg-muted/30 p-2.5 text-xs text-foreground';
+
+export const stayvoHostCalloutDestructiveClass =
+  'rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive';
+
 export const stayvoKickerClass =
   'text-xs font-medium uppercase tracking-wider text-muted-foreground';
 
