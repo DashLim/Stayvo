@@ -70,6 +70,16 @@ export const stayvoHostCalloutClass =
 export const stayvoHostCalloutDestructiveClass =
   'rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 text-xs text-destructive';
 
+/** Host dropdown / action menu panel */
+export const stayvoHostMenuPanelClass =
+  'absolute z-50 min-w-[9rem] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-lg';
+
+export const stayvoHostMenuItemClass =
+  'flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted';
+
+export const stayvoHostMenuItemDestructiveClass =
+  'flex w-full items-center rounded-md px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10';
+
 export const stayvoKickerClass =
   'text-xs font-medium uppercase tracking-wider text-muted-foreground';
 
@@ -101,13 +111,10 @@ export const stayvoHostPanelClass =
 
 /** Full-width mobile host tab bar (fixed above safe area). */
 export const stayvoHostBottomNavShellClass =
-  'border-t border-border bg-card shadow-[0_-1px_3px_rgba(0,0,0,0.06)]';
-
-export const stayvoHostBottomNavGridClass =
-  'mx-auto grid h-[3.5rem] max-w-lg grid-cols-4 sm:max-w-none';
+  'grid w-full grid-cols-4 grid-rows-1 border-t border-border bg-card shadow-[0_-1px_3px_rgba(0,0,0,0.06)]';
 
 export const stayvoHostBottomNavLinkClass =
-  'flex min-h-[3.5rem] min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-1.5 text-[10px] font-medium leading-tight transition-colors';
+  'flex min-h-[3.5rem] w-full min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-1.5 text-[10px] font-medium leading-tight transition-colors';
 
 export const stayvoHostBottomNavLinkActiveClass =
   'rounded-lg bg-primary/15 text-primary';
@@ -123,6 +130,9 @@ export const stayvoHostMainClass = 'mx-auto w-full max-w-6xl flex-1 space-y-6 p-
 
 export const stayvoSidebarClass =
   'sticky top-0 z-40 hidden h-screen min-h-[100dvh] w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex';
+
+export const stayvoSidebarNavLinkBaseClass =
+  'outline-none rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
 export const stayvoNavLinkActiveClass =
   'bg-sidebar-accent font-medium text-sidebar-accent-foreground';

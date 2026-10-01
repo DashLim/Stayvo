@@ -7,7 +7,6 @@ import { AnimatePresence } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { HOST_NAV_TABS } from '@/app/dashboard/_components/host-nav-config';
 import {
-  stayvoHostBottomNavGridClass,
   stayvoHostBottomNavLinkActiveClass,
   stayvoHostBottomNavLinkClass,
   stayvoHostBottomNavShellClass,
@@ -76,32 +75,33 @@ export default function HostBottomNav() {
           className="fixed inset-x-0 bottom-0 z-50 md:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <nav className={stayvoHostBottomNavShellClass} aria-label="Host navigation">
-            <div className={stayvoHostBottomNavGridClass}>
-              {HOST_NAV_TABS.map((tab) => {
-                const active =
-                  optimisticHref != null ? optimisticHref === tab.href : tab.match(path);
-                return (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    prefetch
-                    onPointerDown={() => setOptimisticHref(tab.href)}
-                    onClick={() => setOptimisticHref(tab.href)}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      stayvoHostBottomNavLinkClass,
-                      active
-                        ? stayvoHostBottomNavLinkActiveClass
-                        : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    {tab.icon}
-                    <span className="max-w-full truncate px-0.5">{tab.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+          <nav
+            className={cn(stayvoHostBottomNavShellClass, 'stayvo-host-bottom-nav')}
+            aria-label="Host navigation"
+          >
+            {HOST_NAV_TABS.map((tab) => {
+              const active =
+                optimisticHref != null ? optimisticHref === tab.href : tab.match(path);
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  prefetch
+                  onPointerDown={() => setOptimisticHref(tab.href)}
+                  onClick={() => setOptimisticHref(tab.href)}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    stayvoHostBottomNavLinkClass,
+                    active
+                      ? stayvoHostBottomNavLinkActiveClass
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {tab.icon}
+                  <span className="max-w-full truncate px-0.5">{tab.label}</span>
+                </Link>
+              );
+            })}
           </nav>
         </div>
       )}

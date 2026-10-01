@@ -11,7 +11,9 @@ import {
   stayvoNavLinkActiveClass,
   stayvoNavLinkClass,
   stayvoSidebarClass,
+  stayvoSidebarNavLinkBaseClass,
 } from '@/lib/stayvo-ui-classes';
+import { cn } from '@/lib/utils';
 
 export default function HostDesktopSidebar({
   displayName,
@@ -74,9 +76,11 @@ export default function HostDesktopSidebar({
                 href={tab.href}
                 prefetch
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? stayvoNavLinkActiveClass : stayvoNavLinkClass
-                }`}
+                className={cn(
+                  stayvoSidebarNavLinkBaseClass,
+                  'flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors',
+                  active ? stayvoNavLinkActiveClass : stayvoNavLinkClass,
+                )}
               >
                 <span className={active ? 'text-sidebar-accent-foreground' : 'text-muted-foreground'}>
                   {tab.icon}

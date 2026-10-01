@@ -22,6 +22,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Copy, GripVertical, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import { cloneProperty, deleteProperty } from '@/app/actions/properties';
 import { capitalizeWordStarts } from '@/lib/capitalize-word-starts';
 import {
@@ -35,13 +36,21 @@ import {
 import PressButton from '@/app/_components/PressButton';
 import NoPropertiesEmptyState from '@/app/dashboard/_components/NoPropertiesEmptyState';
 import {
-  stayvoBtnCompactPrimaryClass,
   stayvoBtnCompactSecondaryClass,
+  stayvoBtnIconPrimaryClass,
   stayvoBtnPrimaryClass,
   stayvoBtnSecondaryClass,
+  stayvoHostCalloutDestructiveClass,
   stayvoHostCardClass,
+  stayvoHostMenuItemClass,
+  stayvoHostMenuItemDestructiveClass,
+  stayvoHostMenuPanelClass,
   stayvoHostNavItemActiveClass,
   stayvoHostNavItemClass,
+  stayvoHintClass,
+  stayvoInputClass,
+  stayvoMutedTextClass,
+  stayvoSectionTitleClass,
 } from '@/lib/stayvo-ui-classes';
 import { cn } from '@/lib/utils';
 
@@ -98,11 +107,7 @@ function DragHandle({
       className={`touch-none select-none rounded-md border border-input bg-background p-2 text-muted-foreground shadow-xs transition hover:text-primary [-webkit-touch-callout:none] ${trelloPressFx}`}
       aria-label="Drag to reorder"
     >
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
-        <circle cx="12" cy="6" r="2" />
-        <circle cx="12" cy="12" r="2" />
-        <circle cx="12" cy="18" r="2" />
-      </svg>
+      <GripVertical className="h-4 w-4 shrink-0" aria-hidden />
     </button>
   );
 }
@@ -155,20 +160,18 @@ function SortablePropertyRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="relative border-b border-white/15 px-4 py-3 first:pt-3 last:border-b-0 dark:border-white/10"
+      className="relative border-b border-border px-4 py-3 last:border-b-0"
     >
       {/* Top row: drag handle + names + Edit link (hidden in edit mode) / delete (in edit mode) */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <DragHandle listeners={listeners} attributes={attributes} hidden={!editMode} />
           <div className="min-w-0">
-            <p className="font-semibold text-slate-900 dark:text-slate-200">
+            <p className="text-sm font-medium text-foreground">
               {(p.internal_name ?? '').trim() || p.property_name || 'Untitled'}
             </p>
             {!editMode ? (
-              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                {p.property_name || 'Untitled'}
-              </p>
+              <p className={`truncate ${stayvoHintClass}`}>{p.property_name || 'Untitled'}</p>
             ) : null}
           </div>
         </div>
@@ -177,24 +180,9 @@ function SortablePropertyRow({
             <Link
               href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
               prefetch={false}
-              className={`${stayvoBtnCompactSecondaryClass} hidden md:inline-flex ${trelloPressFx}`}
+              className={`${stayvoBtnCompactSecondaryClass} hidden gap-1.5 md:inline-flex ${trelloPressFx}`}
             >
-              <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
-                <path
-                  d="M10 3H5.5A2.5 2.5 0 0 0 3 5.5v9A2.5 2.5 0 0 0 5.5 17h9A2.5 2.5 0 0 0 17 14.5V10"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="m12.5 3.5 2.5 2.5m-2.5-2.5-4 4-.5 2.5 2.5-.5 4-4a1 1 0 0 0 0-1.4l-1.1-1.1a1 1 0 0 0-1.4 0Z"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
               Edit
             </Link>
             <div className="relative md:hidden">
@@ -207,38 +195,39 @@ function SortablePropertyRow({
               title="Property actions"
               aria-label="Property actions"
             >
-              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
-                <path d="M4.5 10a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 4.5 10Zm5.5 0a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 10 10Zm5.5 0a1.5 1.5 0 1 0 0-.001A1.5 1.5 0 0 0 15.5 10Z" />
-              </svg>
+              <MoreHorizontal className="h-4 w-4 shrink-0" aria-hidden />
             </PressButton>
             {menuOpen ? (
-              <div className="absolute bottom-full right-0 z-50 mb-2 w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg dark:border-white/10 dark:bg-neutral-900">
+              <div className={`${stayvoHostMenuPanelClass} bottom-full right-0 mb-2 w-40`}>
                 <Link
                   href={`/properties/${p.id}/edit?returnTo=${encodeURIComponent('/dashboard/manage')}`}
                   prefetch={false}
-                  className="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-300 dark:text-slate-200 dark:hover:bg-slate-700/95 dark:hover:text-white"
+                  className={`${stayvoHostMenuItemClass} gap-2`}
                   onClick={() => setOpenMenuPropertyId(null)}
                 >
+                  <Pencil className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   Edit
                 </Link>
                 <button
                   type="button"
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-300 dark:text-slate-200 dark:hover:bg-slate-700/95 dark:hover:text-white"
+                  className={`${stayvoHostMenuItemClass} gap-2`}
                   onClick={() => {
                     setOpenMenuPropertyId(null);
                     onCloneProperty(p.id, p.property_name || 'Untitled');
                   }}
                 >
+                  <Copy className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                   Clone
                 </button>
                 <button
                   type="button"
-                  className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-100 dark:text-rose-400 dark:hover:bg-rose-950/55"
+                  className={`${stayvoHostMenuItemDestructiveClass} gap-2`}
                   onClick={() => {
                     setOpenMenuPropertyId(null);
                     onDeleteProperty(p.id, p.property_name || 'Untitled');
                   }}
                 >
+                  <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
                   Delete
                 </button>
               </div>
@@ -252,13 +241,15 @@ function SortablePropertyRow({
               type="button"
               disabled={pending}
               onClick={() => onToggleLive(p.id, !p.is_live)}
-              className={`relative inline-flex h-7 w-[3.25rem] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${p.is_live ? 'bg-brand' : 'bg-slate-300 dark:bg-slate-600'} ${trelloPressFx}`}
+              className={`relative inline-flex h-7 w-[3.25rem] shrink-0 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${p.is_live ? 'bg-primary' : 'bg-muted'} ${trelloPressFx}`}
               aria-label={p.is_live ? 'Set to draft' : 'Set to live'}
               title={p.is_live ? 'Live — tap to draft' : 'Draft — tap to go live'}
             >
-              <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${p.is_live ? 'translate-x-7' : 'translate-x-1'}`} />
+              <span
+                className={`inline-block h-5 w-5 rounded-full bg-background shadow-xs transition-transform duration-200 ${p.is_live ? 'translate-x-7' : 'translate-x-1'}`}
+              />
             </PressButton>
-            <span className="min-w-[2rem] text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span className="min-w-[2rem] text-xs font-medium text-muted-foreground">
               {p.is_live ? 'Live' : 'Draft'}
             </span>
             <PressButton
@@ -269,30 +260,19 @@ function SortablePropertyRow({
               aria-label="Delete property"
               title="Delete property"
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
-                <path
-                  d="M9 3.75h6m-7.5 3h9l-.67 10.05A2.25 2.25 0 0 1 13.58 19h-3.16a2.25 2.25 0 0 1-2.25-2.2L7.5 6.75Zm2.75 3.5v5.5m3.5-5.5v5.5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="hidden text-sm font-semibold text-rose-700 dark:text-rose-400 md:inline">
-                Delete Property
-              </span>
+              <Trash2 className="h-4 w-4 shrink-0 md:h-5 md:w-5" aria-hidden />
+              <span className="hidden text-sm font-medium md:inline">Delete Property</span>
             </PressButton>
           </div>
         )}
       </div>
-      {/* Move-to dropdown — only in edit mode, stacked below the name */}
       {editMode ? (
         <div className="mt-2 pl-9">
           <select
             value={p.location_id}
             disabled={pending}
             onChange={(e) => onMoveProperty(p.id, e.target.value)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 dark:[color-scheme:dark]"
+            className={`${stayvoInputClass} h-9 text-xs`}
           >
             {flatLocations.map((l) => (
               <option key={l.id} value={l.id}>
@@ -355,38 +335,31 @@ function LocationGroupPanel({
       style={sectionStyle}
       className={`${stayvoHostCardClass} p-4 md:p-6`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/50 dark:border-white/10 pb-3">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
+        <div className="flex min-w-0 items-center gap-2">
           <DragHandle
             listeners={locationDragListeners}
             attributes={locationDragAttributes}
             hidden={!editMode || !enableLocationDrag}
           />
-          <div>
-            <h2 className="text-lg font-semibold text-brand md:text-xl">{loc.name}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+          <div className="min-w-0">
+            <h2 className={stayvoSectionTitleClass}>{loc.name}</h2>
+            <p className={`mt-0.5 ${stayvoHintClass}`}>
               {properties.length} propert{properties.length === 1 ? 'y' : 'ies'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {!editMode ? (
             <Link
               href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
               prefetch={false}
-              className={`${stayvoBtnCompactPrimaryClass} h-7 w-7 px-0 md:h-8 md:w-auto md:px-3 ${trelloPressFx}`}
+              className={cn(stayvoBtnIconPrimaryClass, 'md:h-10 md:w-auto md:gap-2 md:px-4', trelloPressFx)}
               aria-label={`Add property under ${loc.name}`}
               title={`Add property under ${loc.name}`}
             >
-              <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0" fill="none" aria-hidden>
-                <path
-                  d="M10 5v10M5 10h10"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="hidden text-sm font-semibold md:inline">Add Property</span>
+              <Plus className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="hidden text-sm font-medium md:inline">Add Property</span>
             </Link>
           ) : null}
           {editMode ? (
@@ -394,7 +367,7 @@ function LocationGroupPanel({
               type="button"
               disabled={pending}
               onClick={() => onDeleteLocation(loc.id, loc.name, properties.length)}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 text-destructive disabled:opacity-50 md:w-auto md:px-3 ${trelloPressFx}`}
+              className={`${stayvoBtnCompactSecondaryClass} h-10 gap-1.5 border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/15 disabled:opacity-50 md:px-3 ${trelloPressFx}`}
               aria-label="Delete location"
               title={
                 properties.length > 0
@@ -402,25 +375,15 @@ function LocationGroupPanel({
                   : 'Delete this empty location'
               }
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" fill="none" aria-hidden>
-                <path
-                  d="M9 3.75h6m-7.5 3h9l-.67 10.05A2.25 2.25 0 0 1 13.58 19h-3.16a2.25 2.25 0 0 1-2.25-2.2L7.5 6.75Zm2.75 3.5v5.5m3.5-5.5v5.5"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className="hidden text-sm font-semibold text-rose-700 dark:text-rose-400 md:inline">
-                Delete Location
-              </span>
+              <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="hidden text-sm font-medium md:inline">Delete Location</span>
             </PressButton>
           ) : null}
         </div>
       </div>
 
       {properties.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">No properties in this location yet.</p>
+        <p className={`mt-3 ${stayvoMutedTextClass}`}>No properties in this location yet.</p>
       ) : (
         <DndContext
           sensors={propertySensors}
@@ -723,13 +686,10 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       : null;
 
   return (
-    <div className="mt-6 w-full space-y-6">
-      {/* Edit mode banner */}
+    <div className="mt-4 w-full space-y-6 md:mt-6">
       {editMode ? (
         <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-4 py-2 text-xs font-medium text-primary">
-          <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
-            <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-.793.793-2.828-2.828.793-.793ZM11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828Z" />
-          </svg>
+          <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
           Editing — drag to reorder, toggle live/draft, or delete
         </div>
       ) : null}
@@ -743,8 +703,8 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
             aria-label="Cancel"
             onClick={() => setAddLocOpen(false)}
           />
-          <div className="relative w-[calc(100%-2rem)] max-w-sm rounded-xl border border-border bg-card p-5 shadow-lg">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Add new location</h2>
+          <div className="relative w-[calc(100%-2rem)] max-w-sm rounded-lg border border-border bg-card p-5 shadow-lg">
+            <h2 className="text-base font-medium text-foreground">Add new location</h2>
             <input
               autoFocus
               type="text"
@@ -753,7 +713,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
               onChange={(e) => setNewLocName(capitalizeWordStarts(e.target.value))}
               onKeyDown={(e) => { if (e.key === 'Enter') void submitNewLocation(); }}
               placeholder="Location name"
-              className="mt-3 h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={`mt-3 ${stayvoInputClass}`}
             />
             <div className="mt-4 flex justify-end gap-2">
               <PressButton
@@ -777,9 +737,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
       ) : null}
 
       {error ? (
-        <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-800/60 dark:bg-rose-950/50 dark:text-rose-400">
-          {error}
-        </p>
+        <p className={stayvoHostCalloutDestructiveClass}>{error}</p>
       ) : null}
 
       {!hasAnyProperty && !editMode ? (
@@ -821,9 +779,9 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
 
           <DragOverlay>
             {activeGroup && editMode ? (
-              <div className="rounded-lg border border-border bg-card p-4 shadow-md">
-                <p className="font-semibold text-slate-900 dark:text-slate-100">{activeGroup.location.name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+              <div className={`${stayvoHostCardClass} p-4 shadow-md`}>
+                <p className="text-sm font-medium text-foreground">{activeGroup.location.name}</p>
+                <p className={stayvoHintClass}>
                   {`${activeGroup.properties.length} propert${activeGroup.properties.length === 1 ? 'y' : 'ies'}`}
                 </p>
               </div>
@@ -834,9 +792,9 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
 
       {!editMode && hasAnyProperty ? (
         <div className="hidden min-h-0 md:flex md:gap-8">
-          <aside className="sticky top-6 w-[220px] shrink-0 space-y-1 self-start md:max-h-[min(36rem,calc(100dvh-6rem))] md:overflow-y-auto md:pr-1">
+          <aside className="sticky top-6 w-64 shrink-0 space-y-1 self-start md:max-h-[min(36rem,calc(100dvh-6rem))] md:overflow-y-auto md:pr-1">
             {groups.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No locations yet.</p>
+              <p className={stayvoMutedTextClass}>No locations yet.</p>
             ) : (
               groups.map((g) => {
                 const selected = g.location.id === desktopLocationId;
@@ -849,11 +807,12 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                       selected ? stayvoHostNavItemActiveClass : stayvoHostNavItemClass,
                     )}
                   >
-                    <span className="w-full truncate">{g.location.name}</span>
+                    <span className="w-full truncate text-left">{g.location.name}</span>
                     <span
-                      className={`mt-0.5 text-xs font-medium ${
-                        selected ? 'text-amber-950/80' : 'text-slate-500 dark:text-slate-400'
-                      }`}
+                      className={cn(
+                        'mt-0.5 text-xs font-medium',
+                        selected ? 'text-primary/80' : 'text-muted-foreground',
+                      )}
                     >
                       {g.properties.length} propert{g.properties.length === 1 ? 'y' : 'ies'}
                     </span>
@@ -880,7 +839,7 @@ export default function ManageDashboardClient({ locationGroups }: { locationGrou
                 enableLocationDrag={false}
               />
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Select a location.</p>
+              <p className={stayvoMutedTextClass}>Select a location.</p>
             )}
           </div>
         </div>
