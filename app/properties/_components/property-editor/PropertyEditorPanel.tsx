@@ -14,12 +14,14 @@ export default function PropertyEditorPanel({
   return (
     <section
       className={cn(
-        'rounded-xl border border-border bg-card p-4 shadow-xs sm:p-6',
+        'rounded-lg border border-border bg-card p-3 shadow-xs sm:p-6',
         className,
       )}
     >
-      <header className="mb-5 border-b border-border/60 pb-4">
-        <h2 className="font-serif text-2xl font-light tracking-tight text-foreground">{title}</h2>
+      <header className="mb-4 border-b border-border/60 pb-3 sm:mb-5 sm:pb-4">
+        <h2 className="font-serif text-xl font-light tracking-tight text-foreground sm:text-2xl">
+          {title}
+        </h2>
         {description ? (
           <p className="mt-1.5 text-sm text-muted-foreground">{description}</p>
         ) : null}

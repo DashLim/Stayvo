@@ -374,12 +374,12 @@ export default function TrackGuestLinksClient({
         {sections.map((section) =>
           section.properties.length === 0 ? null : (
             <section key={section.locationId}>
-              {/* Location header */}
-              <div className="mb-4 flex items-center gap-2">
-                <span className="rounded-md border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
-                  {section.locationName}
-                </span>
-                <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
+              <div className="mb-4 border-b border-border pb-3">
+                <h2 className={stayvoSectionTitleClass}>{section.locationName}</h2>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {section.properties.length}{' '}
+                  {section.properties.length === 1 ? 'property' : 'properties'}
+                </p>
               </div>
 
               {/* Property groups */}

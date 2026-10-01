@@ -80,13 +80,25 @@ export const stayvoBtnCompactSecondaryClass =
 export const stayvoHostPanelClass =
   'rounded-lg border border-border bg-card p-4 shadow-sm';
 
+/** Full-width mobile host tab bar (fixed above safe area). */
 export const stayvoHostBottomNavShellClass =
-  'rounded-xl border border-border bg-card px-1.5 py-2 shadow-md';
+  'border-t border-border bg-card shadow-[0_-1px_3px_rgba(0,0,0,0.06)]';
+
+export const stayvoHostBottomNavGridClass =
+  'mx-auto grid h-[3.5rem] max-w-lg grid-cols-4 sm:max-w-none';
 
 export const stayvoHostBottomNavLinkClass =
-  'relative flex w-[4.5rem] flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium transition-colors';
+  'flex min-h-[3.5rem] min-w-0 flex-col items-center justify-center gap-1 px-0.5 py-1.5 text-[10px] font-medium leading-tight transition-colors';
 
-export const stayvoHostBottomNavLinkActiveClass = 'bg-primary/15 text-primary';
+export const stayvoHostBottomNavLinkActiveClass =
+  'rounded-lg bg-primary/15 text-primary';
+
+/** Reserve space so fixed bottom nav never covers host dashboard content. */
+export const stayvoHostMobileBottomPaddingClass =
+  'pb-[calc(4.25rem+env(safe-area-inset-bottom))]';
+
+export const stayvoBtnIconPrimaryClass =
+  'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
 
 export const stayvoHostMainClass = 'mx-auto w-full max-w-6xl flex-1 space-y-6 p-4 sm:p-6 lg:p-8';
 

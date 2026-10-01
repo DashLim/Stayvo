@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowLeft, Eye, LayoutList, MoreHorizontal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { stayvoHostHeaderClass, stayvoPageTitleClass } from '@/lib/stayvo-ui-classes';
+import { stayvoHostHeaderClass } from '@/lib/stayvo-ui-classes';
 import type { PropertyEditorModuleId } from '@/app/properties/_components/property-editor/property-editor-modules';
 
 type PropertyEditorHeaderProps = {
@@ -56,9 +56,13 @@ export default function PropertyEditorHeader({
           <ArrowLeft className="h-4 w-4" />
         </Button>
 
-        <h1 className={`min-w-0 flex-1 truncate ${stayvoPageTitleClass}`}>{title}</h1>
+        <h1
+          className={`min-w-0 flex-1 truncate text-xl font-light tracking-tight text-foreground sm:text-2xl md:text-3xl font-serif`}
+        >
+          {title}
+        </h1>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Button
             type="button"
             variant="outline"

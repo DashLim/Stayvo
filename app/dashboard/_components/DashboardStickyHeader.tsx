@@ -7,11 +7,11 @@ import { motion } from 'framer-motion';
 import { Filter, MapPin, Pencil, Plus, X } from 'lucide-react';
 import {
   stayvoBtnIconClass,
-  stayvoBtnPrimaryClass,
-  stayvoBtnSecondaryClass,
+  stayvoBtnIconPrimaryClass,
   stayvoHostHeaderClass,
   stayvoPageTitleClass,
 } from '@/lib/stayvo-ui-classes';
+import { cn } from '@/lib/utils';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (path) => path === '/dashboard', title: 'Dashboard' },
@@ -70,13 +70,13 @@ export default function DashboardStickyHeader() {
         ) : null}
 
         {isManage ? (
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <motion.button
               type="button"
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => window.dispatchEvent(new Event('stayvo:manage-toggle-edit'))}
-              className={`${stayvoBtnIconClass} md:h-10 md:w-auto md:px-3`}
+              className={cn(stayvoBtnIconClass, 'md:h-10 md:w-auto md:px-3')}
               title={manageEditActive ? 'Exit edit mode' : 'Edit'}
               aria-label={manageEditActive ? 'Exit edit mode' : 'Edit'}
             >
@@ -92,7 +92,7 @@ export default function DashboardStickyHeader() {
               whileTap={{ scale: 0.92 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               onClick={() => window.dispatchEvent(new Event('stayvo:manage-add-location'))}
-              className={`${stayvoBtnSecondaryClass} md:px-3`}
+              className={cn(stayvoBtnIconClass, 'md:h-10 md:w-auto md:px-3')}
               title="Add location"
               aria-label="Add location"
             >
@@ -106,7 +106,7 @@ export default function DashboardStickyHeader() {
               <Link
                 href={`/properties/new?returnTo=${encodeURIComponent('/dashboard/manage')}`}
                 prefetch={false}
-                className={`${stayvoBtnPrimaryClass} md:px-3`}
+                className={cn(stayvoBtnIconPrimaryClass, 'md:h-10 md:w-auto md:px-3 md:gap-2')}
                 title="Add property"
                 aria-label="Add property"
               >

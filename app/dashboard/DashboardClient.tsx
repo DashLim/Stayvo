@@ -322,18 +322,12 @@ export default function DashboardClient({
             <div className="flex flex-col gap-8 md:hidden">
               {visibleSections.map((section) => (
                 <div key={section.locationId}>
-                  <div className="mb-4 flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between md:mb-5">
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
-                      <h2 className="shrink-0 text-center text-xs font-semibold uppercase tracking-widest text-amber-800/80 dark:text-amber-500/80 md:text-base md:normal-case md:tracking-tight">
-                        <span className="block md:inline">{section.locationName}</span>
-                        <span className="mt-1 block text-[11px] font-semibold normal-case text-slate-500 dark:text-slate-400 md:ml-2 md:mt-0 md:inline">
-                          {section.properties.length}{' '}
-                          {section.properties.length === 1 ? 'property' : 'properties'}
-                        </span>
-                      </h2>
-                      <div className="h-px flex-1 bg-amber-200/60 dark:bg-amber-900/40" />
-                    </div>
+                  <div className="mb-4 border-b border-border pb-3">
+                    <h2 className={stayvoSectionTitleClass}>{section.locationName}</h2>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {section.properties.length}{' '}
+                      {section.properties.length === 1 ? 'property' : 'properties'}
+                    </p>
                   </div>
                   {section.properties.length > 0 ? (
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-5">

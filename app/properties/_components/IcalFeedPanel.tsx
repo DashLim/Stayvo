@@ -10,7 +10,11 @@ import {
   type IcalFeedStatus,
 } from '@/app/actions/ical-feeds';
 import { icalFeedDisplayName } from '@/lib/ical/feed-source-label';
-import { stayvoInputClass } from '@/lib/stayvo-ui-classes';
+import {
+  stayvoBtnCompactPrimaryClass,
+  stayvoBtnCompactSecondaryClass,
+  stayvoInputClass,
+} from '@/lib/stayvo-ui-classes';
 
 function formatSyncedAt(iso: string | null) {
   if (!iso) return 'Never';
@@ -193,7 +197,7 @@ export default function IcalFeedPanel({
                       type="button"
                       disabled={submitting}
                       onClick={() => void onDisconnect(feed.id, connectedLabel)}
-                      className="rounded-full border border-slate-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-white/20 dark:bg-white/10 dark:text-slate-200"
+                      className={stayvoBtnCompactSecondaryClass}
                     >
                       Disconnect
                     </PressButton>
@@ -212,7 +216,7 @@ export default function IcalFeedPanel({
               type="button"
               disabled={submitting}
               onClick={() => void onSyncNow()}
-              className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+              className={`${stayvoBtnCompactPrimaryClass} disabled:opacity-60`}
             >
               {submitting ? 'Syncing…' : 'Sync all now'}
             </PressButton>
@@ -234,7 +238,7 @@ export default function IcalFeedPanel({
                 type="button"
                 disabled={submitting || !calendarName.trim() || !feedUrl.trim()}
                 onClick={() => void onConnect()}
-                className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                className={`${stayvoBtnCompactPrimaryClass} disabled:opacity-60`}
               >
                 {submitting ? 'Saving…' : 'Add & sync'}
               </PressButton>
@@ -258,7 +262,7 @@ export default function IcalFeedPanel({
             type="button"
             disabled={submitting || !calendarName.trim() || !feedUrl.trim()}
             onClick={() => void onConnect()}
-            className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className={`${stayvoBtnCompactPrimaryClass} h-10 px-4 text-sm disabled:opacity-60`}
           >
             {submitting ? 'Connecting…' : 'Connect first calendar'}
           </PressButton>

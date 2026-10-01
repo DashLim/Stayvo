@@ -251,10 +251,10 @@ export default function GuestImageSlot({
 
   const canInteract = !busy;
   const uploadControlClassName =
-    'inline-flex min-h-[2.25rem] items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-800 transition hover:bg-slate-50 dark:border-white/15 dark:bg-white/10 dark:text-slate-100 dark:hover:bg-white/15';
+    'inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-xs transition-colors hover:bg-muted';
 
   return (
-    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2.5 dark:border-white/10 dark:bg-white/[0.06]">
+    <div className="mt-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-sm leading-snug text-slate-800 dark:text-slate-200">
@@ -298,7 +298,7 @@ export default function GuestImageSlot({
               type="button"
               disabled={busy}
               onClick={() => void onRemove()}
-              className="inline-flex min-h-[2.25rem] items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-800/50 dark:bg-rose-950/45 dark:text-rose-300 dark:hover:bg-rose-950/70"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 px-3 text-xs font-medium text-destructive shadow-xs transition-colors hover:bg-destructive/15 disabled:opacity-50"
             >
               Remove
             </PressButton>
