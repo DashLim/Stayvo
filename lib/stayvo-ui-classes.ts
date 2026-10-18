@@ -63,6 +63,9 @@ export const stayvoHostBadgeAccentClass =
 export const stayvoHostBadgeDestructiveClass =
   'inline-flex items-center rounded-md border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive';
 
+export const stayvoHostBadgeSuccessClass =
+  'inline-flex items-center rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[10px] font-medium text-success';
+
 /** Restrained host inline callout (alerts, notices) */
 export const stayvoHostCalloutClass =
   'rounded-lg border border-border bg-muted/30 p-2.5 text-xs text-foreground';

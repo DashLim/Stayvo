@@ -73,7 +73,6 @@ export default function HostBottomNav() {
       {!filterOpen && !addLocationOpen && (
         <div
           className="fixed inset-x-0 bottom-0 z-50 md:hidden"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
           <nav
             className={cn(stayvoHostBottomNavShellClass, 'stayvo-host-bottom-nav')}

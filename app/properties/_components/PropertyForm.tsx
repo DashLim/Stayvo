@@ -577,7 +577,7 @@ export default function PropertyForm({
         id="stayvo-property-form"
         onSubmit={onSubmit}
         autoComplete="off"
-        className="mx-auto w-full max-w-6xl px-4 lg:px-6"
+        className="mx-auto w-full max-w-6xl px-4 md:px-6 lg:px-8"
       >
         {error ? (
           <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">

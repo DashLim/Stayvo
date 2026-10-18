@@ -251,15 +251,15 @@ export default function GuestImageSlot({
 
   const canInteract = !busy;
   const uploadControlClassName =
-    'inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium text-foreground shadow-xs transition-colors hover:bg-muted';
+    'inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-muted';
 
   return (
     <div className="mt-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-sm leading-snug text-slate-800 dark:text-slate-200">
-            <span className="font-semibold">Media</span>
-            <span className="font-normal text-slate-600 dark:text-slate-400">
+          <p className="text-sm leading-snug text-foreground">
+            <span className="font-medium">Media</span>
+            <span className="font-normal text-muted-foreground">
               {allowVideo ? (
                 <>
                   {' '}
@@ -298,7 +298,7 @@ export default function GuestImageSlot({
               type="button"
               disabled={busy}
               onClick={() => void onRemove()}
-              className="inline-flex h-8 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 px-3 text-xs font-medium text-destructive shadow-xs transition-colors hover:bg-destructive/15 disabled:opacity-50"
+              className="inline-flex h-10 items-center justify-center rounded-md border border-destructive/30 bg-destructive/10 px-3 text-sm font-medium text-destructive shadow-xs transition-colors hover:bg-destructive/15 disabled:opacity-50"
             >
               Remove
             </PressButton>
@@ -307,7 +307,7 @@ export default function GuestImageSlot({
       </div>
 
       {previewUrl ? (
-        <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
+        <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
           {isVideoStoragePath(value) ? (
             <video
               src={previewUrl}

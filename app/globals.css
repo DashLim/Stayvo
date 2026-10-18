@@ -298,7 +298,18 @@ body {
     width: 100%;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     grid-template-rows: 1fr;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  .stayvo-host-bottom-nav > a {
+    display: flex;
+    min-width: 0;
+    min-height: 3.5rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
 }
 
 /* Instant tap feedback — avoid transform on buttons (conflicts with @dnd-kit drag transforms). */

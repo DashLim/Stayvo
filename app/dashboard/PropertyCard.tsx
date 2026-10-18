@@ -7,7 +7,6 @@ import {
   ChevronDown,
   Copy,
   Pencil,
-  RefreshCw,
   Trash2,
   X,
 } from 'lucide-react';
@@ -17,7 +16,6 @@ import {
   generateGuestLink,
   updateGuestLink,
 } from '@/app/actions/guest-links';
-import { syncPropertyIcalFeedNow } from '@/app/actions/ical-feeds';
 import PressButton from '@/app/_components/PressButton';
 import { guestPortalAbsoluteUrl } from '@/lib/guest-portal-url';
 import { icalFeedDisplayName } from '@/lib/ical/feed-source-label';
@@ -348,7 +346,6 @@ export default function PropertyCard({
   const [editCustomSlug, setEditCustomSlug] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
-  const [syncingCalendar, setSyncingCalendar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkMessage, setLinkMessage] = useState<string | null>(null);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -487,26 +484,6 @@ export default function PropertyCard({
     }
   }
 
-  async function onSyncCalendar() {
-    setSyncingCalendar(true);
-    setError(null);
-    setLinkMessage(null);
-    try {
-      const res = await syncPropertyIcalFeedNow(property.id);
-      if (!res.ok) throw new Error(res.error);
-      let msg = `Calendar sync complete. Created ${res.result.created}, extended ${res.result.extended}, expired ${res.result.expired}.`;
-      if ('warning' in res && res.warning) {
-        msg += ` ${res.warning}`;
-      }
-      setLinkMessage(msg);
-      router.refresh();
-    } catch (err: any) {
-      setError(err?.message ?? 'Unable to sync calendar.');
-    } finally {
-      setSyncingCalendar(false);
-    }
-  }
-
   async function onDeleteLink(linkId: string) {
     const yes = window.confirm(
       'Delete this guest link? Guests will no longer be able to open it.'
@@ -581,17 +558,6 @@ export default function PropertyCard({
             aria-hidden
           />
         </motion.button>
-        {icalFeed ? (
-          <PressButton
-            type="button"
-            disabled={syncingCalendar || submitting}
-            onClick={() => void onSyncCalendar()}
-            className={`${stayvoBtnCompactSecondaryClass} max-w-full gap-1.5 disabled:opacity-60`}
-          >
-            <RefreshCw className={cn('h-3.5 w-3.5 shrink-0', syncingCalendar && 'animate-spin')} aria-hidden />
-            {syncingCalendar ? 'Syncing…' : 'Sync'}
-          </PressButton>
-        ) : null}
         <motion.button
           type="button"
           whileTap={{ scale: 0.92 }}

@@ -160,7 +160,7 @@ function SortablePropertyRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="relative border-b border-border px-4 py-3 last:border-b-0"
+      className="relative px-4 py-3"
     >
       {/* Top row: drag handle + names + Edit link (hidden in edit mode) / delete (in edit mode) */}
       <div className="flex items-start justify-between gap-3">
@@ -335,8 +335,8 @@ function LocationGroupPanel({
       style={sectionStyle}
       className={`${stayvoHostCardClass} p-4 md:p-6`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border pb-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <DragHandle
             listeners={locationDragListeners}
             attributes={locationDragAttributes}
@@ -349,7 +349,7 @@ function LocationGroupPanel({
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
           {!editMode ? (
             <Link
               href={`/properties/new?locationId=${encodeURIComponent(loc.id)}&returnTo=${encodeURIComponent('/dashboard/manage')}`}
@@ -398,7 +398,7 @@ function LocationGroupPanel({
             items={properties.map((p) => p.id)}
             strategy={verticalListSortingStrategy}
           >
-            <ul className="mt-3 overflow-visible rounded-lg border border-border bg-card divide-y divide-border">
+            <ul className="divide-y divide-border">
               {properties.map((p) => (
                 <SortablePropertyRow
                   key={p.id}

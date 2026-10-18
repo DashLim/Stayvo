@@ -3,6 +3,7 @@ import { getGuestLinkOpenStatsForLinkIds } from '@/app/actions/guest-link-open-s
 import TrackGuestLinksClient from '@/app/dashboard/track/TrackGuestLinksClient';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { sortGuestLinksByCheckoutAsc } from '@/lib/guest-link-sort';
+import { stayvoHostCalloutDestructiveClass, stayvoMutedTextClass } from '@/lib/stayvo-ui-classes';
 
 export default async function DashboardTrackPage() {
   const supabase = await createSupabaseServerClient();
@@ -30,8 +31,10 @@ export default async function DashboardTrackPage() {
 
   if (locationsError || propertiesError) {
     return (
-      <main className="py-10">
-        <p className="mt-2 text-sm text-rose-700">Unable to load data.</p>
+      <main className="py-6 md:py-8">
+        <div className="w-full md:mx-auto md:max-w-6xl">
+          <p className={stayvoHostCalloutDestructiveClass}>Unable to load data.</p>
+        </div>
       </main>
     );
   }
@@ -79,9 +82,9 @@ export default async function DashboardTrackPage() {
     linkIds.length > 0 ? await getGuestLinkOpenStatsForLinkIds(linkIds) : {};
 
   return (
-    <main className="py-10">
-      <div className="w-full md:mx-auto md:max-w-[1200px]">
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 md:text-base">
+    <main className="py-6 md:py-8">
+      <div className="w-full md:mx-auto md:max-w-6xl">
+        <p className={stayvoMutedTextClass}>
           See whether guest links were opened and approx. how many devices loaded the portal.
         </p>
 

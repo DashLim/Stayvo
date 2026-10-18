@@ -6,6 +6,15 @@ import { getServiceRoleSupabase } from '@/lib/supabase/admin';
 import { encryptFeedUrl } from '@/lib/ical-feed-crypto';
 import { syncPropertyIcalFeed } from '@/lib/ical/sync-feed';
 import type { IcalFeedSource } from '@/lib/ical/types';
+import { listHostSyncFeeds, syncOneHostFeed } from '@/lib/ical/host-sync';
+
+export async function getHostIcalSyncFeeds() {
+  return listHostSyncFeeds(await createSupabaseServerClient());
+}
+
+export async function syncHostIcalFeedNow(feedId: string) {
+  return syncOneHostFeed(await createSupabaseServerClient(), feedId, syncPropertyIcalFeed);
+}
 
 function normalizeString(value: string | null | undefined) {
   return (value ?? '').trim();

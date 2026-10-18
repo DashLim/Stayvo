@@ -1,12 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Calendar, Clock } from 'lucide-react';
 import type { GuestLinkOpenStats } from '@/lib/guest-link-open-stats';
 import { sortGuestLinksByCheckoutAsc } from '@/lib/guest-link-sort';
 import {
+  stayvoHostBadgeAccentClass,
+  stayvoHostBadgeClass,
+  stayvoHostBadgeSuccessClass,
+  stayvoHostCalloutClass,
+  stayvoHostCalloutDestructiveClass,
   stayvoHostCardClass,
   stayvoHostNavItemActiveClass,
   stayvoHostNavItemClass,
+  stayvoHintClass,
+  stayvoMutedTextClass,
   stayvoSectionTitleClass,
 } from '@/lib/stayvo-ui-classes';
 import { cn } from '@/lib/utils';
@@ -69,6 +77,43 @@ function isExpired(link: GuestLinkItem) {
   return new Date(link.expires_at).getTime() < Date.now();
 }
 
+function LinkStatusBadge({ opened, devices }: { opened: boolean; devices: number }) {
+  if (opened) {
+    return (
+      <span className={cn(stayvoHostBadgeSuccessClass, 'shrink-0 leading-tight')}>
+        Opened
+        {devices > 0 ? (
+          <span className="ml-1 font-semibold tabular-nums text-inherit">· {devices}</span>
+        ) : null}
+      </span>
+    );
+  }
+  return <span className={stayvoHostBadgeClass}>Not yet</span>;
+}
+
+function GuestLinkMeta({
+  link,
+  last,
+}: {
+  link: GuestLinkItem;
+  last: string | null;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className={cn(stayvoHintClass, 'inline-flex items-center gap-1')}>
+        <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+        {link.is_permanent === true ? 'Permanent' : formatDate(link.checkout_date)}
+      </span>
+      {last ? (
+        <span className={cn(stayvoHintClass, 'inline-flex max-w-full items-center gap-1')}>
+          <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="truncate">{last}</span>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function GuestCard({
   link,
   stat,
@@ -81,121 +126,55 @@ function GuestCard({
   const opened = Boolean(stat && stat.deviceCount > 0);
   const last = isClientReady ? formatLastOpen(stat?.lastOpenAt) : null;
   const devices = stat?.deviceCount ?? 0;
+  const guestName = displayGuestName(link.guest_name);
+  const calendarBadge =
+    link.link_source === 'ical' ? (
+      <span className={stayvoHostBadgeAccentClass}>Calendar</span>
+    ) : null;
 
-  const statusBadges = (
-    <div className="flex shrink-0 items-center gap-1.5">
-      {opened ? (
-        <>
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Opened
-          </span>
-          {devices > 0 ? (
-            <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-              {devices}
-            </span>
-          ) : null}
-        </>
-      ) : (
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-          Not yet
-        </span>
-      )}
-    </div>
-  );
-
-  const metaRow = (
-    <div className="mt-2 flex flex-wrap items-center gap-3">
-      <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-        <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-slate-400" fill="currentColor" aria-hidden>
-          <path d="M5 2.5a.5.5 0 0 0-1 0V4H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 14h10a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13 4h-1V2.5a.5.5 0 0 0-1 0V4H5V2.5ZM2.5 7.5h11v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" />
-        </svg>
-        {link.is_permanent === true ? 'Permanent' : formatDate(link.checkout_date)}
-      </span>
-      {last ? (
-        <span className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-          <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-slate-400" fill="currentColor" aria-hidden>
-            <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-3.25a.75.75 0 0 1 .75.75v2.69l1.53 1.53a.75.75 0 1 1-1.06 1.06l-1.75-1.75A.75.75 0 0 1 7.25 8.5V5.5A.75.75 0 0 1 8 4.75Z" />
-          </svg>
-          {last}
-        </span>
-      ) : null}
+  const primaryRow = (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="min-w-0 text-sm font-medium text-foreground">{guestName}</span>
+      {calendarBadge}
+      <LinkStatusBadge opened={opened} devices={devices} />
     </div>
   );
 
   return (
     <>
-      {/* Mobile: original stacked layout */}
-      <div className="relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition dark:border-white/8 dark:bg-white/5 md:hidden">
-        <div
-          className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${opened ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-white/15'}`}
-          aria-hidden
-        />
-        <div className="pl-4 pr-3 py-3">
-          <div className="flex items-start justify-between gap-2">{statusBadges}</div>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-[15px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
-            {displayGuestName(link.guest_name)}
-            {link.link_source === 'ical' ? (
-              <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
-                Calendar
-              </span>
-            ) : null}
-          </p>
-          {metaRow}
-        </div>
+      <div
+        className={cn(
+          stayvoHostCardClass,
+          'min-w-0 px-3 py-2.5 md:hidden',
+        )}
+      >
+        {primaryRow}
+        <GuestLinkMeta link={link} last={last} />
       </div>
 
-      {/* Desktop: compact single row */}
-      <div className="relative hidden min-h-0 items-stretch overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition dark:border-white/8 dark:bg-white/5 md:flex">
-        <div
-          className={`w-1 shrink-0 self-stretch rounded-l-xl ${opened ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-white/15'}`}
-          aria-hidden
-        />
-        <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-x-2 gap-y-1 overflow-hidden py-2 pl-2.5 pr-3 md:gap-x-3 md:px-4 md:py-2.5">
-          <div className="flex shrink-0 items-center gap-1">
-            {opened ? (
-              <>
-                <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                  <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                  Opened
-                </span>
-                {devices > 0 ? (
-                  <span className="inline-flex min-w-[16px] items-center justify-center rounded-full bg-emerald-500 px-1 py-0.5 text-[9px] font-bold text-white">
-                    {devices}
-                  </span>
-                ) : null}
-              </>
-            ) : (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
-                Not yet
-              </span>
-            )}
-          </div>
-          <span className="h-3 w-px shrink-0 bg-slate-200 dark:bg-white/15" aria-hidden />
-          <p className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm font-semibold leading-none text-slate-900 dark:text-slate-100">
-            <span className="truncate">{displayGuestName(link.guest_name)}</span>
-            {link.link_source === 'ical' ? (
-              <span className="shrink-0 rounded-full bg-brand/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-900">
-                Calendar
-              </span>
-            ) : null}
-          </p>
-          <div className="flex min-w-0 shrink-0 items-center gap-x-2 text-[11px] text-slate-500 dark:text-slate-400">
-            <span className="inline-flex items-center gap-1 whitespace-nowrap">
-              <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-slate-400" fill="currentColor" aria-hidden>
-                <path d="M5 2.5a.5.5 0 0 0-1 0V4H3a1.5 1.5 0 0 0-1.5 1.5v7A1.5 1.5 0 0 0 3 14h10a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 13 4h-1V2.5a.5.5 0 0 0-1 0V4H5V2.5ZM2.5 7.5h11v5a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5v-5Z" />
-              </svg>
-              {link.is_permanent === true ? 'Permanent' : formatDate(link.checkout_date)}
+      <div
+        className={cn(
+          stayvoHostCardClass,
+          'hidden min-w-0 items-center gap-2 px-3 py-2.5 md:flex',
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+          <span className="min-w-[4rem] truncate text-sm font-medium text-foreground">{guestName}</span>
+          {calendarBadge ? <span className="shrink-0">{calendarBadge}</span> : null}
+        </div>
+        <LinkStatusBadge opened={opened} devices={devices} />
+        <span className="h-3 w-px shrink-0 bg-border" aria-hidden />
+        <div className="flex min-w-0 shrink-0 items-center gap-x-2 overflow-hidden">
+          <span className={cn(stayvoHintClass, 'inline-flex shrink-0 items-center gap-1 whitespace-nowrap')}>
+            <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            {link.is_permanent === true ? 'Permanent' : formatDate(link.checkout_date)}
+          </span>
+          {last ? (
+            <span className={cn(stayvoHintClass, 'inline-flex min-w-0 max-w-[9rem] items-center gap-1')}>
+              <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="min-w-0 truncate">{last}</span>
             </span>
-            {last ? (
-              <span className="inline-flex max-w-[7.5rem] items-center gap-1 truncate sm:max-w-[10rem]">
-                <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0 text-slate-400" fill="currentColor" aria-hidden>
-                  <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-3.25a.75.75 0 0 1 .75.75v2.69l1.53 1.53a.75.75 0 1 1-1.06 1.06l-1.75-1.75A.75.75 0 0 1 7.25 8.5V5.5A.75.75 0 0 1 8 4.75Z" />
-                </svg>
-                <span className="truncate">{last}</span>
-              </span>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
     </>
@@ -224,35 +203,31 @@ function PropertyGuestLinksBlock({
     [guestLinks, property.id]
   );
   const openedCount = links.filter((l) => openStatsByLinkId[l.id]?.deviceCount > 0).length;
+  const openedSummary =
+    links.length > 0 ? (
+      <span className={stayvoHintClass}>
+        {openedCount}/{links.length} opened
+      </span>
+    ) : null;
 
   return (
     <div>
       {embedded ? (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3 dark:border-white/10">
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-            Guest links
-          </span>
-          {links.length > 0 ? (
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 md:text-xs">
-              {openedCount}/{links.length} opened
-            </span>
-          ) : null}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+          <span className="text-xs font-medium text-foreground">Guest links</span>
+          {openedSummary}
         </div>
       ) : (
-        <div className="mb-2 flex items-center justify-between gap-2 px-0.5 md:mb-3">
-          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 md:text-base">
+        <div className="mb-2 flex items-center justify-between gap-2 md:mb-3">
+          <h3 className="min-w-0 text-base font-medium text-foreground">
             {displayTitle(property.property_name, property.internal_name)}
           </h3>
-          {links.length > 0 ? (
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 md:text-xs">
-              {openedCount}/{links.length} opened
-            </span>
-          ) : null}
+          {openedSummary}
         </div>
       )}
 
       {links.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white/50 px-4 py-3 text-xs text-slate-600 dark:border-white/10 dark:bg-white/4 dark:text-white md:px-6 md:py-5 md:text-sm">
+        <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground md:py-4 md:text-sm">
           No guest links yet.
         </div>
       ) : (
@@ -288,16 +263,10 @@ function TrackPropertyCard({
     'Untitled';
 
   return (
-    <div className={`${stayvoHostCardClass} flex min-h-0 w-full min-w-0 max-w-full flex-col p-5 md:p-4`}>
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="min-w-0 flex-1 text-left text-base font-semibold leading-tight text-slate-900 dark:text-slate-100">
-            {headingText}
-          </h2>
-        </div>
-      </div>
+    <div className={`${stayvoHostCardClass} flex min-h-0 w-full min-w-0 max-w-full flex-col p-4 md:p-5`}>
+      <h2 className="min-w-0 text-left text-base font-medium text-foreground">{headingText}</h2>
 
-      <div className="mt-4 min-w-0 flex-1 md:mt-3">
+      <div className="mt-3 min-w-0 flex-1 md:mt-4">
         <PropertyGuestLinksBlock
           property={property}
           guestLinks={guestLinks}
@@ -349,7 +318,7 @@ export default function TrackGuestLinksClient({
 
   if (guestLinksError) {
     return (
-      <p className="mt-6 text-sm text-amber-700">
+      <p className={cn(stayvoHostCalloutDestructiveClass, 'mt-6')}>
         Guest links could not be loaded. Ensure Supabase migrations are applied.
       </p>
     );
@@ -357,7 +326,7 @@ export default function TrackGuestLinksClient({
 
   if (!hasAnyProperty) {
     return (
-      <p className="mt-6 text-sm text-slate-600">
+      <p className={cn(stayvoHostCalloutClass, 'mt-6')}>
         No live properties yet. Publish a property from Manage to generate trackable links.
       </p>
     );
@@ -370,22 +339,21 @@ export default function TrackGuestLinksClient({
 
   return (
     <div className="mt-6 w-full">
-      <div className="mx-auto w-full max-w-[1200px] space-y-8 md:hidden">
+      <div className="space-y-8 md:hidden">
         {sections.map((section) =>
           section.properties.length === 0 ? null : (
             <section key={section.locationId}>
               <div className="mb-4 border-b border-border pb-3">
                 <h2 className={stayvoSectionTitleClass}>{section.locationName}</h2>
-                <p className="mt-0.5 text-sm text-muted-foreground">
+                <p className={cn(stayvoMutedTextClass, 'mt-0.5')}>
                   {section.properties.length}{' '}
                   {section.properties.length === 1 ? 'property' : 'properties'}
                 </p>
               </div>
 
-              {/* Property groups */}
               <div className="space-y-5">
                 {section.properties.map((property) => (
-                  <div key={property.id}>
+                  <div key={property.id} className={`${stayvoHostCardClass} p-4`}>
                     <PropertyGuestLinksBlock
                       property={property}
                       guestLinks={guestLinks}
@@ -400,8 +368,8 @@ export default function TrackGuestLinksClient({
         )}
       </div>
 
-      <div className="mx-auto hidden min-h-0 w-full max-w-[1200px] md:flex md:gap-8">
-        <aside className="sticky top-6 w-[220px] shrink-0 self-start md:max-h-[min(36rem,calc(100dvh-6rem))] md:space-y-1 md:overflow-y-auto md:pr-1">
+      <div className="hidden min-h-0 w-full md:flex md:gap-8">
+        <aside className="sticky top-6 w-64 shrink-0 self-start md:max-h-[min(36rem,calc(100dvh-6rem))] md:space-y-1 md:overflow-y-auto md:pr-1">
           {sectionsWithProperties.map((s) => {
             const selected = s.locationId === desktopLocationId;
             return (
@@ -413,7 +381,7 @@ export default function TrackGuestLinksClient({
                   selected ? stayvoHostNavItemActiveClass : stayvoHostNavItemClass,
                 )}
               >
-                <span className="w-full truncate">{s.locationName}</span>
+                <span className="w-full truncate text-left">{s.locationName}</span>
                 <span
                   className={cn(
                     'mt-0.5 text-xs font-medium',
@@ -433,7 +401,7 @@ export default function TrackGuestLinksClient({
                 <h2 className={stayvoSectionTitleClass}>
                   {desktopSelectedSection.locationName}
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                <p className={cn(stayvoMutedTextClass, 'mt-0.5')}>
                   {desktopSelectedSection.properties.length}{' '}
                   {desktopSelectedSection.properties.length === 1 ? 'property' : 'properties'}
                 </p>
@@ -451,13 +419,11 @@ export default function TrackGuestLinksClient({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No properties in this location.
-                </p>
+                <p className={stayvoMutedTextClass}>No properties in this location.</p>
               )}
             </>
           ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Select a location.</p>
+            <p className={stayvoMutedTextClass}>Select a location.</p>
           )}
         </div>
       </div>

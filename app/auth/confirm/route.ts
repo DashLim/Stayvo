@@ -2,14 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { safeNextPath } from '@/lib/auth-callback-url';
 import { getSupabasePublicEnv } from '@/lib/supabase/env';
-
-function safeNextPath(raw: string | null): string {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) {
-    return '/dashboard';
-  }
-  return raw;
-}
 
 export async function GET(request: Request) {
   const env = getSupabasePublicEnv();

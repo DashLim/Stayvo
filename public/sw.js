@@ -1,9 +1,9 @@
-const CACHE_NAME = 'stayvo-v5';
+const CACHE_NAME = 'stayvo-v6';
+const CACHE_PREFIX = 'stayvo-v';
 
-// Static assets to pre-cache on install
-const PRECACHE_URLS = ['/', '/dashboard', '/offline.html'];
+// Only public, non-personalized content belongs in the offline cache.
+const PRECACHE_URLS = ['/offline.html'];
 
-// ─── Install: pre-cache shell ───────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
@@ -13,110 +13,96 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// ─── Activate: remove old caches ────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+        Promise.all(
+          keys
+            .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+            .map((key) => caches.delete(key))
+        )
       )
       .then(() => self.clients.claim())
   );
 });
 
-// ─── Fetch strategy ─────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET, cross-origin, or API/auth requests
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Never intercept API, auth, or App Router payload requests.
   if (
-    request.method !== 'GET' ||
-    url.origin !== self.location.origin ||
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/_next/data/') ||
-    url.pathname.includes('supabase')
+    url.pathname.includes('supabase') ||
+    url.searchParams.has('_rsc')
   ) {
     return;
   }
 
-  // App Router (RSC / flight): do not intercept — caching or wrapping fetch breaks client-side
-  // navigations ("Failed to fetch RSC payload", esp. on LAN hostnames like 192.168.x.x).
-  // See Next headers: `app-router-headers.js` (NEXT_RSC_UNION_QUERY = '_rsc', RSC_HEADER = 'rsc', …).
-  if (url.searchParams.has('_rsc')) return;
-  const hdr = request.headers;
+  const headers = request.headers;
   if (
-    hdr.get('rsc') ||
-    hdr.get('next-router-state-tree') ||
-    hdr.get('next-router-prefetch') ||
-    hdr.get('next-router-segment-prefetch') ||
-    hdr.get('next-hmr-refresh')
+    headers.get('rsc') ||
+    headers.get('next-router-state-tree') ||
+    headers.get('next-router-prefetch') ||
+    headers.get('next-router-segment-prefetch') ||
+    headers.get('next-hmr-refresh')
   ) {
     return;
   }
+
   if (url.pathname.startsWith('/_next/') && !url.pathname.startsWith('/_next/static/')) {
     return;
   }
 
-  // Next.js chunks under /_next/static must be network-first: cache-first serves stale JS after
-  // rebuilds (dev HMR, redeploy) and causes ChunkLoadError when loading route bundles.
-  if (url.pathname.startsWith('/_next/static/')) {
+  // Navigations (including dashboard/editor/account/guest-token pages) are network-only.
+  // On network failure, show the generic offline page; never persist HTML responses.
+  if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
-      fetch(request)
-        .then((res) => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(request, clone));
-          }
-          return res;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // Brand logos (public/brand/*) are replaced often; cache-first here shows stale images after export.
-  if (url.pathname.startsWith('/brand/')) {
-    return;
-  }
-
-  // Other static assets → cache-first
-  if (url.pathname.match(/\.(ico|png|svg|webp|jpg|jpeg|woff2?|ttf|css|js)$/)) {
-    event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ??
-          fetch(request).then((res) => {
-            if (res.ok) {
-              const clone = res.clone();
-              caches.open(CACHE_NAME).then((c) => c.put(request, clone));
-            }
-            return res;
-          })
-      )
-    );
-    return;
-  }
-
-  // HTML navigation → network-first, fall back to cache, then offline page
-  event.respondWith(
-    fetch(request)
-      .then((res) => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(request, clone));
-        }
-        return res;
-      })
-      .catch(
-        () =>
-          caches.match(request) ??
-          caches.match('/offline.html') ??
+      fetch(request).catch(async () => {
+        const cache = await caches.open(CACHE_NAME);
+        return (
+          (await cache.match('/offline.html')) ||
           new Response('You are offline.', {
             status: 503,
             headers: { 'Content-Type': 'text/plain' },
           })
-      )
+        );
+      })
+    );
+    return;
+  }
+
+  // Hashed Next assets and a small allowlist of public app assets are safe to cache.
+  const isNextStatic = url.pathname.startsWith('/_next/static/');
+  const isPublicStatic =
+    url.pathname.startsWith('/icons/') ||
+    ['/icon.svg', '/manifest.webmanifest', '/offline.html'].includes(url.pathname);
+  if (!isNextStatic && !isPublicStatic) return;
+
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      if (!isNextStatic) {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+      }
+
+      try {
+        const response = await fetch(request);
+        if (response.ok) await cache.put(request, response.clone());
+        return response;
+      } catch (error) {
+        if (isNextStatic) {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+        }
+        throw error;
+      }
+    })()
   );
 });

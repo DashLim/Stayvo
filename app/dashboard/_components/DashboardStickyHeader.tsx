@@ -12,6 +12,7 @@ import {
   stayvoPageTitleClass,
 } from '@/lib/stayvo-ui-classes';
 import { cn } from '@/lib/utils';
+import DashboardSyncAll from '@/app/dashboard/_components/DashboardSyncAll';
 
 const headerByPath: Array<{ match: (path: string) => boolean; title: string }> = [
   { match: (path) => path === '/dashboard', title: 'Dashboard' },
@@ -45,29 +46,31 @@ export default function DashboardStickyHeader() {
 
   return (
     <header
-      className={`${stayvoHostHeaderClass} -mx-4 px-4 pt-[env(safe-area-inset-top)] md:-mx-6 md:px-6 lg:-mx-8 lg:px-8`}
+      className={cn(
+        stayvoHostHeaderClass,
+        'px-4 pt-[env(safe-area-inset-top)] md:px-6 lg:px-8',
+      )}
     >
       <div className="mx-auto flex h-14 w-full min-w-0 max-w-2xl items-center justify-between gap-2 overflow-hidden md:max-w-6xl md:gap-3">
         <h1 className={cn(stayvoPageTitleClass, 'min-w-0 flex-1 truncate pr-2 text-left')}>
           {title}
         </h1>
 
-        {isDashboard ? (
-          <motion.div className="flex shrink-0 items-center">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              onClick={() => window.dispatchEvent(new Event('stayvo:dashboard-open-filter'))}
-              className={cn(stayvoBtnIconClass, 'shrink-0 md:h-10 md:w-auto md:px-3')}
-              aria-label="Open filter"
-              title="Filter"
-            >
-              <Filter className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="hidden text-sm font-medium md:inline">Filter</span>
-            </motion.button>
-          </motion.div>
-        ) : null}
+        <motion.div className={cn('flex shrink-0 items-center gap-2', !isDashboard && 'hidden')}>
+          <DashboardSyncAll visible={isDashboard} />
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            onClick={() => window.dispatchEvent(new Event('stayvo:dashboard-open-filter'))}
+            className={cn(stayvoBtnIconClass, 'shrink-0 md:h-10 md:w-auto md:px-3')}
+            aria-label="Open filter"
+            title="Filter"
+          >
+            <Filter className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden text-sm font-medium md:inline">Filter</span>
+          </motion.button>
+        </motion.div>
 
         {isManage ? (
           <div className="flex shrink-0 items-center gap-1 md:gap-2">
